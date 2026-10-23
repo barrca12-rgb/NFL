@@ -7,6 +7,7 @@
 Outputs (model/output/):
     week_<season>_<week>.csv        one row per game, every number below
     week_<season>_<week>.md         readable report: projections, edges, flagged plays
+    week_<season>_<week>.html       bet card: verdicts and stakes first, sortable tables (also saved to reports/)
     power_ratings_<season>_<week>.csv
 
 Lines file (optional, CSV): away_team, home_team, home_spread, total, and optionally home_spread_odds,
@@ -26,15 +27,17 @@ import numpy as np
 import pandas as pd
 
 from .calibrate import build_features, injury_table
-from .data import HERE, depth_chart_qb1, load_all, load_games
+from .data import HERE, REPO, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
 from .features import FEATURES, game_features
 from .injuries import FEATURES as INJ_FEATURES, add_injury_features, live_table
 from .projection import fit_points_model
 from .ratings import build_ratings, power_table
+from .report_html import build_html
 from .simulate import SimConfig, american, simulate_game, summarize
 
 OUT = os.path.join(HERE, "output")
+REPORTS = os.path.join(REPO, "reports")  # committed copies of each week's report
 ADJ_PATH = os.path.join(HERE, "adjustments.csv")
 
 # How much of the model's disagreement with the line to believe when pricing bets. The model's raw projection is
@@ -65,6 +68,84 @@ APPLIED_STAGES = ("thursday", "final")
 
 def season_phase(week: int, game_type: str = "REG") -> str:
     return "early" if game_type == "REG" and week <= EARLY_WEEKS else "late"
+
+
+LADDER_STEPS = 6       # half-points checked against the bet for "good down to" (3 points)
+WATCH_STEPS = 3        # half-points checked in the bet's favor for the watch list (1.5 points: a realistic move)
+LADDER_SIMS = 8000
+
+
+def qualifies(p_raw: float, ev: float, phase: str) -> bool:
+    """A spread is a bet when the model's raw cover % clears the phase's flag threshold (the backtested selection
+    rule) AND the blended (realistic) price is still +EV."""
+    return p_raw >= FLAG_RULES[phase][-1][1] and ev > 0
+
+
+def add_verdicts(out: pd.DataFrame, phase: str) -> pd.DataFrame:
+    """One clear call per game: BET / SMALL / WATCH / PASS, a stake in units, and the reason in plain words.
+
+    BET   - flagged (raw cover clears the phase threshold) and +EV on the blended price.
+            Stake: Weeks 1-4 STRONG 2u, PLAY 1u; Week 5 on LEAN 0.5u (the edge is thin mid-season).
+    SMALL - flagged but the blended price is thin (usually a favorite laying a key number): 0.5u, Weeks 1-4 only.
+    WATCH - not a bet at today's number, but it becomes one if the line moves to `bet_at`.
+    PASS  - no edge worth betting."""
+    stake = {"STRONG": 2.0, "PLAY": 1.0, "LEAN": 0.5}
+    verdicts, stakes, reasons = [], [], []
+    for r in out.itertuples():
+        flag, ev = getattr(r, "flag", ""), getattr(r, "spread_ev", np.nan)
+        if flag and ev > 0:
+            v, u = "BET", stake[flag]
+            why = f"{flag}: model covers {r.p_cover_raw:.0%}, realistic {r.p_cover_blend:.0%}, +EV"
+        elif flag and phase == "early":
+            v, u = "SMALL", 0.5
+            why = f"{flag} by the model, but the realistic price is thin ({r.p_cover_blend:.0%})"
+        elif pd.notna(getattr(r, "bet_at", np.nan)):
+            v, u = "WATCH", 0.0
+            why = f"Becomes a bet at {r.spread_pick} {_fmt_spread(r.bet_at)}"
+        else:
+            v, u = "PASS", 0.0
+            why = "No edge worth betting at this number"
+        verdicts.append(v)
+        stakes.append(u)
+        reasons.append(why)
+    return out.assign(verdict=verdicts, stake_units=stakes, reason=reasons)
+
+
+def _line_ladder(sim, model_margin, line, side, odds, blend_total, exp_drives, playoff, cfg, rng, phase) -> dict:
+    """Check the bet at nearby half-point lines (nflverse sign: + = home favored).
+
+    Returns the worst line the pick still qualifies at ("bet down to") and, if it doesn't qualify now, the nearest
+    better line at which it would ("becomes a bet at"), both in the picked team's sportsbook convention."""
+    sign = 1 if side == "home" else -1          # moving the line by +sign*0.5 makes the bet worse
+    small = SimConfig(**{**cfg.__dict__, "n_sims": LADDER_SIMS})
+
+    def check(L):
+        s = summarize(sim, L)
+        pc, pl = s[f"p_{side}_cover"], s[f"p_{'away' if side == 'home' else 'home'}_cover"]
+        bm = L + BLEND_SPREAD * (model_margin - L)
+        b = summarize(simulate_game((blend_total + bm) / 2, (blend_total - bm) / 2, exp_drives, playoff, small, rng), L)
+        bw, bl = b[f"p_{side}_cover"], b[f"p_{'away' if side == 'home' else 'home'}_cover"]
+        return qualifies(pc / (pc + pl), bw * _payout(odds) - bl, phase)
+
+    def pick_line(L):  # sportsbook number for the picked team
+        return -L if side == "home" else L
+
+    out = {"bet_down_to": np.nan, "bet_at": np.nan}
+    if check(line):
+        worst = line
+        for k in range(1, LADDER_STEPS + 1):
+            L = line + sign * 0.5 * k
+            if not check(L):
+                break
+            worst = L
+        out["bet_down_to"] = pick_line(worst)
+    else:
+        for k in range(1, WATCH_STEPS + 1):
+            L = line - sign * 0.5 * k
+            if check(L):
+                out["bet_at"] = pick_line(L)
+                break
+    return out
 
 
 def _payout(odds):
@@ -205,6 +286,10 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
                 # 66.4% for the closing-line favorite and 65.3% for the model alone.
                 "p_home_win_blend": b["p_home_win"],
             })
+            # How far the line can move before the bet stops (or starts) qualifying.
+            odds = ln[f"{side}_spread_odds"]
+            row.update(_line_ladder(sim, s["sim_margin"], spread_nv, side, odds, bt, h["exp_drives"], playoff, cfg,
+                                    rng, season_phase(week, g.game_type)))
             if pd.notna(ln["total"]):
                 row["total_edge"] = s["sim_total"] - ln["total"]
                 ou = "over" if row["total_edge"] > 0 else "under"
@@ -214,8 +299,10 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
         rows.append(row)
     out = pd.DataFrame(rows)
     p = out.get("p_cover_raw", pd.Series(0.0, index=out.index)).fillna(0)
-    rules = FLAG_RULES[season_phase(week, wk["game_type"].iloc[0])]
+    phase = season_phase(week, wk["game_type"].iloc[0])
+    rules = FLAG_RULES[phase]
     out["flag"] = np.select([p >= th for _, th in rules], [name for name, _ in rules], "")
+    out = add_verdicts(out, phase)
 
     tag = f"{season}_{week:02d}"
     out.to_csv(os.path.join(OUT, f"week_{tag}.csv"), index=False)
@@ -224,8 +311,14 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     pt = pt.sort_values("net_pts", ascending=False)
     pt.to_csv(os.path.join(OUT, f"power_ratings_{tag}.csv"))
     report = render(out, pt, season, week, n_sims, adj, inj_mode, inj_players)
-    with open(os.path.join(OUT, f"week_{tag}.md"), "w") as fh:
-        fh.write(report)
+    qb_change = {t: n for t, n in qb_notes.items() if "QB change" in n}
+    page = build_html(out, pt, season, week, n_sims, phase, FLAG_TEXT[phase], inj_mode, inj_players, qb_change)
+    os.makedirs(REPORTS, exist_ok=True)
+    for folder, name in ((OUT, f"week_{tag}"), (REPORTS, f"{season}_week{week:02d}")):
+        with open(os.path.join(folder, f"{name}.md"), "w") as fh:
+            fh.write(report)
+        with open(os.path.join(folder, f"{name}.html"), "w") as fh:
+            fh.write(page)
     print(report)
     return out
 

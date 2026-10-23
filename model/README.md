@@ -14,7 +14,19 @@ python -m model.run_week                       # next week; downloads fresh nflv
 python -m model.run_week --lines lines.csv     # compare against your book's Monday numbers
 ```
 
-Writes `model/output/week_<season>_<week>.md` (report), `.csv` (all numbers) and `power_ratings_<season>_<week>.csv`.
+Writes the **bet card** `reports/<season>_week<NN>.html` (open it in a browser), plus a Markdown copy, the full
+numbers in `model/output/week_<season>_<week>.csv`, and `power_ratings_<season>_<week>.csv`.
+
+The bet card gives every game one call:
+
+| Call | Meaning | Stake |
+|---|---|---|
+| **BET** | Model cover % clears the threshold for this part of the season *and* the realistic price is +EV | Weeks 1-4: 2u (STRONG) or 1u (PLAY). Week 5 on: 0.5u |
+| **SMALL** | Clears the threshold but the realistic price is thin, usually a favorite laying 3 or 7 (Weeks 1-4 only) | 0.5u |
+| **WATCH** | Not a bet now, but becomes one if the line moves up to 1.5 points in its favor (the card shows the number) | 0 until it gets there |
+| **PASS** | No edge | 0 |
+
+Every bet also shows **good down to**: the worst number you can still take it at.
 
 **Lines file** (optional): `away_team,home_team,home_spread,total[,home_spread_odds,away_spread_odds,over_odds,under_odds,home_ml,away_ml]`.
 `home_spread` uses sportsbook convention: -3 means the home team is favored by 3. Without `--lines`, the lines
