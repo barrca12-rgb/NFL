@@ -82,7 +82,7 @@ def game_features(week_games: pd.DataFrame, r: dict, starters: dict[str, str] | 
     f["def_sr"] = o.map(r["sr"]["def"]).fillna(0).to_numpy()
     f["off_pass"] = t.map(r["pass_epa"]["off"]).fillna(0).to_numpy()
     f["def_pass"] = o.map(r["pass_epa"]["def"]).fillna(0).to_numpy()
-    for m in ("epa_adj", "epa_nto", "to_rate"):
+    for m in ("epa_adj", "epa_nto", "to_rate", "ed_epa", "ed_sr", "proe"):
         f[f"off_{m}"] = t.map(r[m]["off"]).fillna(0).to_numpy()
         f[f"def_{m}"] = o.map(r[m]["def"]).fillna(0).to_numpy()
     if "elo" in r:
@@ -113,6 +113,18 @@ def game_features(week_games: pd.DataFrame, r: dict, starters: dict[str, str] | 
         return np.array(out)
 
     f["qb_delta"] = qb_delta(t)
+    if r.get("qb_cpoe") is not None:
+        qc = r["qb_cpoe"]
+        h = r["history"]
+        hh = h[h["qb_id"].notna()].assign(c=lambda x: x["qb_id"].map(qc))
+        cbase = (hh["wt"] * hh["c"]).groupby(hh["team"]).sum() / hh["wt"].groupby(hh["team"]).sum()
+        crep = qc.quantile(0.15) if len(qc) else -3.0
+        cd = []
+        for tm in t:
+            qid = starters.get(tm, r["starter"].get(tm))
+            v = qc.get(qid, crep) if qid is not None else crep
+            cd.append(v - cbase.get(tm, v))
+        f["qb_cpoe_delta"] = np.array(cd)
     f["opp_qb_delta"] = qb_delta(o)
     f["starter"] = [starters.get(tm, r["starter"].get(tm)) for tm in t]
     return f

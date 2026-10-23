@@ -26,6 +26,7 @@ class RatingConfig:
     half_life: float = 8.0       # weeks for a game's weight to halve
     offseason_gap: float = 4.0  # extra "weeks" of decay charged across an offseason
     lookback_seasons: int = 2    # seasons of history before the current one that are used at all
+    def_shrink: float = 1.0      # extra ridge shrinkage on defensive ratings (defense is noisier week to week)
     # QB ratings get their own, longer memory: QB quality is far more stable than team performance.
     # Backtest 2016-2025: 40-week half-life over 4 seasons cut margin MAE 9.972 -> 9.956 and lifted straight-up
     # accuracy 65.3% -> 66.1% vs the team-rating memory (8 weeks / 2 seasons). Opponent adjustment didn't help.
@@ -46,6 +47,9 @@ METRICS = {
     "epa_adj": 12.0,
     "epa_nto": 12.0,
     "to_rate": 30.0,
+    "ed_epa": 12.0,
+    "ed_sr": 12.0,
+    "proe": 12.0,
 }
 
 
@@ -68,7 +72,8 @@ def history_before(tg: pd.DataFrame, season: int, week: int, cfg: RatingConfig) 
     return h
 
 
-def ridge_ratings(h: pd.DataFrame, metric: str, teams: list[str], penalty: float, with_def: bool = True):
+def ridge_ratings(h: pd.DataFrame, metric: str, teams: list[str], penalty: float, with_def: bool = True,
+                  def_shrink: float = 1.0):
     """Weighted ridge for y = b0 + hfa*is_home + off[team] - def[opp]. Returns (b0, hfa, off, def) as dict/Series."""
     h = h[h[metric].notna()]
     n, k = len(h), len(teams)
@@ -87,6 +92,8 @@ def ridge_ratings(h: pd.DataFrame, metric: str, teams: list[str], penalty: float
     # Penalty is scaled by the average game weight so it means "N average games of prior".
     lam = np.full(ncol, penalty * w.mean())
     lam[:2] = 1e-6
+    if with_def:
+        lam[2 + k:] *= def_shrink
     XtW = X.T * w
     beta = np.linalg.solve(XtW @ X + np.diag(lam), XtW @ y)
     off = pd.Series(beta[2:2 + k], index=teams)
@@ -126,7 +133,7 @@ def build_ratings(tg: pd.DataFrame, season: int, week: int, cfg: RatingConfig | 
     teams = sorted(set(h["team"]) | set(h["opp"]))
     out = {"teams": teams, "history": h}
     for m, pen in METRICS.items():
-        out[m] = ridge_ratings(h, m, teams, pen)
+        out[m] = ridge_ratings(h, m, teams, pen, def_shrink=cfg.def_shrink)
     out["st"] = ridge_ratings(h, "st_net", teams, 8.0, with_def=False)
     hq = history_before(tg, season, week, RatingConfig(half_life=cfg.qb_half_life,
                                                        offseason_gap=cfg.qb_offseason_gap,
@@ -136,6 +143,9 @@ def build_ratings(tg: pd.DataFrame, season: int, week: int, cfg: RatingConfig | 
         hq = hq.copy()
         hq["qb_epa_sum"] = hq["qb_epa_sum"] + hq["qb_db"] * hq["opp"].map(out["pass_epa"]["def"]).fillna(0)
     out["qbr"] = qb_ratings(hq, prior_db=cfg.qb_prior_db)
+    # Completion % over expected per pass: stabilizes faster than EPA/dropback (shrunk toward slightly below avg).
+    out["qb_cpoe"] = qb_ratings(hq.assign(qb_epa_sum=hq["qb_cpoe_sum"], qb_db=hq["qb_cpoe_n"]),
+                                prior_mean=-1.0, prior_db=200.0) if "qb_cpoe_sum" in hq else None
     out["qb_base"] = team_qb_baseline(h, out["qbr"]).reindex(teams).fillna(out["qbr"].mean())
     out["starter"] = last_starter(h)
     if elo is not None:

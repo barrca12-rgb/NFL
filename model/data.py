@@ -25,7 +25,7 @@ PBP_COLS = [
     "game_id", "season", "week", "season_type", "posteam", "defteam", "home_team", "away_team",
     "play_type", "epa", "success", "wp", "pass", "rush", "qb_dropback", "qb_epa",
     "passer_player_id", "passer_player_name", "fixed_drive", "fixed_drive_result", "special_teams_play",
-    "fumble_lost", "interception",
+    "fumble_lost", "interception", "down", "pass_oe", "cpoe",
 ]
 
 
@@ -90,8 +90,20 @@ def team_games(pbp: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
     plays["wepa_nto"] = plays["wepa"] * (~to)
     plays["wto"] = plays["w"] * to
 
+    # Early downs (1st/2nd) are more predictive than 3rd/4th, which swing more on chance.
+    ed = plays["down"].isin([1, 2])
+    plays["w_ed"] = plays["w"] * ed
+    plays["wepa_ed"] = plays["wepa"] * ed
+    plays["wsucc_ed"] = plays["wsucc"] * ed
+    # Pass rate over expected on early downs in neutral game states: coaching aggressiveness.
+    neutral = ed & plays["wp"].between(0.2, 0.8) & plays["pass_oe"].notna()
+    plays["proe_n"] = neutral.astype(float)
+    plays["proe_sum"] = np.where(neutral, plays["pass_oe"], 0.0)
+
     key = ["game_id", "posteam"]
     agg = plays.groupby(key).agg(
+        w_ed=("w_ed", "sum"), wepa_ed=("wepa_ed", "sum"), wsucc_ed=("wsucc_ed", "sum"),
+        proe_n=("proe_n", "sum"), proe_sum=("proe_sum", "sum"),
         defteam=("defteam", "first"), w=("w", "sum"), wepa=("wepa", "sum"), wsucc=("wsucc", "sum"),
         wpass_epa=("wpass_epa", "sum"), wpass=("wpass", "sum"), plays=("epa", "size"),
         wepa_adj=("wepa_adj", "sum"), w_nto=("w_nto", "sum"), wepa_nto=("wepa_nto", "sum"), wto=("wto", "sum"),
@@ -102,6 +114,9 @@ def team_games(pbp: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
     agg["epa_adj"] = agg["wepa_adj"] / agg["w"]
     agg["epa_nto"] = agg["wepa_nto"] / agg["w_nto"].clip(lower=1)
     agg["to_rate"] = agg["wto"] / agg["w"]
+    agg["ed_epa"] = agg["wepa_ed"] / agg["w_ed"].clip(lower=1)
+    agg["ed_sr"] = agg["wsucc_ed"] / agg["w_ed"].clip(lower=1)
+    agg["proe"] = (agg["proe_sum"] / agg["proe_n"].clip(lower=1)).where(agg["proe_n"] >= 5)
 
     drives = (pbp[pbp["posteam"].notna() & pbp["fixed_drive"].notna()]
               .drop_duplicates(["game_id", "posteam", "fixed_drive"]))
@@ -118,8 +133,10 @@ def team_games(pbp: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
 
     # Starting QB = most dropbacks; his EPA per dropback this game.
     db = pbp[(pbp["qb_dropback"] == 1) & pbp["passer_player_id"].notna() & pbp["qb_epa"].notna()]
+    db = db.assign(cpoe_n=db["cpoe"].notna().astype(float), cpoe_v=db["cpoe"].fillna(0.0))
     qb = db.groupby(key + ["passer_player_id", "passer_player_name"]).agg(
-        qb_db=("qb_epa", "size"), qb_epa_sum=("qb_epa", "sum")).reset_index()
+        qb_db=("qb_epa", "size"), qb_epa_sum=("qb_epa", "sum"),
+        qb_cpoe_n=("cpoe_n", "sum"), qb_cpoe_sum=("cpoe_v", "sum")).reset_index()
     qb = qb.sort_values("qb_db", ascending=False).drop_duplicates(key)
     qb = qb.rename(columns={"passer_player_id": "qb_id", "passer_player_name": "qb_name"})
 
@@ -136,7 +153,7 @@ def team_games(pbp: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
     tg["ppd"] = tg["points"] / tg["drives"]
     keep = ["game_id", "season", "week", "game_type", "gameday", "team", "opp", "is_home", "points",
             "plays", "drives", "ppd", "off_td", "off_fg", "epa", "sr", "pass_epa", "st_net",
-            "epa_adj", "epa_nto", "to_rate",
+            "epa_adj", "epa_nto", "to_rate", "ed_epa", "ed_sr", "proe", "qb_cpoe_n", "qb_cpoe_sum",
             "qb_id", "qb_name", "qb_db", "qb_epa_sum"]
     return tg[keep].dropna(subset=["points"]).sort_values(["gameday", "game_id", "team"]).reset_index(drop=True)
 
