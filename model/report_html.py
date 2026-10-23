@@ -16,6 +16,8 @@ import pandas as pd
 def _clean(v):
     if v is None:
         return None
+    if isinstance(v, list):
+        return [{k: _clean(x) for k, x in o.items()} for o in v]
     if isinstance(v, (np.floating, float)):
         return None if math.isnan(v) else round(float(v), 4)
     if isinstance(v, (np.integer,)):
@@ -33,7 +35,6 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
                flag_text: str, inj_mode: str | None, inj_players: pd.DataFrame | None, qb_change: dict) -> str:
     g = out.copy()
     g["matchup"] = g["away_team"] + " @ " + g["home_team"]
-    g["pick_line"] = np.where(g["spread_pick"] == g["home_team"], g["home_spread"], -g["home_spread"])
     pw = g["p_home_win_blend"].fillna(g["p_home_win"]) if "p_home_win_blend" in g else g["p_home_win"]
     g["winner"] = np.where(pw >= 0.5, g["home_team"], g["away_team"])
     g["win_pct"] = np.maximum(pw, 1 - pw)
@@ -44,7 +45,8 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
         "game_id", "gameday", "matchup", "away_team", "home_team", "proj_away", "proj_home", "model_home_spread",
         "home_spread", "spread_edge", "spread_pick", "pick_line", "p_cover_raw", "p_cover_blend", "spread_ev",
         "verdict", "stake_units", "reason", "bet_down_to", "bet_at", "flag", "model_total", "total", "total_pick",
-        "p_total_raw", "p_total_blend", "total_ev", "winner", "win_pct", "away_inj_pts", "home_inj_pts", "qb_note",
+        "p_total_raw", "winner", "win_pct", "away_inj_pts", "home_inj_pts", "qb_note",
+        "best_book", "pick_odds", "offers", "n_books",
     ])
     p = pt.reset_index().rename(columns={"index": "team"})
     p["rank"] = range(1, len(p) + 1)
@@ -54,7 +56,8 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
 
     data = {
         "season": season, "week": week, "n_sims": n_sims, "phase": phase, "flag_text": flag_text,
-        "inj_mode": inj_mode, "line_source": str(out["line_source"].iloc[0]),
+        "inj_mode": inj_mode,
+        "line_source": ", ".join(sorted({b for x in out["line_source"].dropna() for b in str(x).split(", ")})),
         "games": games, "ratings": ratings, "injuries": players,
     }
     payload = json.dumps(data).replace("</", "<\\/")
@@ -112,6 +115,12 @@ section { display: grid; gap: 14px; min-width: 0 }
 .ticket dt { color: var(--muted) }
 .ticket dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600 }
 .stake { font: 700 15px/1 var(--display); letter-spacing: .06em; text-transform: uppercase }
+.ticket .price { font-size: 20px; color: var(--muted) }
+.ticket .book { font-size: 14px }
+table.books { font-size: 13px; width: 100% }
+table.books td { padding: 3px 0; border: 0; text-align: left }
+table.books td:nth-child(2), table.books td:nth-child(3) { text-align: right }
+table.books tr.best td { font-weight: 700 }
 .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; color: var(--muted) }
 
 /* Verdict pills */
@@ -189,9 +198,10 @@ details[open] summary { margin-bottom: 10px }
     <h2 id="gl-h">How to read this</h2>
     <div class="glossary">
       <div><b>Model cover %</b>How often the pick covers in 20,000 simulations if the model's projection is exactly right. Used to pick and rank plays; it runs high (a 70% here has historically won about 56%).</div>
-      <div><b>Realistic cover %</b>The same simulation with the projection pulled 65% of the way back toward the line, which matches the model's real track record. Use this for whether a bet is worth it and how much.</div>
+      <div><b>Realistic cover %</b>The same simulation centered between the market consensus and the model (45% toward the model in Weeks 1-4, 20% after), which matches the model's real track record. It is then priced at each book's own number, so a better number at one book shows up as real value. Use this for whether a bet is worth it and how much.</div>
       <div><b>EV / unit</b>Expected profit per unit staked at the posted odds, from the realistic cover %. Above 0 means the price is worth taking.</div>
-      <div><b>Good down to</b>The worst number you can still take the bet at. If your book's line is worse than this, pass.</div>
+      <div><b>Good down to</b>The worst number you can still take the bet at, at the same price. If the line moves past it, pass.</div>
+      <div><b>Every book</b>Each sportsbook's number and price for the pick. The bold one is the best; always bet there.</div>
     </div>
   </section>
 
@@ -215,7 +225,14 @@ details[open] summary { margin-bottom: 10px }
   const sgn1 = (x) => x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(1);
   const ev = (x) => x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(3);
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
-  const units = (u) => u >= 1 ? u + "u" : u + "u";
+  const units = (u) => u + "u";
+  const ml = (x) => x == null ? "" : (x > 0 ? "+" : "") + Math.round(x);
+  const offersHtml = (g) => !g.offers || g.offers.length < 2 ? "" :
+    '<table class="books"><tbody>' + g.offers.map((o) => "<tr" + (o.book === g.best_book ? ' class="best"' : "") + "><td>" +
+      esc(o.book) + "</td><td>" + sp(o.line) + " " + ml(o.odds) + '</td><td class="' + (o.ev > 0 ? "pos" : "neg") + '">' + ev(o.ev) + "</td></tr>").join("") +
+    "</tbody></table>";
+  const booksCell = (r) => (r.offers || []).map((o) => (o.book === r.best_book ? "<b>" : "") + esc(o.book.replace(/\.ag$/, "")) + " " +
+    sp(o.line) + " " + ml(o.odds) + (o.book === r.best_book ? "</b>" : "")).join("<br>");
 
   // Header
   $("eyebrow").textContent = D.season + " NFL season · " + (D.phase === "early" ? "Weeks 1-4: strongest part of the season" : "Week 5 on: thin edges, smaller stakes");
@@ -239,13 +256,15 @@ details[open] summary { margin-bottom: 10px }
       el.className = "ticket" + (g.verdict === "SMALL" ? " small" : "");
       el.innerHTML = '<div class="stake" style="color:var(' + (g.verdict === "SMALL" ? "--amber" : "--turf") + ')">' +
         esc(g.verdict) + " · " + units(g.stake_units) + (g.flag ? " · " + esc(g.flag) : "") + "</div>" +
-        '<div class="pick">' + esc(g.spread_pick) + " " + sp(g.pick_line) + "</div>" +
+        '<div class="pick">' + esc(g.spread_pick) + " " + sp(g.pick_line) + ' <span class="price">' + ml(g.pick_odds) + "</span></div>" +
+        '<div class="book">Bet at <b>' + esc(g.best_book) + "</b></div>" +
         '<div class="game">' + esc(g.matchup) + " · " + esc(g.gameday) + "</div>" +
         "<dl><dt>Good down to</dt><dd>" + esc(g.spread_pick) + " " + sp(g.bet_down_to) + "</dd>" +
         "<dt>Realistic cover</dt><dd>" + pct(g.p_cover_blend) + "</dd>" +
         "<dt>Model cover</dt><dd>" + pct(g.p_cover_raw) + "</dd>" +
         "<dt>EV / unit</dt><dd>" + ev(g.spread_ev) + "</dd>" +
         "<dt>Projection</dt><dd>" + esc(g.away_team) + " " + num1(g.proj_away) + " – " + esc(g.home_team) + " " + num1(g.proj_home) + "</dd></dl>" +
+        offersHtml(g) +
         (g.qb_note ? '<div class="game">QB: ' + esc(g.qb_note) + "</div>" : "");
       $("slip").appendChild(el);
     });
@@ -303,16 +322,17 @@ details[open] summary { margin-bottom: 10px }
     {k: "matchup", h: "Game", l: 1},
     {k: "gameday", h: "Date", l: 1},
     {k: "verdict", h: "Call", l: 1, f: vpill, sort: (r) => verdictOrder[r.verdict] * 10 + (r.stake_units || 0)},
-    {k: "spread_pick", h: "Side", l: 1, f: (r) => esc(r.spread_pick) + " " + sp(r.pick_line), cls: (r) => r.verdict === "BET" ? "strong" : ""},
+    {k: "spread_pick", h: "Side (best price)", l: 1, f: (r) => esc(r.spread_pick) + " " + sp(r.pick_line) + " " + ml(r.pick_odds) + (r.best_book ? " · " + esc(r.best_book) : ""), cls: (r) => r.verdict === "BET" ? "strong" : ""},
     {k: "stake_units", h: "Stake", f: (r) => r.stake_units ? units(r.stake_units) : "–"},
     {k: "proj", h: "Projected score", l: 1, f: (r) => esc(r.away_team) + " " + num1(r.proj_away) + " – " + esc(r.home_team) + " " + num1(r.proj_home), sort: (r) => r.proj_home - r.proj_away},
     {k: "model_home_spread", h: "Model line", f: (r) => esc(r.home_team) + " " + sp(r.model_home_spread)},
-    {k: "home_spread", h: "Market line", f: (r) => esc(r.home_team) + " " + sp(r.home_spread)},
+    {k: "home_spread", h: "Consensus", f: (r) => esc(r.home_team) + " " + sp(r.home_spread)},
     {k: "spread_edge", h: "Edge", f: (r) => sgn1(r.spread_edge), sort: (r) => r.spread_edge == null ? null : Math.abs(r.spread_edge)},
     {k: "p_cover_raw", h: "Model cover", f: (r) => pct(r.p_cover_raw)},
     {k: "p_cover_blend", h: "Realistic cover", f: (r) => pct(r.p_cover_blend)},
     {k: "spread_ev", h: "EV / unit", f: (r) => ev(r.spread_ev), cls: (r) => r.spread_ev > 0 ? "pos" : "neg"},
     {k: "bet_down_to", h: "Good down to", f: (r) => r.bet_down_to == null ? (r.bet_at == null ? "–" : "bet at " + sp(r.bet_at)) : sp(r.bet_down_to)},
+    {k: "n_books", h: "Every book", l: 1, f: booksCell},
     {k: "reason", h: "Why", l: 1},
   ];
   const gt = table("t-games", gameCols, D.games, ["verdict", -1]);
@@ -343,7 +363,6 @@ details[open] summary { margin-bottom: 10px }
     {k: "model_total", h: "Model", f: (r) => num1(r.model_total)},
     {k: "tedge", h: "Edge", f: (r) => sgn1(r.model_total - r.total), sort: (r) => Math.abs(r.model_total - r.total)},
     {k: "p_total_raw", h: "Model %", f: (r) => pct(r.p_total_raw)},
-    {k: "p_total_blend", h: "Realistic %", f: (r) => pct(r.p_total_blend)},
   ], D.games, ["tedge", -1]);
 
   // Injuries + QBs

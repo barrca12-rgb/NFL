@@ -31,6 +31,7 @@ from .data import HERE, REPO, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
 from .features import FEATURES, game_features
 from .injuries import FEATURES as INJ_FEATURES, add_injury_features, live_table
+from .odds import DEFAULT_BOOKS, load_book_lines
 from .projection import fit_points_model
 from .ratings import build_ratings, power_table
 from .report_html import build_html
@@ -40,112 +41,128 @@ OUT = os.path.join(HERE, "output")
 REPORTS = os.path.join(REPO, "reports")  # committed copies of each week's report
 ADJ_PATH = os.path.join(HERE, "adjustments.csv")
 
-# How much of the model's disagreement with the line to believe when pricing bets. The model's raw projection is
-# its own (independent) opinion; these weights only affect the "blended" cover probabilities and EV. Spread value
-# reflects the backtest: regressing (result - line) on (model - line) gives a slope of 0.34 +/- 0.13 against
-# early-week lines and 0.23 +/- 0.08 against closing lines. Totals: slope 0.02, i.e. no edge, so no blend.
-BLEND_SPREAD = 0.35
+# How much of the model's disagreement with a line to believe when pricing a bet, by part of the season. The raw
+# projection is the model's own opinion; these weights only shape the "realistic" cover % and EV. Measured as the
+# slope of (result - line) on (model - line), walk-forward 2016-2025:
+#   Weeks 1-4: 0.36-0.50 vs closing lines, 0.43 vs early-week lines   -> 0.45
+#   Weeks 5+:  0.38 (2016-20) but -0.04 (2021-25) vs closing lines, 0.36 vs early-week lines -> 0.20
+# Totals: slope 0.02 (no edge), so no blend.
+BLEND = {"early": 0.45, "late": 0.20}
 BLEND_TOTAL = 0.0
-# Spread flags use the simulated cover probability (raw, pushes excluded) and depend on the part of the season.
-# Walk-forward backtest 2016-2025, 20,000 sims per game (model/BACKTEST.md); breakeven at -110 is 52.4%.
-#   Weeks 1-4 (books still lean on preseason opinions; the model's ratings react faster):
-#     >= 53%: 245-181 (57.5%) vs closing lines
-#     >= 56%: 174-119 (59.4%, 9 of 10 seasons profitable) vs closing lines, 99-61 (61.9%) vs early-week lines
-#   Weeks 5+ (the market has caught up): the best threshold, >= 58%, went 382-348 (52.3%) vs closing lines and
-#     168-147 (53.3%) vs early-week lines - a thin edge, so those are labelled LEAN, not PLAY.
 EARLY_WEEKS = 4
-FLAG_RULES = {"early": [("STRONG", 0.56), ("PLAY", 0.53)], "late": [("LEAN", 0.58)]}
+# Betting rule (out-of-sample: thresholds picked on 2016-20, tested on 2021-25):
+#   Weeks 1-4: model cover >= 53% and +EV at the realistic price. STRONG (>= 56%) went 59.4% ATS vs closing lines,
+#     61.9% vs early-week lines; model cover >= 60% held at 61.3% in the 2021-25 test.
+#   Week 5 on: no model-cover threshold survived the out-of-sample test. What did: betting when the realistic cover %
+#     beats the break-even of the BEST price across books (53.0-53.3% ATS in 2021-25 with half a point of shopping,
+#     51% without). So mid-season bets are price plays: shop the four books, bet small.
+FLAG_RULES = {"early": [("STRONG", 0.56), ("PLAY", 0.53)], "late": [("VALUE", 0.0)]}
+STAKES = {"STRONG": 2.0, "PLAY": 1.0, "VALUE": 0.5}
 FLAG_TEXT = {
-    "early": "Weeks 1-4: STRONG = raw cover >= 56% (backtest 59.4% ATS vs closing lines, 61.9% vs early-week lines, "
-             "profitable in 9 of 10 seasons); PLAY = raw cover >= 53% (57.5% vs closing lines).",
-    "late": "Week 5 on: LEAN = raw cover >= 58% (backtest 52.3% ATS vs closing lines, 53.3% vs early-week lines). "
-            "After Week 4 the market has caught up and edges are thin: bet only at the Monday number, smaller stakes.",
+    "early": "Weeks 1-4: STRONG = model cover >= 56% and +EV (backtest 59.4% ATS vs closing lines, 61.9% vs "
+             "early-week lines, profitable in 9 of 10 seasons); PLAY = model cover >= 53% and +EV (57.5%).",
+    "late": "Week 5 on: VALUE = the realistic cover % beats the break-even of the best price across books. Mid-season "
+            "edges come from price, not the model alone: backtest 53% ATS with line shopping, 51% without. 0.5u each.",
 }
 # Injury-report stages that adjust projections (see model/injuries.py). Backtest 2016-2025: Thursday/final reports
 # improved accuracy (opponent's missing defensive starters ~ +0.5-0.7 pts each); the Monday carry-forward did not.
 APPLIED_STAGES = ("thursday", "final")
+
+LADDER_STEPS = 6       # half-points checked against the bet for "good down to" (3 points)
+WATCH_STEPS = 3        # half-points checked in the bet's favor for the watch list (1.5 points: a realistic move)
+OFFER_SIMS = 8000      # minimum sims for the realistic-price simulation
 
 
 def season_phase(week: int, game_type: str = "REG") -> str:
     return "early" if game_type == "REG" and week <= EARLY_WEEKS else "late"
 
 
-LADDER_STEPS = 6       # half-points checked against the bet for "good down to" (3 points)
-WATCH_STEPS = 3        # half-points checked in the bet's favor for the watch list (1.5 points: a realistic move)
-LADDER_SIMS = 8000
+def flag_for(p_raw: float, ev: float, phase: str) -> str:
+    """Flag name if the offer is a bet under the phase's rule, else ''."""
+    if not ev > 0:
+        return ""
+    for name, th in FLAG_RULES[phase]:
+        if p_raw >= th:
+            return name
+    return ""
 
 
-def qualifies(p_raw: float, ev: float, phase: str) -> bool:
-    """A spread is a bet when the model's raw cover % clears the phase's flag threshold (the backtested selection
-    rule) AND the blended (realistic) price is still +EV."""
-    return p_raw >= FLAG_RULES[phase][-1][1] and ev > 0
+class Pricer:
+    """Prices one side of one game at any book's line.
+
+    raw:       the model's own simulation.
+    realistic: a simulation centered BLEND[phase] of the way from the market CONSENSUS line to the model. It is the
+               same for every book; a book hanging a better number than consensus is then genuinely worth more
+               (the line-shopping edge the backtest measured)."""
+
+    def __init__(self, sim, model_margin, consensus, total, exp_drives, playoff, cfg, rng, phase, side):
+        self.sim, self.side, self.phase = sim, side, phase
+        center = consensus + BLEND[phase] * (model_margin - consensus)
+        self.real = simulate_game((total + center) / 2, (total - center) / 2, exp_drives, playoff,
+                                  SimConfig(**{**cfg.__dict__, "n_sims": max(OFFER_SIMS, cfg.n_sims)}), rng)
+
+    def _p(self, s):
+        other = "away" if self.side == "home" else "home"
+        return s[f"p_{self.side}_cover"], s[f"p_{other}_cover"]
+
+    def price(self, L, odds) -> dict:
+        """L in nflverse sign (+ = home favored by L)."""
+        pc, pl = self._p(summarize(self.sim, L))
+        bw, bl = self._p(summarize(self.real, L))
+        raw, ev = pc / (pc + pl), bw * _payout(odds) - bl
+        return {"p_raw": raw, "p_blend": bw / (bw + bl), "ev": ev, "flag": flag_for(raw, ev, self.phase)}
+
+    def pick_line(self, L):  # sportsbook number for the picked team
+        return -L if self.side == "home" else L
+
+    def ladder(self, L, odds) -> dict:
+        """Worst line the bet still qualifies at ("good down to"), or the nearest better line where it would."""
+        sign = 1 if self.side == "home" else -1          # +sign*0.5 makes the bet worse
+        out = {"bet_down_to": np.nan, "bet_at": np.nan}
+        if self.price(L, odds)["flag"]:
+            worst = L
+            for k in range(1, LADDER_STEPS + 1):
+                if not self.price(L + sign * 0.5 * k, odds)["flag"]:
+                    break
+                worst = L + sign * 0.5 * k
+            out["bet_down_to"] = self.pick_line(worst)
+        else:
+            for k in range(1, WATCH_STEPS + 1):
+                if self.price(L - sign * 0.5 * k, odds)["flag"]:
+                    out["bet_at"] = self.pick_line(L - sign * 0.5 * k)
+                    break
+        return out
 
 
 def add_verdicts(out: pd.DataFrame, phase: str) -> pd.DataFrame:
     """One clear call per game: BET / SMALL / WATCH / PASS, a stake in units, and the reason in plain words.
 
-    BET   - flagged (raw cover clears the phase threshold) and +EV on the blended price.
-            Stake: Weeks 1-4 STRONG 2u, PLAY 1u; Week 5 on LEAN 0.5u (the edge is thin mid-season).
-    SMALL - flagged but the blended price is thin (usually a favorite laying a key number): 0.5u, Weeks 1-4 only.
-    WATCH - not a bet at today's number, but it becomes one if the line moves to `bet_at`.
+    BET   - the best available offer is a bet under the phase's rule (see FLAG_RULES). Stake by flag (STAKES).
+    SMALL - Weeks 1-4 only: model cover clears 53% but the realistic price is not +EV (often a favorite laying a key
+            number): 0.5u.
+    WATCH - not a bet at the best number available, but becomes one if a line moves to `bet_at`.
     PASS  - no edge worth betting."""
-    stake = {"STRONG": 2.0, "PLAY": 1.0, "LEAN": 0.5}
     verdicts, stakes, reasons = [], [], []
     for r in out.itertuples():
         flag, ev = getattr(r, "flag", ""), getattr(r, "spread_ev", np.nan)
-        if flag and ev > 0:
-            v, u = "BET", stake[flag]
-            why = f"{flag}: model covers {r.p_cover_raw:.0%}, realistic {r.p_cover_blend:.0%}, +EV"
-        elif flag and phase == "early":
+        flag = flag if isinstance(flag, str) else ""
+        at = f" at {r.best_book}" if getattr(r, "best_book", "") else ""
+        if flag:
+            v, u = "BET", STAKES[flag]
+            why = f"{flag}{at}: model covers {r.p_cover_raw:.0%}, realistic {r.p_cover_blend:.0%}, EV {ev:+.3f}"
+        elif phase == "early" and getattr(r, "p_cover_raw", 0) >= FLAG_RULES["early"][-1][1]:
             v, u = "SMALL", 0.5
-            why = f"{flag} by the model, but the realistic price is thin ({r.p_cover_blend:.0%})"
+            why = f"Model likes it ({r.p_cover_raw:.0%}) but the realistic price is thin ({r.p_cover_blend:.0%})"
         elif pd.notna(getattr(r, "bet_at", np.nan)):
             v, u = "WATCH", 0.0
             why = f"Becomes a bet at {r.spread_pick} {_fmt_spread(r.bet_at)}"
         else:
             v, u = "PASS", 0.0
-            why = "No edge worth betting at this number"
+            why = "No edge at any book's number"
         verdicts.append(v)
         stakes.append(u)
         reasons.append(why)
     return out.assign(verdict=verdicts, stake_units=stakes, reason=reasons)
-
-
-def _line_ladder(sim, model_margin, line, side, odds, blend_total, exp_drives, playoff, cfg, rng, phase) -> dict:
-    """Check the bet at nearby half-point lines (nflverse sign: + = home favored).
-
-    Returns the worst line the pick still qualifies at ("bet down to") and, if it doesn't qualify now, the nearest
-    better line at which it would ("becomes a bet at"), both in the picked team's sportsbook convention."""
-    sign = 1 if side == "home" else -1          # moving the line by +sign*0.5 makes the bet worse
-    small = SimConfig(**{**cfg.__dict__, "n_sims": LADDER_SIMS})
-
-    def check(L):
-        s = summarize(sim, L)
-        pc, pl = s[f"p_{side}_cover"], s[f"p_{'away' if side == 'home' else 'home'}_cover"]
-        bm = L + BLEND_SPREAD * (model_margin - L)
-        b = summarize(simulate_game((blend_total + bm) / 2, (blend_total - bm) / 2, exp_drives, playoff, small, rng), L)
-        bw, bl = b[f"p_{side}_cover"], b[f"p_{'away' if side == 'home' else 'home'}_cover"]
-        return qualifies(pc / (pc + pl), bw * _payout(odds) - bl, phase)
-
-    def pick_line(L):  # sportsbook number for the picked team
-        return -L if side == "home" else L
-
-    out = {"bet_down_to": np.nan, "bet_at": np.nan}
-    if check(line):
-        worst = line
-        for k in range(1, LADDER_STEPS + 1):
-            L = line + sign * 0.5 * k
-            if not check(L):
-                break
-            worst = L
-        out["bet_down_to"] = pick_line(worst)
-    else:
-        for k in range(1, WATCH_STEPS + 1):
-            L = line - sign * 0.5 * k
-            if check(L):
-                out["bet_at"] = pick_line(L)
-                break
-    return out
 
 
 def _payout(odds):
@@ -159,24 +176,28 @@ def default_week(games: pd.DataFrame, season: int) -> int:
     return int(played["week"].max()) + 1 if len(played) else 1
 
 
-def load_lines(path: str | None, wk: pd.DataFrame) -> pd.DataFrame:
-    cols = ["game_id", "home_spread", "total", "home_spread_odds", "away_spread_odds", "over_odds", "under_odds",
-            "home_ml", "away_ml"]
-    if path:
-        ln = pd.read_csv(path)
-        ln = wk[["game_id", "away_team", "home_team"]].merge(ln, on=["away_team", "home_team"], how="left")
-        for c in cols:
-            if c not in ln:
-                ln[c] = np.nan
-        ln["line_source"] = os.path.basename(path)
-        return ln[cols + ["line_source"]]
-    ln = pd.DataFrame({
-        "game_id": wk["game_id"], "home_spread": -wk["spread_line"], "total": wk["total_line"],
+def load_lines(path: str | None, wk: pd.DataFrame, books=DEFAULT_BOOKS) -> pd.DataFrame:
+    """Every available offer, one row per (game, book). nflverse's consensus line is always included as a fallback
+    book ("nflverse"); with a lines file, the books in it (default: FanDuel, DraftKings, BetMGM, Caesars) are added.
+    Accepts the Odds API / Google Sheet export or a plain CSV (away_team, home_team, home_spread, ... [, book])."""
+    base = pd.DataFrame({
+        "game_id": wk["game_id"], "book": "nflverse", "home_spread": -wk["spread_line"], "total": wk["total_line"],
         "home_spread_odds": wk["home_spread_odds"], "away_spread_odds": wk["away_spread_odds"],
         "over_odds": wk["over_odds"], "under_odds": wk["under_odds"],
-        "home_ml": wk["home_moneyline"], "away_ml": wk["away_moneyline"], "line_source": "nflverse games.csv",
+        "home_ml": wk["home_moneyline"], "away_ml": wk["away_moneyline"],
     })
-    return ln
+    if not path:
+        return base
+    ln = load_book_lines(path, books)
+    ln = wk[["game_id", "away_team", "home_team"]].merge(ln, on=["away_team", "home_team"], how="inner")
+    ln = ln.drop(columns=["away_team", "home_team", "commence_time"], errors="ignore")
+    have = set(ln["game_id"])
+    # games the file doesn't cover keep the nflverse line; totals missing from the file come from nflverse
+    out = pd.concat([ln, base[~base["game_id"].isin(have)]], ignore_index=True)
+    tot = base.set_index("game_id")[["total", "over_odds", "under_odds"]]
+    for c in ("total", "over_odds", "under_odds"):
+        out[c] = out[c].fillna(out["game_id"].map(tot[c]))
+    return out
 
 
 def load_adjustments(season: int, week: int) -> pd.DataFrame:
@@ -187,7 +208,7 @@ def load_adjustments(season: int, week: int) -> pd.DataFrame:
 
 
 def run(season: int | None, week: int | None, n_sims: int, lines_path: str | None, refresh: bool,
-        use_injuries: bool = True) -> pd.DataFrame:
+        use_injuries: bool = True, books=DEFAULT_BOOKS) -> pd.DataFrame:
     os.makedirs(OUT, exist_ok=True)
     if season is None:
         g = load_games(refresh=refresh)
@@ -244,18 +265,21 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     pts_adj = adj.groupby("team")["points"].sum() if "points" in adj else pd.Series(dtype=float)
     f["pred"] = f["pred"] + f["team"].map(pts_adj).fillna(0)
 
-    lines = load_lines(lines_path, wk)
+    lines = load_lines(lines_path, wk, books)
+    phase = season_phase(week, wk["game_type"].iloc[0])
     cfg = SimConfig.calibrated(n_sims=n_sims)
     rows = []
     for g in wk.itertuples():
         h = f[(f["game_id"] == g.game_id) & (f["side"] == "home")].iloc[0]
         a = f[(f["game_id"] == g.game_id) & (f["side"] == "away")].iloc[0]
-        ln = lines[lines["game_id"] == g.game_id].iloc[0]
-        spread_nv = -ln["home_spread"] if pd.notna(ln["home_spread"]) else np.nan  # nflverse sign: + = home fav
+        offers = lines[(lines["game_id"] == g.game_id) & lines["home_spread"].notna()]
+        cons_spread = offers["home_spread"].median() if len(offers) else np.nan   # consensus, sportsbook sign
+        cons_total = lines.loc[lines["game_id"] == g.game_id, "total"].median()
+        spread_nv = -cons_spread                                                   # nflverse sign: + = home fav
         playoff = g.game_type != "REG"
         rng = np.random.default_rng(zlib.crc32(g.game_id.encode()))
         sim = simulate_game(h["pred"], a["pred"], h["exp_drives"], playoff, cfg, rng)
-        s = summarize(sim, spread_nv, ln["total"])
+        s = summarize(sim, spread_nv, cons_total)
         row = {
             "game_id": g.game_id, "gameday": g.gameday.date(), "away_team": g.away_team, "home_team": g.home_team,
             "away_qb": qb_notes[g.away_team], "home_qb": qb_notes[g.home_team],
@@ -263,45 +287,46 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
             "proj_away": s["sim_away_pts"], "proj_home": s["sim_home_pts"],
             "model_home_spread": -s["sim_margin"], "model_total": s["sim_total"],
             "p_home_win": s["p_home_win"], "fair_home_ml": s["fair_home_ml"], "fair_away_ml": s["fair_away_ml"],
-            **{c: ln[c] for c in ("home_spread", "total", "home_ml", "away_ml", "line_source")},
+            "home_spread": cons_spread, "total": cons_total, "n_books": int(offers["book"].nunique()),
+            "home_ml": lines.loc[lines["game_id"] == g.game_id, "home_ml"].median(),
+            "away_ml": lines.loc[lines["game_id"] == g.game_id, "away_ml"].median(),
+            "line_source": ", ".join(sorted(offers["book"].unique())) or "none",
         }
-        if pd.notna(spread_nv):
-            row["spread_edge"] = s["sim_margin"] - spread_nv          # + = model likes HOME vs the line
-            # Pick the side the simulation says covers more often (the rule the backtest validated). It can differ
-            # from the sign of the point edge because favorites' margins are right-skewed.
+        if len(offers):
+            row["spread_edge"] = s["sim_margin"] - spread_nv          # + = model likes HOME vs the consensus
+            # Side: the one the simulation says covers more often at the consensus number (the backtested rule).
             side = "home" if s["p_home_cover"] >= s["p_away_cover"] else "away"
-            # Blended view: believe BLEND_SPREAD of the disagreement, re-simulate to price the bet.
-            bm = spread_nv + BLEND_SPREAD * row["spread_edge"]
-            bt = (ln["total"] + BLEND_TOTAL * (s["sim_total"] - ln["total"])) if pd.notna(ln["total"]) else s["sim_total"]
-            bsim = simulate_game((bt + bm) / 2, (bt - bm) / 2, h["exp_drives"], playoff, cfg, rng)
-            b = summarize(bsim, spread_nv, ln["total"])
-            p_win = b[f"p_{side}_cover"]
-            p_lose = b[f"p_{'away' if side == 'home' else 'home'}_cover"]
+            bt = (cons_total + BLEND_TOTAL * (s["sim_total"] - cons_total)) if pd.notna(cons_total) else s["sim_total"]
+            pr = Pricer(sim, s["sim_margin"], spread_nv, bt, h["exp_drives"], playoff, cfg, rng, phase, side)
+            # Price every book's number for that side; the best EV is the offer to bet.
+            priced = []
+            for o in offers.itertuples():
+                odds = getattr(o, f"{side}_spread_odds")
+                q = pr.price(-o.home_spread, odds)
+                priced.append({"book": o.book, "line": pr.pick_line(-o.home_spread),
+                               "odds": None if pd.isna(odds) else float(odds), **q})
+            priced.sort(key=lambda x: x["ev"], reverse=True)
+            best = priced[0]
+            best_L = -best["line"] if side == "home" else best["line"]
             row.update({
-                "spread_pick": (g.home_team if side == "home" else g.away_team),
-                "p_cover_raw": s[f"p_{side}_cover"] / (s["p_home_cover"] + s["p_away_cover"]),
-                "p_cover_blend": p_win / (p_win + p_lose),
-                "spread_ev": p_win * _payout(ln[f"{side}_spread_odds"]) - p_lose,
-                # Straight-up: the blended (35% model, 65% line) view picked 66.8% of winners in 2016-2025 vs
-                # 66.4% for the closing-line favorite and 65.3% for the model alone.
-                "p_home_win_blend": b["p_home_win"],
+                "spread_pick": g.home_team if side == "home" else g.away_team,
+                "best_book": best["book"], "pick_line": best["line"], "pick_odds": best["odds"],
+                "p_cover_raw": best["p_raw"], "p_cover_blend": best["p_blend"], "spread_ev": best["ev"],
+                "flag": best["flag"], "offers": priced,
+                **pr.ladder(best_L, best["odds"]),
             })
-            # How far the line can move before the bet stops (or starts) qualifying.
-            odds = ln[f"{side}_spread_odds"]
-            row.update(_line_ladder(sim, s["sim_margin"], spread_nv, side, odds, bt, h["exp_drives"], playoff, cfg,
-                                    rng, season_phase(week, g.game_type)))
-            if pd.notna(ln["total"]):
-                row["total_edge"] = s["sim_total"] - ln["total"]
+            # Straight-up: model blended with the consensus line (66.8% of winners in the 2016-2025 backtest).
+            bm = spread_nv + 0.35 * row["spread_edge"]
+            win = summarize(simulate_game((bt + bm) / 2, (bt - bm) / 2, h["exp_drives"], playoff,
+                                          SimConfig(**{**cfg.__dict__, "n_sims": OFFER_SIMS}), rng))
+            row["p_home_win_blend"] = win["p_home_win"]
+            if pd.notna(cons_total):
+                row["total_edge"] = s["sim_total"] - cons_total
                 ou = "over" if row["total_edge"] > 0 else "under"
-                pw, pl = b[f"p_{ou}"], b[f"p_{'under' if ou == 'over' else 'over'}"]
-                row.update({"total_pick": ou, "p_total_raw": s[f"p_{ou}"] / (s["p_over"] + s["p_under"]),
-                            "p_total_blend": pw / (pw + pl), "total_ev": pw * _payout(ln[f"{ou}_odds"]) - pl})
+                row.update({"total_pick": ou, "p_total_raw": s[f"p_{ou}"] / (s["p_over"] + s["p_under"])})
         rows.append(row)
     out = pd.DataFrame(rows)
-    p = out.get("p_cover_raw", pd.Series(0.0, index=out.index)).fillna(0)
-    phase = season_phase(week, wk["game_type"].iloc[0])
-    rules = FLAG_RULES[phase]
-    out["flag"] = np.select([p >= th for _, th in rules], [name for name, _ in rules], "")
+    out["flag"] = out.get("flag", pd.Series("", index=out.index)).fillna("")
     out = add_verdicts(out, phase)
 
     tag = f"{season}_{week:02d}"
@@ -372,20 +397,18 @@ def _injury_section(out: pd.DataFrame, mode: str | None, players: pd.DataFrame |
 
 
 def _flagged_section(out: pd.DataFrame, phase: str) -> list[str]:
-    """The plays to act on, at the top of the report."""
-    L = ["## Flagged plays\n"]
-    fl = out[out["flag"] != ""].copy() if "flag" in out else out.iloc[0:0]
+    """The bets, at the top of the report."""
+    L = ["## Bets\n"]
+    fl = out[out["verdict"].isin(["BET", "SMALL"])].copy() if "verdict" in out else out.iloc[0:0]
     if fl.empty:
-        return L + ["No spread clears this week's threshold. " + FLAG_TEXT[phase], ""]
-    fl["rank"] = fl["flag"].map({"STRONG": 2, "PLAY": 1}).fillna(0)
-    fl = fl.sort_values(["rank", "p_cover_raw"], ascending=False)
-    L += ["| Flag | Play | Matchup | Cover % raw | Cover % blended | EV/unit | Note |", "|---|---|---|---|---|---|---|"]
+        return L + ["No bets at the available numbers. " + FLAG_TEXT[phase], ""]
+    fl = fl.sort_values(["stake_units", "p_cover_raw"], ascending=False)
+    L += ["| Call | Stake | Bet | Book | Good down to | Model cover | Realistic cover | EV/unit |",
+          "|---|---|---|---|---|---|---|---|"]
     for r in fl.itertuples():
-        pick_line = r.home_spread if r.spread_pick == r.home_team else -r.home_spread
-        note = ("best bet: also +EV on the blended price" if r.spread_ev > 0
-                else "flag only: blended price is thin, consider a smaller stake")
-        L.append(f"| **{r.flag}** | **{r.spread_pick} {_fmt_spread(pick_line)}** | {r.away_team} @ {r.home_team} | "
-                 f"{r.p_cover_raw:.1%} | {r.p_cover_blend:.1%} | {r.spread_ev:+.3f} | {note} |")
+        L.append(f"| **{r.verdict}** {r.flag} | {r.stake_units:g}u | **{r.spread_pick} {_fmt_spread(r.pick_line)} "
+                 f"{_fmt_ml(r.pick_odds)}** ({r.away_team} @ {r.home_team}) | {r.best_book} | "
+                 f"{_fmt_spread(r.bet_down_to)} | {r.p_cover_raw:.1%} | {r.p_cover_blend:.1%} | {r.spread_ev:+.3f} |")
     L += ["", FLAG_TEXT[phase] + " Breakeven at -110 is 52.4%.", ""]
     return L
 
@@ -420,23 +443,30 @@ def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: 
 
     if "spread_edge" in out:
         sp = out[out["spread_edge"].notna()].sort_values("p_cover_raw", ascending=False)
-        L += ["## Spread edges (highest cover probability first)\n",
-              "| Matchup | Pick | Line | Edge (pts) | Cover % raw | Cover % blended | EV/unit | Flag |", "|---|---|---|---|---|---|---|---|"]
+        L += ["## Spread edges (highest model cover first; priced at the best book)\n",
+              "| Matchup | Pick (best book) | Consensus | Edge (pts) | Model cover | Realistic cover | EV/unit | Flag |",
+              "|---|---|---|---|---|---|---|---|"]
         for r in sp.itertuples():
-            pick_line = r.home_spread if r.spread_pick == r.home_team else -r.home_spread
-            L.append(f"| {r.away_team} @ {r.home_team} | **{r.spread_pick} {_fmt_spread(pick_line)}** | "
-                     f"{r.home_team} {_fmt_spread(r.home_spread)} | {abs(r.spread_edge):.1f} | {r.p_cover_raw:.1%} | "
-                     f"{r.p_cover_blend:.1%} | {r.spread_ev:+.3f} | {r.flag} |")
-        L += ["", FLAG_TEXT[phase] + " Raw cover % is the backtested selection number but overstates the true win rate. "
-              f"Blended cover % believes {BLEND_SPREAD:.0%} of the disagreement and is the realistic price for "
-              "sizing; EV/unit uses it.", ""]
+            L.append(f"| {r.away_team} @ {r.home_team} | **{r.spread_pick} {_fmt_spread(r.pick_line)}** "
+                     f"{_fmt_ml(r.pick_odds)} ({r.best_book}) | {r.home_team} {_fmt_spread(r.home_spread)} | "
+                     f"{abs(r.spread_edge):.1f} | {r.p_cover_raw:.1%} | {r.p_cover_blend:.1%} | {r.spread_ev:+.3f} | "
+                     f"{r.flag} |")
+        L += ["", FLAG_TEXT[phase] + f" Realistic cover % believes {BLEND[phase]:.0%} of the model's disagreement "
+              "with each book's line; EV/unit uses it at that book's price.", ""]
+        L += ["### Every book's number for the pick\n", "| Matchup | Pick | " + " | ".join(
+            "Book" for _ in range(1)) + " offers (line, price, EV) |", "|---|---|---|"]
+        for r in sp.itertuples():
+            offers = "; ".join(f"{o['book']} {_fmt_spread(o['line'])} {_fmt_ml(o['odds'])} ({o['ev']:+.3f})"
+                               for o in (r.offers if isinstance(r.offers, list) else []))
+            L.append(f"| {r.away_team} @ {r.home_team} | {r.spread_pick} | {offers} |")
+        L.append("")
     if "total_edge" in out:
         tt = out[out["total_edge"].notna()].reindex(out["total_edge"].abs().sort_values(ascending=False).index)
         L += ["## Totals (unproven: no edge vs closing totals in backtest; treat as leans)\n",
-              "| Matchup | Lean | Line | Model | Edge | Prob raw | Prob blended | EV/unit |", "|---|---|---|---|---|---|---|---|"]
+              "| Matchup | Lean | Line | Model | Edge | Model % |", "|---|---|---|---|---|---|"]
         for r in tt.itertuples():
             L.append(f"| {r.away_team} @ {r.home_team} | {r.total_pick} | {r.total} | {r.model_total:.1f} | "
-                     f"{r.total_edge:+.1f} | {r.p_total_raw:.1%} | {r.p_total_blend:.1%} | {r.total_ev:+.3f} |")
+                     f"{r.total_edge:+.1f} | {r.p_total_raw:.1%} |")
         L.append("")
     L += _injury_section(out, inj_mode, inj_players)
     L += ["## Starting QBs used\n"]
@@ -463,5 +493,8 @@ if __name__ == "__main__":
     ap.add_argument("--lines", help="CSV of sportsbook lines to compare against")
     ap.add_argument("--no-refresh", action="store_true", help="don't download fresh nflverse data")
     ap.add_argument("--no-injuries", action="store_true", help="ignore this week's injury report")
+    ap.add_argument("--books", default=",".join(DEFAULT_BOOKS),
+                    help="books to shop from the lines file (comma list, or 'all'); default: " + ",".join(DEFAULT_BOOKS))
     a = ap.parse_args()
-    run(a.season, a.week, a.sims, a.lines, refresh=not a.no_refresh, use_injuries=not a.no_injuries)
+    run(a.season, a.week, a.sims, a.lines, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
+        books=None if a.books == "all" else a.books.split(","))

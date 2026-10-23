@@ -21,16 +21,40 @@ The bet card gives every game one call:
 
 | Call | Meaning | Stake |
 |---|---|---|
-| **BET** | Model cover % clears the threshold for this part of the season *and* the realistic price is +EV | Weeks 1-4: 2u (STRONG) or 1u (PLAY). Week 5 on: 0.5u |
-| **SMALL** | Clears the threshold but the realistic price is thin, usually a favorite laying 3 or 7 (Weeks 1-4 only) | 0.5u |
-| **WATCH** | Not a bet now, but becomes one if the line moves up to 1.5 points in its favor (the card shows the number) | 0 until it gets there |
-| **PASS** | No edge | 0 |
+| **BET** | Weeks 1-4: model cover % >= 53% *and* +EV at the realistic price (STRONG at 56%+). Week 5 on: the realistic cover % beats the break-even of the best book's price (VALUE) | Weeks 1-4: 2u STRONG, 1u PLAY. Week 5 on: 0.5u |
+| **SMALL** | Weeks 1-4 only: the model likes it but the realistic price is thin, usually a favorite laying 3 or 7 | 0.5u |
+| **WATCH** | Not a bet now, but becomes one if a line moves up to 1.5 points in its favor (the card shows the number) | 0 until it gets there |
+| **PASS** | No edge at any book | 0 |
 
-Every bet also shows **good down to**: the worst number you can still take it at.
+Every bet also shows the **book** to bet it at and **good down to**: the worst number you can still take it at.
 
-**Lines file** (optional): `away_team,home_team,home_spread,total[,home_spread_odds,away_spread_odds,over_odds,under_odds,home_ml,away_ml]`.
-`home_spread` uses sportsbook convention: -3 means the home team is favored by 3. Without `--lines`, the lines
-currently in nflverse `games.csv` are used.
+### Why the rule changes after Week 4 (research, walk-forward backtest 2016-2025)
+
+* Thresholds were chosen on 2016-2020 and tested on 2021-2025. In Weeks 1-4 the edge held out of sample: model
+  cover >= 60% went 62.0% in training and 61.3% in the test; a point edge >= 2 went 61.3% in both.
+* From Week 5 on, no column's threshold survived: every "best" cutoff from 2016-2020 fell to 49-52% in 2021-2025.
+  The share of the model's disagreement that showed up in results fell from 0.38 to -0.04 against closing lines.
+* What did survive mid-season was **price**. Half a point is worth about 1.5 points of cover probability normally,
+  2.6 at 7 and 4.1 at 3. Betting when the realistic cover % beats the best book's break-even went 53.0-53.3% in
+  2021-2025 with half a point of shopping, against 51% without. Sharps' mid-season plays come mostly from this:
+  betting the best number across books, early in the week.
+* Within a picked side, no column (model cover %, point edge, realistic cover %) predicted covering much better
+  than another. The value is mostly in which side to take.
+
+**Lines from several books** (recommended): `--lines` accepts the flattened export from The Odds API or its
+Google Sheets add-on (columns `game_id, commence_time, bookmaker, home_team, away_team, market, label_1, odd_1,
+point_1, ...`). Download the sheet as CSV into `lines/` and run:
+
+```bash
+python -m model.run_week --lines lines/odds_<date>.csv              # FanDuel, DraftKings, BetMGM, Caesars
+python -m model.run_week --lines lines/odds_<date>.csv --books all  # every book in the file
+python -m model.odds --api-key $ODDS_API_KEY --out lines/today.csv  # pull live (needs api.the-odds-api.com allowed)
+```
+
+Each book's number is priced on its own and the card tells you which book to bet at. A plain CSV also works:
+`away_team,home_team,home_spread[,book,home_spread_odds,away_spread_odds,total,over_odds,under_odds,home_ml,away_ml]`,
+where `home_spread` uses sportsbook convention (-3 means home favored by 3). Without `--lines`, nflverse's consensus
+line is used.
 
 **Manual adjustments** go in `model/adjustments.csv`:
 
@@ -92,7 +116,7 @@ The design follows the published methods behind the best-known public models:
    - Scorelines are weighted so key-number frequencies match real 2015-2025 games: 3 in 14.7% of games, 7 in 8.5%.
 4. **Edges** (`run_week.py`): the model's projection is its own opinion and never looks at the line. For pricing, the report shows two cover probabilities:
    - **raw:** treats the model as the truth. Picks and flags use this number, because it's what the backtest validated. Weeks 1-4: STRONG at 56%+ and PLAY at 53%+. Week 5 on: LEAN at 58%+.
-   - **blended:** believes 35% of the model's disagreement with the line, which is what the backtest supports. It's the realistic win rate, so size bets on this one.
+   - **blended:** centers the game between the market consensus and the model (45% toward the model in Weeks 1-4, 20% after, as measured in the backtest), then prices it at each book's number. It's the realistic win rate; EV and the mid-season rule use it.
 
 ## Backtest
 
