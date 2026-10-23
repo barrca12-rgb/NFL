@@ -32,7 +32,8 @@ def _records(df: pd.DataFrame, cols: list[str]) -> list[dict]:
 
 
 def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: int, phase: str,
-               flag_text: str, inj_mode: str | None, inj_players: pd.DataFrame | None, qb_change: dict) -> str:
+               flag_text: str, inj_mode: str | None, inj_players: pd.DataFrame | None, qb_change: dict,
+               tz: pd.DataFrame | None = None, tpairs: pd.DataFrame | None = None) -> str:
     g = out.copy()
     g["matchup"] = g["away_team"] + " @ " + g["home_team"]
     pw = g["p_home_win_blend"].fillna(g["p_home_win"]) if "p_home_win_blend" in g else g["p_home_win"]
@@ -60,6 +61,10 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
         "inj_mode": inj_mode,
         "line_source": ", ".join(sorted({b for x in out["line_source"].dropna() for b in str(x).split(", ")})),
         "games": games, "ratings": ratings, "injuries": players,
+        "teasers": _records(tz, ["matchup", "team", "grade", "line", "teased_line", "book", "total", "p_leg"])
+        if tz is not None and len(tz) else [],
+        "teaser_pairs": _records(tpairs, ["teaser", "grades", "p_both", "p_both_model", "ev", "stake_units"])
+        if tpairs is not None and len(tpairs) else [],
     }
     payload = json.dumps(data).replace("</", "<\\/")
     title = f"Week {week} Bet Card"
@@ -171,6 +176,12 @@ details[open] summary { margin-bottom: 10px }
     <div class="sec-head"><h2 id="slip-h">Bets</h2><span class="note" id="slip-sum"></span></div>
     <div class="slip" id="slip"></div>
     <p class="note" id="flagtext"></p>
+  </section>
+
+  <section aria-labelledby="tz-h" id="tz-sec">
+    <div class="sec-head"><h2 id="tz-h">Teasers</h2><span class="note">6-point, 2-team teasers through 3 and 7. Grade A legs have won about 78% since 2006; break-even is 73.9% per leg at -120.</span></div>
+    <div class="tbl"><table id="t-tzp"></table></div>
+    <div class="tbl"><table id="t-tz"></table></div>
   </section>
 
   <section aria-labelledby="watch-h" id="watch-sec">
@@ -312,6 +323,29 @@ details[open] summary { margin-bottom: 10px }
   }
   const verdictOrder = {BET: 4, H2H: 3, SMALL: 2, WATCH: 1, PASS: 0};
   const vpill = (r) => '<span class="v ' + r.verdict + '">' + r.verdict + "</span>";
+
+  // Teasers
+  if (!D.teasers.length) {
+    $("tz-sec").querySelector(".note").textContent = "No qualifying teaser legs this week (underdogs +1.5 to +2.5, or favorites -7.5 to -8.5 the model likes).";
+  } else {
+    if (D.teaser_pairs.length) table("t-tzp", [
+      {k: "teaser", h: "Teaser to bet", l: 1, cls: () => "strong"},
+      {k: "grades", h: "Grades", l: 1},
+      {k: "p_both", h: "Both legs win (backtest)", f: (r) => pct(r.p_both)},
+      {k: "p_both_model", h: "Model estimate", f: (r) => pct(r.p_both_model)},
+      {k: "ev", h: "EV at -120", f: (r) => ev(r.ev), cls: (r) => r.ev > 0 ? "pos" : "neg"},
+      {k: "stake_units", h: "Stake", f: (r) => units(r.stake_units)},
+    ], D.teaser_pairs, ["ev", -1]);
+    table("t-tz", [
+      {k: "team", h: "Leg", l: 1, f: (r) => esc(r.team) + " · " + esc(r.matchup)},
+      {k: "grade", h: "Grade", l: 1},
+      {k: "line", h: "Line", f: (r) => sp(r.line)},
+      {k: "teased_line", h: "Teased to", f: (r) => sp(r.teased_line), cls: () => "strong"},
+      {k: "book", h: "Best number", l: 1},
+      {k: "total", h: "Total", f: (r) => r.total == null ? "–" : r.total},
+      {k: "p_leg", h: "Leg win % (realistic)", f: (r) => pct(r.p_leg)},
+    ], D.teasers, ["p_leg", -1]);
+  }
 
   // Watch list
   const watch = D.games.filter((g) => g.verdict === "WATCH");

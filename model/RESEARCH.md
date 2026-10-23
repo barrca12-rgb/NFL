@@ -25,6 +25,8 @@ season-set measurement has a standard error of about ±1.1 points; with the 740 
 
 | **Coach head-to-head fade** (model/coaches.py): bet against the head coach whose teams have covered more in past meetings with this coach (shrink 20, 4+ meetings, rating >= 1.0) | 58.0% (1999-2009), 58.7% (2010-15), 53.5% (2016-20), 58.3% (2021-25); 255-191 combined. 57.4% when the model agrees, 54.3% when it disagrees. Not a home/away or division effect. Loose version (2+ meetings) as a check on model bets: 54.0% when it agrees, 50.4% when it disagrees |
 
+| **Teasers through 3 and 7** (model/teasers.py): 6-point legs on underdogs +1.5..+2.5 | 77.0% / 75.6% / 77.6% (2006-12 / 2013-18 / 2019-25) vs 73.9% break-even at -120; ~79% with totals <= 47.5 (2016-25); 78.5% when the model likes the side. Favorites -7.5..-8.5: ~71-76%, only 75% when the model likes them |
+
 ## Tried and rejected (did not hold out of sample)
 
 | Idea | Result vs current |
@@ -45,6 +47,7 @@ season-set measurement has a standard error of about ±1.1 points; with the 740 
 | Unit matchups: expected pressure (sacks+hits allowed vs generated), pressure mismatch interaction, pass/run efficiency matchups, play-mix-weighted matchups | MAE 9.957-9.968 vs 9.956; ATS no better |
 | Coach career ATS rating | 51.3-51.7% in every era at a 1-pt gap; too small to bet, not added |
 | Same-season division rematch fade | 52-55% before 2021, 42.6% in 2021-25 |
+| Late-season motivation: teams out of contention (can't reach 9 wins) vs teams still alive, Weeks 12-18 | 51.7% / 50.2% / 50.8% / 45.2% by era; no consistent edge, the market prices it |
 | Mid-season model-cover thresholds (58%, 60%, point edge >= 3) | 2016-20 "best" cutoffs fell to 49-52% in 2021-25 |
 | Situational spots mid-season (QB-change games, underdogs only, crossing 3/7, dead-zone exclusion) | 54-58% in 2016-20, 47-50% in 2021-25 |
 

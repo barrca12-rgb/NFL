@@ -69,6 +69,36 @@ line is used.
 The report marks a game "QB change" whenever the depth chart's QB1 differs from the team's last starter. Check
 those games before betting them.
 
+## Teasers
+
+The card also lists 6-point teaser legs through the key numbers 3 and 7 (model/teasers.py) and suggests 2-team
+teasers, never two legs from the same game:
+
+| Grade | Leg | Backtest |
+|---|---|---|
+| **A** | underdog +1.5 to +2.5, total 47.5 or lower, model not against the side by 2+ | about 78% per leg since 2006 |
+| **B** | the same underdogs with higher totals, or favorites -7.5 to -8.5 the model likes | about 75% per leg |
+
+Break-even per leg is 73.9% on a 2-team teaser at -120 and 75.2% at -130, so shop teaser prices. AA teasers are
+1u, AB 0.5u.
+
+## Tracking real bets (closing line value and the shutoff)
+
+```bash
+python -m model.tracker log --season 2026 --week 8                 # record the card's bets
+python -m model.tracker log --season 2026 --week 8 --only "TB,LAC"  # or just the ones you placed
+python -m model.tracker settle                                     # after the games
+python -m model.tracker report                                     # record, ROI, CLV and stake multiplier per angle
+```
+
+Bets are kept in `bets/bets.csv` (edit a line, price or stake to what you actually got). After the games, `settle`
+fills in the closing line, result and profit. **Closing line value** (your number minus the closing number) is the
+early warning: an angle that beats the close is real long before its win rate can prove it.
+
+Each angle (STRONG, PLAY, VALUE, H2H, SMALL, TEASER) starts from its backtested win rate. Live results update it, and
+the next card's stakes for that angle are scaled down as its updated win rate slides toward break-even (zero at
+break-even), or capped at half if it averages negative CLV after 25 bets.
+
 ## Weekly schedule: Monday run, Thursday re-run
 
 Run the same command again later in the week. It detects which nflverse injury report is available and uses it automatically:

@@ -28,6 +28,8 @@ import pandas as pd
 
 from .calibrate import build_features, injury_table
 from .coaches import coach_h2h
+from .teasers import TEASE, grade_leg, pair_legs, pairs_table
+from .tracker import stake_multipliers
 from .data import HERE, REPO, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
 from .features import FEATURES, game_features
@@ -189,6 +191,15 @@ def add_verdicts(out: pd.DataFrame, phase: str) -> pd.DataFrame:
         reasons.append(why)
         sides.append(side)
     out = out.assign(verdict=verdicts, stake_units=stakes, reason=reasons, bet_side=sides)
+    # Live-results shutoff (model/tracker.py): scale each angle's stake by how its real bets are doing.
+    mult = stake_multipliers()
+    if mult:
+        angle = np.where(out["verdict"].eq("BET"), out["flag"], out["verdict"])
+        m = pd.Series(angle, index=out.index).map(mult).fillna(1.0)
+        cut = m < 1
+        out["stake_units"] = (out["stake_units"] * m).round(2)
+        out.loc[cut, "reason"] = out.loc[cut, "reason"] + " (stake x" + m[cut].round(2).astype(str) + \
+            ": live results below backtest)"
     # what to actually bet: the model's best offer, or the head-to-head side's best number
     h2h_bet = out["verdict"].eq("H2H")
     for a_, b_ in (("bet_line", "pick_line"), ("bet_odds", "pick_odds"), ("bet_book", "best_book")):
@@ -298,6 +309,7 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     f["pred"] = f["pred"] + f["team"].map(pts_adj).fillna(0)
 
     lines = load_lines(lines_path, wk, books)
+    teasers = []
     h2h = coach_h2h(games, wk).set_index("game_id")
     phase = season_phase(week, wk["game_type"].iloc[0])
     cfg = SimConfig.calibrated(n_sims=n_sims)
@@ -363,6 +375,23 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
                             reverse=True)[0]   # most points, then best price
                 row.update({"h2h_line": fo["line"], "h2h_odds": fo["odds"], "h2h_book": fo["book"],
                             "h2h_p_blend": fo["p_blend"]})
+            # Teaser legs (model/teasers.py): best number for each side across books, teased 6 points.
+            for tside in ("home", "away"):
+                team = g.home_team if tside == "home" else g.away_team
+                sl = offers["home_spread"] if tside == "home" else -offers["home_spread"]
+                bi = sl.idxmax()                                   # most points for this side
+                line = float(sl.loc[bi])
+                # model margin minus the line from this side's view (home covers if m + line > 0, away if -m + line > 0)
+                edge_side = (s["sim_margin"] + line) if tside == "home" else (-s["sim_margin"] + line)
+                grade = grade_leg(line, cons_total, edge_side)
+                if grade:
+                    tp = Pricer(sim, s["sim_margin"], spread_nv, bt, h["exp_drives"], playoff, cfg, rng, phase, tside)
+                    teased_nv = -(line + TEASE) if tside == "home" else (line + TEASE)
+                    q = tp.price(teased_nv, -120)
+                    teasers.append({"game_id": g.game_id, "matchup": f"{g.away_team} @ {g.home_team}", "team": team,
+                                    "line": line, "teased_line": line + TEASE, "book": offers.loc[bi, "book"],
+                                    "total": cons_total, "model_edge": edge_side, "grade": grade,
+                                    "p_leg": q["p_blend"]})
             # Straight-up: model blended with the consensus line (66.8% of winners in the 2016-2025 backtest).
             bm = spread_nv + 0.35 * row["spread_edge"]
             win = summarize(simulate_game((bt + bm) / 2, (bt - bm) / 2, h["exp_drives"], playoff,
@@ -376,6 +405,10 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     out = pd.DataFrame(rows)
     out["flag"] = out.get("flag", pd.Series("", index=out.index)).fillna("")
     out = add_verdicts(out, phase)
+    tz = pd.DataFrame(teasers)
+    tpairs = pairs_table(pair_legs(tz)) if len(tz) else pd.DataFrame()
+    if len(tpairs):
+        tpairs["stake_units"] = (tpairs["stake_units"] * stake_multipliers().get("TEASER", 1.0)).round(2)
 
     tag = f"{season}_{week:02d}"
     out.to_csv(os.path.join(OUT, f"week_{tag}.csv"), index=False)
@@ -383,9 +416,14 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     pt["net_pts"] = pt["off_pts"] + pt["def_pts"]
     pt = pt.sort_values("net_pts", ascending=False)
     pt.to_csv(os.path.join(OUT, f"power_ratings_{tag}.csv"))
-    report = render(out, pt, season, week, n_sims, adj, inj_mode, inj_players)
+    if len(tz):
+        tz.to_csv(os.path.join(OUT, f"teasers_{tag}.csv"), index=False)
+    if len(tpairs):
+        tpairs.to_json(os.path.join(OUT, f"teaser_pairs_{tag}.json"), orient="records", indent=1)
+    report = render(out, pt, season, week, n_sims, adj, inj_mode, inj_players, tz, tpairs)
     qb_change = {t: n for t, n in qb_notes.items() if "QB change" in n}
-    page = build_html(out, pt, season, week, n_sims, phase, FLAG_TEXT[phase], inj_mode, inj_players, qb_change)
+    page = build_html(out, pt, season, week, n_sims, phase, FLAG_TEXT[phase], inj_mode, inj_players, qb_change,
+                      tz, tpairs)
     os.makedirs(REPORTS, exist_ok=True)
     for folder, name in ((OUT, f"week_{tag}"), (REPORTS, f"{season}_week{week:02d}")):
         with open(os.path.join(folder, f"{name}.md"), "w") as fh:
@@ -444,6 +482,27 @@ def _injury_section(out: pd.DataFrame, mode: str | None, players: pd.DataFrame |
     return L + [""]
 
 
+def _teaser_section(tz, tpairs) -> list[str]:
+    L = ["## Teasers (6 points through 3 and 7)\n"]
+    if tz is None or tz.empty:
+        return L + ["No qualifying teaser legs this week (underdogs +1.5 to +2.5, or favorites -7.5 to -8.5 the "
+                    "model likes).", ""]
+    if tpairs is not None and len(tpairs):
+        L += ["| Teaser (2-team, 6 pts) | Grades | Both legs win (backtest) | Model estimate | EV at -120 | Stake |",
+              "|---|---|---|---|---|---|"]
+        for r in tpairs.itertuples():
+            L.append(f"| **{r.teaser}** | {r.grades} | {r.p_both:.1%} | {r.p_both_model:.1%} | {r.ev:+.3f} | "
+                     f"{r.stake_units:g}u |")
+        L.append("")
+    L += ["| Leg | Grade | Line → teased | Book | Total | Leg win % (realistic) |", "|---|---|---|---|---|---|"]
+    for r in tz.sort_values(["grade", "p_leg"], ascending=[True, False]).itertuples():
+        L.append(f"| {r.team} ({r.matchup}) | {r.grade} | {_fmt_spread(r.line)} → {_fmt_spread(r.teased_line)} | "
+                 f"{r.book} | {r.total} | {r.p_leg:.1%} |")
+    L += ["", "Grade A legs have won about 78% since 2006 (break-even 73.9% per leg on a 2-team teaser at -120, "
+          "75.2% at -130). Shop teaser prices: -120 or better.", ""]
+    return L
+
+
 def _flagged_section(out: pd.DataFrame, phase: str) -> list[str]:
     """The bets, at the top of the report."""
     L = ["## Bets\n"]
@@ -464,12 +523,14 @@ def _flagged_section(out: pd.DataFrame, phase: str) -> list[str]:
 
 
 def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: int, adj: pd.DataFrame,
-           inj_mode: str | None = None, inj_players: pd.DataFrame | None = None) -> str:
+           inj_mode: str | None = None, inj_players: pd.DataFrame | None = None,
+           tz: pd.DataFrame | None = None, tpairs: pd.DataFrame | None = None) -> str:
     L = [f"# {season} Week {week} projections\n",
          f"{n_sims:,} Monte Carlo simulations per game. Spreads use sportsbook convention (home -3 = home favored by 3). "
          f"Lines: {out['line_source'].iloc[0]}.\n"]
     phase = season_phase(week)
     L += _flagged_section(out, phase)
+    L += _teaser_section(tz, tpairs)
     L += ["## Projected scores\n",
          "| Matchup | Proj score | Model spread | Line | Spread edge | Model total | Line total | Home win % | Fair ML (A/H) | Market ML (A/H) |",
          "|---|---|---|---|---|---|---|---|---|---|"]
