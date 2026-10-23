@@ -79,7 +79,7 @@ The design follows the published methods behind the best-known public models:
    - Game-day noise is calibrated so the simulated outcomes spread exactly as much as the model's real out-of-sample error.
    - Scorelines are weighted so key-number frequencies match real 2015-2025 games: 3 in 14.7% of games, 7 in 8.5%.
 4. **Edges** (`run_week.py`): the model's projection is its own opinion and never looks at the line. For pricing, the report shows two cover probabilities:
-   - **raw:** treats the model as the truth. Picks and flags use this number, because it's what the backtest validated: PLAY at 56%+ and STRONG at 58%+.
+   - **raw:** treats the model as the truth. Picks and flags use this number, because it's what the backtest validated. Weeks 1-4: STRONG at 56%+ and PLAY at 53%+. Week 5 on: LEAN at 58%+.
    - **blended:** believes 35% of the model's disagreement with the line, which is what the backtest supports. It's the realistic win rate, so size bets on this one.
 
 ## Backtest
@@ -89,14 +89,17 @@ earlier seasons, and every game is simulated 20,000 times. The full results are 
 
 | | Result |
 |---|---|
-| Straight-up winners | 65.3% (closing-line favorite: 66.4%) |
-| Average miss on the margin | 9.97 pts (closing line: 9.78) |
-| ATS vs closing lines, every game | 52.9%, +61 units |
-| ATS vs closing lines, raw cover ≥ 58% (STRONG) | 545-442, 55.2%, +6.4% ROI |
-| ATS vs early-week lines (2016-2020), every game | 55.2% |
-| ATS vs early-week lines, raw cover ≥ 58% | 256-202, 55.9% |
+| Straight-up winners, model alone | 65.9% (closing-line favorite: 66.4%) |
+| Straight-up winners, model blended with the line (report's winner picks) | 66.8% vs closing lines, 67.1% vs early-week lines |
+| Average miss on the margin | 9.96 pts (closing line: 9.78) |
+| ATS vs closing lines, every game | 52.3% |
+| **ATS Weeks 1-4, raw cover ≥ 56% (STRONG)** | **174-119, 59.4% vs closing lines (9 of 10 seasons profitable); 61.9% vs early-week lines** |
+| ATS Weeks 1-4, raw cover ≥ 53% (PLAY) | 245-181, 57.5% vs closing lines |
+| ATS Week 5 on, raw cover ≥ 58% (LEAN) | 52.3% vs closing lines, 53.3% vs early-week lines |
 | Totals | about 51-52%, no reliable edge |
 
-Breakeven at -110 is 52.4%. Results swing by season: the worst year (2023) lost 16 units at the 54% threshold.
+Breakeven at -110 is 52.4%. The edge is concentrated early in the season. In Weeks 1-4 books still lean on
+preseason opinions, and the model's ratings react faster. From Week 5 on the market has caught up, and only
+large disagreements at the Monday number are worth a small bet.
 
 `python -m model.calibrate` refits the simulator calibration (`model/calibration.json`). Re-run it after each season.

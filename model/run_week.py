@@ -43,16 +43,28 @@ ADJ_PATH = os.path.join(HERE, "adjustments.csv")
 # early-week lines and 0.23 +/- 0.08 against closing lines. Totals: slope 0.02, i.e. no edge, so no blend.
 BLEND_SPREAD = 0.35
 BLEND_TOTAL = 0.0
-# Simulated cover probability (raw, pushes excluded) at which a spread is flagged. Walk-forward backtest, 2016-2025,
-# 20,000 sims per game (model/BACKTEST.md):
-#   >= 56%: 702-612 (53.4%) vs closing lines, 338-275 (55.1%) vs early-week lines
-#   >= 58%: 545-442 (55.2%, +6.4% ROI) vs closing lines, 256-202 (55.9%) vs early-week lines
-# Breakeven at -110 is 52.4%.
-PROB_FLAG = 0.56
+# Spread flags use the simulated cover probability (raw, pushes excluded) and depend on the part of the season.
+# Walk-forward backtest 2016-2025, 20,000 sims per game (model/BACKTEST.md); breakeven at -110 is 52.4%.
+#   Weeks 1-4 (books still lean on preseason opinions; the model's ratings react faster):
+#     >= 53%: 245-181 (57.5%) vs closing lines
+#     >= 56%: 174-119 (59.4%, 9 of 10 seasons profitable) vs closing lines, 99-61 (61.9%) vs early-week lines
+#   Weeks 5+ (the market has caught up): the best threshold, >= 58%, went 382-348 (52.3%) vs closing lines and
+#     168-147 (53.3%) vs early-week lines - a thin edge, so those are labelled LEAN, not PLAY.
+EARLY_WEEKS = 4
+FLAG_RULES = {"early": [("STRONG", 0.56), ("PLAY", 0.53)], "late": [("LEAN", 0.58)]}
+FLAG_TEXT = {
+    "early": "Weeks 1-4: STRONG = raw cover >= 56% (backtest 59.4% ATS vs closing lines, 61.9% vs early-week lines, "
+             "profitable in 9 of 10 seasons); PLAY = raw cover >= 53% (57.5% vs closing lines).",
+    "late": "Week 5 on: LEAN = raw cover >= 58% (backtest 52.3% ATS vs closing lines, 53.3% vs early-week lines). "
+            "After Week 4 the market has caught up and edges are thin: bet only at the Monday number, smaller stakes.",
+}
 # Injury-report stages that adjust projections (see model/injuries.py). Backtest 2016-2025: Thursday/final reports
 # improved accuracy (opponent's missing defensive starters ~ +0.5-0.7 pts each); the Monday carry-forward did not.
 APPLIED_STAGES = ("thursday", "final")
-PROB_STRONG = 0.58
+
+
+def season_phase(week: int, game_type: str = "REG") -> str:
+    return "early" if game_type == "REG" and week <= EARLY_WEEKS else "late"
 
 
 def _payout(odds):
@@ -202,7 +214,8 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
         rows.append(row)
     out = pd.DataFrame(rows)
     p = out.get("p_cover_raw", pd.Series(0.0, index=out.index)).fillna(0)
-    out["flag"] = np.select([p >= PROB_STRONG, p >= PROB_FLAG], ["STRONG", "PLAY"], "")
+    rules = FLAG_RULES[season_phase(week, wk["game_type"].iloc[0])]
+    out["flag"] = np.select([p >= th for _, th in rules], [name for name, _ in rules], "")
 
     tag = f"{season}_{week:02d}"
     out.to_csv(os.path.join(OUT, f"week_{tag}.csv"), index=False)
@@ -265,13 +278,13 @@ def _injury_section(out: pd.DataFrame, mode: str | None, players: pd.DataFrame |
     return L + [""]
 
 
-def _flagged_section(out: pd.DataFrame) -> list[str]:
+def _flagged_section(out: pd.DataFrame, phase: str) -> list[str]:
     """The plays to act on, at the top of the report."""
     L = ["## Flagged plays\n"]
     fl = out[out["flag"] != ""].copy() if "flag" in out else out.iloc[0:0]
     if fl.empty:
-        return L + ["No spread clears the 56% threshold this week.", ""]
-    fl["rank"] = (fl["flag"] == "STRONG").astype(int)
+        return L + ["No spread clears this week's threshold. " + FLAG_TEXT[phase], ""]
+    fl["rank"] = fl["flag"].map({"STRONG": 2, "PLAY": 1}).fillna(0)
     fl = fl.sort_values(["rank", "p_cover_raw"], ascending=False)
     L += ["| Flag | Play | Matchup | Cover % raw | Cover % blended | EV/unit | Note |", "|---|---|---|---|---|---|---|"]
     for r in fl.itertuples():
@@ -280,8 +293,7 @@ def _flagged_section(out: pd.DataFrame) -> list[str]:
                 else "flag only: blended price is thin, consider a smaller stake")
         L.append(f"| **{r.flag}** | **{r.spread_pick} {_fmt_spread(pick_line)}** | {r.away_team} @ {r.home_team} | "
                  f"{r.p_cover_raw:.1%} | {r.p_cover_blend:.1%} | {r.spread_ev:+.3f} | {note} |")
-    L += ["", f"STRONG = raw cover >= {PROB_STRONG:.0%} (backtest: 55.2% ATS vs closing lines, 55.9% vs early-week "
-          f"lines). PLAY = raw cover >= {PROB_FLAG:.0%} (53.4% / 55.1%). Breakeven at -110 is 52.4%.", ""]
+    L += ["", FLAG_TEXT[phase] + " Breakeven at -110 is 52.4%.", ""]
     return L
 
 
@@ -290,7 +302,8 @@ def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: 
     L = [f"# {season} Week {week} projections\n",
          f"{n_sims:,} Monte Carlo simulations per game. Spreads use sportsbook convention (home -3 = home favored by 3). "
          f"Lines: {out['line_source'].iloc[0]}.\n"]
-    L += _flagged_section(out)
+    phase = season_phase(week)
+    L += _flagged_section(out, phase)
     L += ["## Projected scores\n",
          "| Matchup | Proj score | Model spread | Line | Spread edge | Model total | Line total | Home win % | Fair ML (A/H) | Market ML (A/H) |",
          "|---|---|---|---|---|---|---|---|---|---|"]
@@ -321,9 +334,7 @@ def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: 
             L.append(f"| {r.away_team} @ {r.home_team} | **{r.spread_pick} {_fmt_spread(pick_line)}** | "
                      f"{r.home_team} {_fmt_spread(r.home_spread)} | {abs(r.spread_edge):.1f} | {r.p_cover_raw:.1%} | "
                      f"{r.p_cover_blend:.1%} | {r.spread_ev:+.3f} | {r.flag} |")
-        L += ["", f"Flag: PLAY = simulated cover % (raw) >= {PROB_FLAG:.0%}, STRONG = >= {PROB_STRONG:.0%}. In the "
-              "2016-2025 backtest these won 53.4% / 55.2% ATS vs closing lines and 55.1% / 55.9% vs early-week lines "
-              "(breakeven 52.4%). Raw cover % is the backtested selection number but overstates the true win rate. "
+        L += ["", FLAG_TEXT[phase] + " Raw cover % is the backtested selection number but overstates the true win rate. "
               f"Blended cover % believes {BLEND_SPREAD:.0%} of the disagreement and is the realistic price for "
               "sizing; EV/unit uses it.", ""]
     if "total_edge" in out:

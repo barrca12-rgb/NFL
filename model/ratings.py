@@ -26,6 +26,14 @@ class RatingConfig:
     half_life: float = 8.0       # weeks for a game's weight to halve
     offseason_gap: float = 4.0  # extra "weeks" of decay charged across an offseason
     lookback_seasons: int = 2    # seasons of history before the current one that are used at all
+    # QB ratings get their own, longer memory: QB quality is far more stable than team performance.
+    # Backtest 2016-2025: 40-week half-life over 4 seasons cut margin MAE 9.972 -> 9.956 and lifted straight-up
+    # accuracy 65.3% -> 66.1% vs the team-rating memory (8 weeks / 2 seasons). Opponent adjustment didn't help.
+    qb_half_life: float = 40.0
+    qb_offseason_gap: float = 4.0
+    qb_lookback: int = 4
+    qb_prior_db: float = 250.0
+    qb_opp_adjust: bool = False  # adjust each game's QB EPA for the pass defense faced
 
 
 METRICS = {
@@ -120,7 +128,14 @@ def build_ratings(tg: pd.DataFrame, season: int, week: int, cfg: RatingConfig | 
     for m, pen in METRICS.items():
         out[m] = ridge_ratings(h, m, teams, pen)
     out["st"] = ridge_ratings(h, "st_net", teams, 8.0, with_def=False)
-    out["qbr"] = qb_ratings(h)
+    hq = history_before(tg, season, week, RatingConfig(half_life=cfg.qb_half_life,
+                                                       offseason_gap=cfg.qb_offseason_gap,
+                                                       lookback_seasons=cfg.qb_lookback))
+    if cfg.qb_opp_adjust:
+        # Opponent pass-defense rating is in EPA/play; add it back so a QB isn't penalized for facing good defenses.
+        hq = hq.copy()
+        hq["qb_epa_sum"] = hq["qb_epa_sum"] + hq["qb_db"] * hq["opp"].map(out["pass_epa"]["def"]).fillna(0)
+    out["qbr"] = qb_ratings(hq, prior_db=cfg.qb_prior_db)
     out["qb_base"] = team_qb_baseline(h, out["qbr"]).reindex(teams).fillna(out["qbr"].mean())
     out["starter"] = last_starter(h)
     if elo is not None:
