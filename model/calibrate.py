@@ -19,6 +19,7 @@ import pandas as pd
 
 from .data import CACHE, load_all
 from .features import walk_forward_features
+from .injuries import add_injury_features, historical_table
 from .projection import fit_points_model, game_level
 from .simulate import CALIBRATION_PATH, SimConfig, key_weight, simulate_game
 
@@ -103,12 +104,25 @@ def calibrate(n_games: int = 300, n_sims: int = 1500, iters: int = 4, verbose: b
     return result
 
 
-def build_features(last_season: int, refresh: bool = False, first: int = 2014) -> pd.DataFrame:
-    """Walk-forward features for every game from `first` through `last_season` (cached for calibrate/backtest)."""
+def build_features(last_season: int, refresh: bool = False, first: int = 2014,
+                   refresh_injuries: bool = False) -> pd.DataFrame:
+    """Walk-forward features for every game from `first` through `last_season` (cached for calibrate/backtest),
+    with the historical injury features attached (used only by the injury-aware Thursday/Friday model)."""
     games, tg = load_all(2012, last_season, refresh=refresh)
     f = walk_forward_features(games, tg, first, last_season)
+    f = add_injury_features(f, injury_table(last_season, refresh=refresh or refresh_injuries)[0])
     f.to_parquet(FEATURES_PATH)
     return f
+
+
+def injury_table(last_season: int, refresh: bool = False) -> tuple[pd.DataFrame, pd.Series]:
+    """Cached historical injury features and miss probabilities (snap counts/injury reports start in 2013)."""
+    tpath, ppath = os.path.join(CACHE, "injury_table.parquet"), os.path.join(CACHE, "p_miss.csv")
+    if refresh or not (os.path.exists(tpath) and os.path.exists(ppath)):
+        t, p = historical_table(range(2013, last_season + 1), refresh=refresh)
+        t.to_parquet(tpath)
+        p.to_csv(ppath)
+    return pd.read_parquet(tpath), pd.read_csv(ppath, index_col=0)["p_miss"]
 
 
 if __name__ == "__main__":

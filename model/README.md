@@ -32,6 +32,26 @@ currently in nflverse `games.csv` are used.
 The report marks a game "QB change" whenever the depth chart's QB1 differs from the team's last starter. Check
 those games before betting them.
 
+## Weekly schedule: Monday run, Thursday re-run
+
+Run the same command again later in the week. It detects which nflverse injury report is available and uses it automatically:
+
+| When | Injury report available | What the run does |
+|---|---|---|
+| Monday | Only last week's | Lists long-term absences carried forward from last week's report. **Doesn't adjust projections**: those players are already reflected in the ratings, and adjusting for them again made the backtest worse. |
+| Wed/Thu | This week's practice report | **Adjusts projections** using practice participation. Did not practice on Thursday means a 76% chance of missing the game; limited means 22%. |
+| Fri/Sat | Final report with game statuses | **Adjusts projections** using Out (100%), Doubtful (99%) and Questionable (30%). |
+
+Every miss probability is measured from 2013-2025 nflverse injury reports and snap counts, not assumed. A player's
+value is his usual offensive or defensive snap share. Only the change versus who the team was already missing
+counts. QBs are handled separately by the QB rating.
+
+How much injuries move the line (backtest, 2016-2025): each missing defensive starter-equivalent (a full-time
+player's worth of snaps) is worth about +0.5 to +0.7 points to the opposing offense. Non-QB offensive absences
+barely matter (about 0). It's a modest effect: it improves projected totals most and leaves ATS rates
+about where they were. Its job is to keep Monday's numbers from going stale as injury news comes out. Add
+`--no-injuries` to switch it off.
+
 ## How it works
 
 The design follows the published methods behind the best-known public models:

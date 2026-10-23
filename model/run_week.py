@@ -25,10 +25,11 @@ import zlib
 import numpy as np
 import pandas as pd
 
-from .calibrate import build_features
+from .calibrate import build_features, injury_table
 from .data import HERE, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
-from .features import game_features
+from .features import FEATURES, game_features
+from .injuries import FEATURES as INJ_FEATURES, add_injury_features, live_table
 from .projection import fit_points_model
 from .ratings import build_ratings, power_table
 from .simulate import SimConfig, american, simulate_game, summarize
@@ -48,6 +49,9 @@ BLEND_TOTAL = 0.0
 #   >= 58%: 545-442 (55.2%, +6.4% ROI) vs closing lines, 256-202 (55.9%) vs early-week lines
 # Breakeven at -110 is 52.4%.
 PROB_FLAG = 0.56
+# Injury-report stages that adjust projections (see model/injuries.py). Backtest 2016-2025: Thursday/final reports
+# improved accuracy (opponent's missing defensive starters ~ +0.5-0.7 pts each); the Monday carry-forward did not.
+APPLIED_STAGES = ("thursday", "final")
 PROB_STRONG = 0.58
 
 
@@ -89,7 +93,8 @@ def load_adjustments(season: int, week: int) -> pd.DataFrame:
     return a[(a["season"] == season) & (a["week"] == week)]
 
 
-def run(season: int | None, week: int | None, n_sims: int, lines_path: str | None, refresh: bool) -> pd.DataFrame:
+def run(season: int | None, week: int | None, n_sims: int, lines_path: str | None, refresh: bool,
+        use_injuries: bool = True) -> pd.DataFrame:
     os.makedirs(OUT, exist_ok=True)
     if season is None:
         g = load_games(refresh=refresh)
@@ -102,9 +107,22 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     print(f"{season} week {week}: {len(wk)} games, {n_sims:,} sims each")
 
     # Points model: trained on every completed game's walk-forward features (built only from earlier games).
-    f_hist = build_features(last_season=season, refresh=False)
+    f_hist = build_features(last_season=season, refresh=False, refresh_injuries=refresh)
     f_hist = f_hist[(f_hist["season"] < season) | (f_hist["week"] < week)]
     model = fit_points_model(f_hist)
+
+    # Injury adjustment: once this week's nflverse injury report exists (Wednesday/Thursday practice reports, then
+    # Friday game statuses), retrain with the injury features for that report stage and use them.
+    inj_mode, inj_table, inj_players = None, None, None
+    if use_injuries:
+        inj_mode, inj_table, inj_players = live_table(wk, season, week, injury_table(season)[1], refresh=refresh)
+        # Monday: last week's report is shown for long-term injuries but NOT used to adjust projections. Backtest:
+        # those absences are already in the ratings (the team played without them), and carrying them forward
+        # made projections slightly worse. Thursday/final reports add new information and are applied.
+        if inj_mode in APPLIED_STAGES:
+            model = fit_points_model(f_hist, features=FEATURES + INJ_FEATURES[inj_mode])
+        print(f"injury report: {inj_mode or 'none'}"
+              + (" (applied)" if inj_mode in APPLIED_STAGES else " (shown only)" if inj_mode else ""))
 
     r = build_ratings(tg, season, week, elo=elo_snapshots(games[games["season"] >= season - 12]), games=games)
     adj = load_adjustments(season, week)
@@ -124,6 +142,11 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
         qb_notes[tm] = nm + ("" if qid == last else f" (QB change; last start: {names.get(last, last)})")
 
     f = game_features(wk, r, starters)
+    f["inj_pts"] = 0.0
+    if inj_mode in APPLIED_STAGES:
+        f = add_injury_features(f, inj_table)
+        feats = INJ_FEATURES[inj_mode]
+        f["inj_pts"] = f[feats].to_numpy() @ model.coef[feats].to_numpy()
     f["pred"] = model.predict(f)
     pts_adj = adj.groupby("team")["points"].sum() if "points" in adj else pd.Series(dtype=float)
     f["pred"] = f["pred"] + f["team"].map(pts_adj).fillna(0)
@@ -143,6 +166,7 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
         row = {
             "game_id": g.game_id, "gameday": g.gameday.date(), "away_team": g.away_team, "home_team": g.home_team,
             "away_qb": qb_notes[g.away_team], "home_qb": qb_notes[g.home_team],
+            "away_inj_pts": a["inj_pts"], "home_inj_pts": h["inj_pts"],
             "proj_away": s["sim_away_pts"], "proj_home": s["sim_home_pts"],
             "model_home_spread": -s["sim_margin"], "model_total": s["sim_total"],
             "p_home_win": s["p_home_win"], "fair_home_ml": s["fair_home_ml"], "fair_away_ml": s["fair_away_ml"],
@@ -186,7 +210,7 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     pt["net_pts"] = pt["off_pts"] + pt["def_pts"]
     pt = pt.sort_values("net_pts", ascending=False)
     pt.to_csv(os.path.join(OUT, f"power_ratings_{tag}.csv"))
-    report = render(out, pt, season, week, n_sims, adj)
+    report = render(out, pt, season, week, n_sims, adj, inj_mode, inj_players)
     with open(os.path.join(OUT, f"week_{tag}.md"), "w") as fh:
         fh.write(report)
     print(report)
@@ -201,6 +225,44 @@ def _fmt_spread(x):
 
 def _fmt_ml(x):
     return "-" if pd.isna(x) else f"{x:+.0f}"
+
+
+def _status_label(st: str) -> str:
+    if st == "none_missed":
+        return "missed last game, not on report (likely IR)"
+    if st.startswith("lag_"):
+        base, played = st[4:].rsplit("_", 1)
+        return f"last week: {base}, {'played' if played == 'played' else 'did not play'}"
+    return st.replace("prac_", "practice: ")
+
+
+def _injury_section(out: pd.DataFrame, mode: str | None, players: pd.DataFrame | None) -> list[str]:
+    L = ["## Injury adjustment\n"]
+    if mode is None:
+        return L + ["No injury report available yet.", ""]
+    if mode == "monday":
+        L += ["**Not applied to projections (Monday run).** This week's report isn't out, so the list below "
+              "carries last week's report forward to show long-term absences. Those players are already reflected "
+              "in the ratings (the team has been playing without them); in the backtest, adjusting for them again "
+              "made projections worse. Re-run Thursday (practice report) or Friday/Saturday (game statuses) to "
+              "apply new injuries.", ""]
+    else:
+        label = {"thursday": "Thursday practice report (no game statuses yet)",
+                 "final": "final report with game statuses"}[mode]
+        L += [f"Applied from the {label}. Each team's projected points include this many points for its own "
+              "offensive absences and the opponent's defensive absences, relative to who the team has already been "
+              "playing without.\n", "| Matchup | Away adj | Home adj |", "|---|---|---|"]
+        for r in out.itertuples():
+            L.append(f"| {r.away_team} @ {r.home_team} | {r.away_team} {r.away_inj_pts:+.1f} | "
+                     f"{r.home_team} {r.home_inj_pts:+.1f} |")
+        L.append("")
+    if players is not None and len(players):
+        L += ["Regulars likely to miss (non-QB, usual snap share >= 40%, miss probability >= 50%):\n",
+              "| Team | Player | Pos | Status | Miss % | Usual snaps |", "|---|---|---|---|---|---|"]
+        for p in players.itertuples():
+            L.append(f"| {p.team} | {p.player} | {p.position} | {_status_label(p.status)} | "
+                     f"{p.p_miss:.0%} | {p.usual:.0%} |")
+    return L + [""]
 
 
 def _flagged_section(out: pd.DataFrame) -> list[str]:
@@ -223,7 +285,8 @@ def _flagged_section(out: pd.DataFrame) -> list[str]:
     return L
 
 
-def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: int, adj: pd.DataFrame) -> str:
+def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: int, adj: pd.DataFrame,
+           inj_mode: str | None = None, inj_players: pd.DataFrame | None = None) -> str:
     L = [f"# {season} Week {week} projections\n",
          f"{n_sims:,} Monte Carlo simulations per game. Spreads use sportsbook convention (home -3 = home favored by 3). "
          f"Lines: {out['line_source'].iloc[0]}.\n"]
@@ -271,6 +334,7 @@ def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: 
             L.append(f"| {r.away_team} @ {r.home_team} | {r.total_pick} | {r.total} | {r.model_total:.1f} | "
                      f"{r.total_edge:+.1f} | {r.p_total_raw:.1%} | {r.p_total_blend:.1%} | {r.total_ev:+.3f} |")
         L.append("")
+    L += _injury_section(out, inj_mode, inj_players)
     L += ["## Starting QBs used\n"]
     for r in out.itertuples():
         L.append(f"- {r.away_team}: {r.away_qb} | {r.home_team}: {r.home_qb}")
@@ -294,5 +358,6 @@ if __name__ == "__main__":
     ap.add_argument("--sims", type=int, default=20000)
     ap.add_argument("--lines", help="CSV of sportsbook lines to compare against")
     ap.add_argument("--no-refresh", action="store_true", help="don't download fresh nflverse data")
+    ap.add_argument("--no-injuries", action="store_true", help="ignore this week's injury report")
     a = ap.parse_args()
-    run(a.season, a.week, a.sims, a.lines, refresh=not a.no_refresh)
+    run(a.season, a.week, a.sims, a.lines, refresh=not a.no_refresh, use_injuries=not a.no_injuries)
