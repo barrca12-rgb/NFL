@@ -214,7 +214,8 @@ def _flagged_section(out: pd.DataFrame) -> list[str]:
     L += ["| Flag | Play | Matchup | Cover % raw | Cover % blended | EV/unit | Note |", "|---|---|---|---|---|---|---|"]
     for r in fl.itertuples():
         pick_line = r.home_spread if r.spread_pick == r.home_team else -r.home_spread
-        note = "best bet: also +EV on blended price" if r.spread_ev > 0 else "pass at this number unless the line moves"
+        note = ("best bet: also +EV on the blended price" if r.spread_ev > 0
+                else "flag only: blended price is thin, consider a smaller stake")
         L.append(f"| **{r.flag}** | **{r.spread_pick} {_fmt_spread(pick_line)}** | {r.away_team} @ {r.home_team} | "
                  f"{r.p_cover_raw:.1%} | {r.p_cover_blend:.1%} | {r.spread_ev:+.3f} | {note} |")
     L += ["", f"STRONG = raw cover >= {PROB_STRONG:.0%} (backtest: 55.2% ATS vs closing lines, 55.9% vs early-week "
