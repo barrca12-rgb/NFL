@@ -203,11 +203,31 @@ def _fmt_ml(x):
     return "-" if pd.isna(x) else f"{x:+.0f}"
 
 
+def _flagged_section(out: pd.DataFrame) -> list[str]:
+    """The plays to act on, at the top of the report."""
+    L = ["## Flagged plays\n"]
+    fl = out[out["flag"] != ""].copy() if "flag" in out else out.iloc[0:0]
+    if fl.empty:
+        return L + ["No spread clears the 56% threshold this week.", ""]
+    fl["rank"] = (fl["flag"] == "STRONG").astype(int)
+    fl = fl.sort_values(["rank", "p_cover_raw"], ascending=False)
+    L += ["| Flag | Play | Matchup | Cover % raw | Cover % blended | EV/unit | Note |", "|---|---|---|---|---|---|---|"]
+    for r in fl.itertuples():
+        pick_line = r.home_spread if r.spread_pick == r.home_team else -r.home_spread
+        note = "best bet: also +EV on blended price" if r.spread_ev > 0 else "pass at this number unless the line moves"
+        L.append(f"| **{r.flag}** | **{r.spread_pick} {_fmt_spread(pick_line)}** | {r.away_team} @ {r.home_team} | "
+                 f"{r.p_cover_raw:.1%} | {r.p_cover_blend:.1%} | {r.spread_ev:+.3f} | {note} |")
+    L += ["", f"STRONG = raw cover >= {PROB_STRONG:.0%} (backtest: 55.2% ATS vs closing lines, 55.9% vs early-week "
+          f"lines). PLAY = raw cover >= {PROB_FLAG:.0%} (53.4% / 55.1%). Breakeven at -110 is 52.4%.", ""]
+    return L
+
+
 def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: int, adj: pd.DataFrame) -> str:
     L = [f"# {season} Week {week} projections\n",
          f"{n_sims:,} Monte Carlo simulations per game. Spreads use sportsbook convention (home -3 = home favored by 3). "
-         f"Lines: {out['line_source'].iloc[0]}.\n",
-         "## Projected scores\n",
+         f"Lines: {out['line_source'].iloc[0]}.\n"]
+    L += _flagged_section(out)
+    L += ["## Projected scores\n",
          "| Matchup | Proj score | Model spread | Line | Spread edge | Model total | Line total | Home win % | Fair ML (A/H) | Market ML (A/H) |",
          "|---|---|---|---|---|---|---|---|---|---|"]
     for r in out.itertuples():
