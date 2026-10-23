@@ -22,6 +22,7 @@ The bet card gives every game one call:
 | Call | Meaning | Stake |
 |---|---|---|
 | **BET** | Weeks 1-4: model cover % >= 53% *and* +EV at the realistic price (STRONG at 56%+). Week 5 on: the realistic cover % beats the break-even of the best book's price (VALUE) | Weeks 1-4: 2u STRONG, 1u PLAY. Week 5 on: 0.5u |
+| **H2H** | Coach head-to-head angle: bet against the head coach whose teams have covered more in 4+ past meetings with this coach (57% since 1999). Also checks model bets: agreement is noted, disagreement halves the stake | 0.5u, or 1u when the model agrees |
 | **SMALL** | Weeks 1-4 only: the model likes it but the realistic price is thin, usually a favorite laying 3 or 7 | 0.5u |
 | **WATCH** | Not a bet now, but becomes one if a line moves up to 1.5 points in its favor (the card shows the number) | 0 until it gets there |
 | **PASS** | No edge at any book | 0 |

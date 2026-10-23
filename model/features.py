@@ -82,9 +82,21 @@ def game_features(week_games: pd.DataFrame, r: dict, starters: dict[str, str] | 
     f["def_sr"] = o.map(r["sr"]["def"]).fillna(0).to_numpy()
     f["off_pass"] = t.map(r["pass_epa"]["off"]).fillna(0).to_numpy()
     f["def_pass"] = o.map(r["pass_epa"]["def"]).fillna(0).to_numpy()
-    for m in ("epa_adj", "epa_nto", "to_rate", "ed_epa", "ed_sr", "proe"):
+    for m in ("epa_adj", "epa_nto", "to_rate", "ed_epa", "ed_sr", "proe", "press_rate", "rush_epa", "pass_share"):
         f[f"off_{m}"] = t.map(r[m]["off"]).fillna(0).to_numpy()
         f[f"def_{m}"] = o.map(r[m]["def"]).fillna(0).to_numpy()
+    # Matchup terms. Ratings are additive (offense minus defense); these test whether specific unit matchups matter
+    # beyond that: pressure expected from this pass rush against this line, its interaction, and pass/run
+    # efficiency weighted by how much this offense actually passes.
+    pr = r["press_rate"]
+    f["exp_press"] = (pr["b0"] + t.map(pr["off"]).fillna(0) - o.map(pr["def"]).fillna(0)).to_numpy()
+    f["press_x"] = (t.map(pr["off"]).fillna(0) * -o.map(pr["def"]).fillna(0)).to_numpy()
+    share = (r["pass_share"]["b0"] + t.map(r["pass_share"]["off"]).fillna(0)).clip(0.3, 0.8).to_numpy()
+    pass_mm = (t.map(r["pass_epa"]["off"]).fillna(0) - o.map(r["pass_epa"]["def"]).fillna(0)).to_numpy()
+    rush_mm = (t.map(r["rush_epa"]["off"]).fillna(0) - o.map(r["rush_epa"]["def"]).fillna(0)).to_numpy()
+    f["style_pass_mm"] = share * pass_mm
+    f["style_rush_mm"] = (1 - share) * rush_mm
+    f["pass_mm"], f["rush_mm"] = pass_mm, rush_mm
     if "elo" in r:
         f["elo_diff"] = ((t.map(r["elo"]).fillna(1500) - o.map(r["elo"]).fillna(1500)) / 25.0).to_numpy()
     if "market" in r:

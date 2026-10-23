@@ -50,6 +50,9 @@ METRICS = {
     "ed_epa": 12.0,
     "ed_sr": 12.0,
     "proe": 12.0,
+    "press_rate": 12.0,
+    "rush_epa": 16.0,
+    "pass_share": 12.0,
 }
 
 

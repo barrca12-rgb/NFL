@@ -23,6 +23,8 @@ season-set measurement has a standard error of about ±1.1 points; with the 740 
 | Thursday/Friday injury report | totals MAE improved; ATS unchanged |
 | Season-phase trust and rules, line shopping | turns the mid-season edge from ~51% into ~53% |
 
+| **Coach head-to-head fade** (model/coaches.py): bet against the head coach whose teams have covered more in past meetings with this coach (shrink 20, 4+ meetings, rating >= 1.0) | 58.0% (1999-2009), 58.7% (2010-15), 53.5% (2016-20), 58.3% (2021-25); 255-191 combined. 57.4% when the model agrees, 54.3% when it disagrees. Not a home/away or division effect. Loose version (2+ meetings) as a check on model bets: 54.0% when it agrees, 50.4% when it disagrees |
+
 ## Tried and rejected (did not hold out of sample)
 
 | Idea | Result vs current |
@@ -40,8 +42,14 @@ season-set measurement has a standard error of about ±1.1 points; with the 740 
 | Joint tuning of rating memory, offseason gap and extra defensive shrinkage (27 settings, chosen on 2016-19, scored on 2020-25) | the best-on-2016-19 setting was worse on 2020-25 (9.975 vs 9.970); all within 0.03 |
 | Turnover luck vs the market: bet against teams with better recent turnover margin / fumble-recovery luck | 48.6-49.9% in both periods; the market does not overrate lucky teams |
 | Model disagrees with the line and picks the less-lucky team | 54.5% (2016-20), 47.0% (2021-25) |
+| Unit matchups: expected pressure (sacks+hits allowed vs generated), pressure mismatch interaction, pass/run efficiency matchups, play-mix-weighted matchups | MAE 9.957-9.968 vs 9.956; ATS no better |
+| Coach career ATS rating | 51.3-51.7% in every era at a 1-pt gap; too small to bet, not added |
+| Same-season division rematch fade | 52-55% before 2021, 42.6% in 2021-25 |
 | Mid-season model-cover thresholds (58%, 60%, point edge >= 3) | 2016-20 "best" cutoffs fell to 49-52% in 2021-25 |
 | Situational spots mid-season (QB-change games, underdogs only, crossing 3/7, dead-zone exclusion) | 54-58% in 2016-20, 47-50% in 2021-25 |
+
+Coverage-scheme matchups (Cover 1/2/3, man/zone) were not testable live: nflverse publishes coverage and pressure
+charting only after each season ends (2026 is not out), so in-season the model can only use last season's tendencies.
 
 ## What this means
 

@@ -46,7 +46,8 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
         "home_spread", "spread_edge", "spread_pick", "pick_line", "p_cover_raw", "p_cover_blend", "spread_ev",
         "verdict", "stake_units", "reason", "bet_down_to", "bet_at", "flag", "model_total", "total", "total_pick",
         "p_total_raw", "winner", "win_pct", "away_inj_pts", "home_inj_pts", "qb_note",
-        "best_book", "pick_odds", "offers", "n_books",
+        "best_book", "pick_odds", "offers", "n_books", "bet_side", "bet_line", "bet_odds", "bet_book",
+        "h2h_meetings", "h2h_total", "h2h_strict", "h2h_loose", "h2h_p_blend", "home_coach", "away_coach",
     ])
     p = pt.reset_index().rename(columns={"index": "team"})
     p["rank"] = range(1, len(p) + 1)
@@ -127,6 +128,7 @@ table.books tr.best td { font-weight: 700 }
 .v { display: inline-block; font: 700 12px/1 var(--display); letter-spacing: .08em; padding: 5px 8px; border-radius: 4px }
 .v.BET { background: var(--turf); color: var(--surface) }
 .v.SMALL { background: var(--amber-soft); color: var(--amber) }
+.v.H2H { background: var(--ink); color: var(--bg) }
 .v.WATCH { background: var(--chalk); color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber) }
 .v.PASS { background: var(--chalk); color: var(--pass) }
 
@@ -201,6 +203,7 @@ details[open] summary { margin-bottom: 10px }
       <div><b>Realistic cover %</b>The same simulation centered between the market consensus and the model (45% toward the model in Weeks 1-4, 20% after), which matches the model's real track record. It is then priced at each book's own number, so a better number at one book shows up as real value. Use this for whether a bet is worth it and how much.</div>
       <div><b>EV / unit</b>Expected profit per unit staked at the posted odds, from the realistic cover %. Above 0 means the price is worth taking.</div>
       <div><b>Good down to</b>The worst number you can still take the bet at, at the same price. If the line moves past it, pass.</div>
+      <div><b>H2H</b>Coach head-to-head angle: fade the head coach whose teams have covered more in 4+ past meetings with this coach. Won 57% since 1999 (58% in 2021-25), and 57% when the model agrees.</div>
       <div><b>Every book</b>Each sportsbook's number and price for the pick. The bold one is the best; always bet there.</div>
     </div>
   </section>
@@ -237,7 +240,7 @@ details[open] summary { margin-bottom: 10px }
   // Header
   $("eyebrow").textContent = D.season + " NFL season · " + (D.phase === "early" ? "Weeks 1-4: strongest part of the season" : "Week 5 on: thin edges, smaller stakes");
   $("h1").textContent = "Week " + D.week + " Bet Card";
-  const bets = D.games.filter((g) => g.verdict === "BET" || g.verdict === "SMALL");
+  const bets = D.games.filter((g) => g.verdict === "BET" || g.verdict === "SMALL" || g.verdict === "H2H");
   const units_total = bets.reduce((s, g) => s + (g.stake_units || 0), 0);
   $("lede").textContent = bets.length
     ? bets.length + (bets.length === 1 ? " play" : " plays") + " this week, " + units_total + " units total. Everything else is a pass unless a watch-list line moves."
@@ -256,15 +259,21 @@ details[open] summary { margin-bottom: 10px }
       el.className = "ticket" + (g.verdict === "SMALL" ? " small" : "");
       el.innerHTML = '<div class="stake" style="color:var(' + (g.verdict === "SMALL" ? "--amber" : "--turf") + ')">' +
         esc(g.verdict) + " · " + units(g.stake_units) + (g.flag ? " · " + esc(g.flag) : "") + "</div>" +
-        '<div class="pick">' + esc(g.spread_pick) + " " + sp(g.pick_line) + ' <span class="price">' + ml(g.pick_odds) + "</span></div>" +
-        '<div class="book">Bet at <b>' + esc(g.best_book) + "</b></div>" +
+        '<div class="pick">' + esc(g.bet_side) + " " + sp(g.bet_line) + ' <span class="price">' + ml(g.bet_odds) + "</span></div>" +
+        '<div class="book">Bet at <b>' + esc(g.bet_book) + "</b></div>" +
         '<div class="game">' + esc(g.matchup) + " · " + esc(g.gameday) + "</div>" +
-        "<dl><dt>Good down to</dt><dd>" + esc(g.spread_pick) + " " + sp(g.bet_down_to) + "</dd>" +
-        "<dt>Realistic cover</dt><dd>" + pct(g.p_cover_blend) + "</dd>" +
-        "<dt>Model cover</dt><dd>" + pct(g.p_cover_raw) + "</dd>" +
-        "<dt>EV / unit</dt><dd>" + ev(g.spread_ev) + "</dd>" +
+        (g.verdict === "H2H"
+          ? "<dl><dt>Coaches</dt><dd>" + esc(g.away_coach) + " vs " + esc(g.home_coach) + "</dd>" +
+            "<dt>Meetings</dt><dd>" + g.h2h_meetings + "</dd>" +
+            "<dt>Realistic cover</dt><dd>" + pct(g.h2h_p_blend) + "</dd>" +
+            "<dt>Angle record</dt><dd>57% since 1999</dd>"
+          : "<dl><dt>Good down to</dt><dd>" + esc(g.spread_pick) + " " + sp(g.bet_down_to) + "</dd>" +
+            "<dt>Realistic cover</dt><dd>" + pct(g.p_cover_blend) + "</dd>" +
+            "<dt>Model cover</dt><dd>" + pct(g.p_cover_raw) + "</dd>" +
+            "<dt>EV / unit</dt><dd>" + ev(g.spread_ev) + "</dd>") +
         "<dt>Projection</dt><dd>" + esc(g.away_team) + " " + num1(g.proj_away) + " – " + esc(g.home_team) + " " + num1(g.proj_home) + "</dd></dl>" +
-        offersHtml(g) +
+        '<div class="game">' + esc(g.reason) + "</div>" +
+        (g.verdict === "H2H" ? "" : offersHtml(g)) +
         (g.qb_note ? '<div class="game">QB: ' + esc(g.qb_note) + "</div>" : "");
       $("slip").appendChild(el);
     });
@@ -301,7 +310,7 @@ details[open] summary { margin-bottom: 10px }
     render();
     return { set(rowsNew) { data = rowsNew.slice(); render(); } };
   }
-  const verdictOrder = {BET: 3, SMALL: 2, WATCH: 1, PASS: 0};
+  const verdictOrder = {BET: 4, H2H: 3, SMALL: 2, WATCH: 1, PASS: 0};
   const vpill = (r) => '<span class="v ' + r.verdict + '">' + r.verdict + "</span>";
 
   // Watch list
@@ -322,7 +331,7 @@ details[open] summary { margin-bottom: 10px }
     {k: "matchup", h: "Game", l: 1},
     {k: "gameday", h: "Date", l: 1},
     {k: "verdict", h: "Call", l: 1, f: vpill, sort: (r) => verdictOrder[r.verdict] * 10 + (r.stake_units || 0)},
-    {k: "spread_pick", h: "Side (best price)", l: 1, f: (r) => esc(r.spread_pick) + " " + sp(r.pick_line) + " " + ml(r.pick_odds) + (r.best_book ? " · " + esc(r.best_book) : ""), cls: (r) => r.verdict === "BET" ? "strong" : ""},
+    {k: "bet_side", h: "Side (best price)", l: 1, f: (r) => esc(r.bet_side) + " " + sp(r.bet_line) + " " + ml(r.bet_odds) + (r.bet_book ? " · " + esc(r.bet_book) : ""), cls: (r) => r.verdict === "BET" || r.verdict === "H2H" ? "strong" : ""},
     {k: "stake_units", h: "Stake", f: (r) => r.stake_units ? units(r.stake_units) : "–"},
     {k: "proj", h: "Projected score", l: 1, f: (r) => esc(r.away_team) + " " + num1(r.proj_away) + " – " + esc(r.home_team) + " " + num1(r.proj_home), sort: (r) => r.proj_home - r.proj_away},
     {k: "model_home_spread", h: "Model line", f: (r) => esc(r.home_team) + " " + sp(r.model_home_spread)},
@@ -336,7 +345,7 @@ details[open] summary { margin-bottom: 10px }
     {k: "reason", h: "Why", l: 1},
   ];
   const gt = table("t-games", gameCols, D.games, ["verdict", -1]);
-  const states = ["All", "BET", "SMALL", "WATCH", "PASS"];
+  const states = ["All", "BET", "H2H", "SMALL", "WATCH", "PASS"];
   states.forEach((s) => {
     const b = document.createElement("button");
     b.type = "button"; b.textContent = s === "All" ? "All games" : s; b.setAttribute("aria-pressed", s === "All");

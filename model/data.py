@@ -25,7 +25,7 @@ PBP_COLS = [
     "game_id", "season", "week", "season_type", "posteam", "defteam", "home_team", "away_team",
     "play_type", "epa", "success", "wp", "pass", "rush", "qb_dropback", "qb_epa",
     "passer_player_id", "passer_player_name", "fixed_drive", "fixed_drive_result", "special_teams_play",
-    "fumble_lost", "interception", "down", "pass_oe", "cpoe",
+    "fumble_lost", "interception", "down", "pass_oe", "cpoe", "sack", "qb_hit",
 ]
 
 
@@ -100,8 +100,21 @@ def team_games(pbp: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
     plays["proe_n"] = neutral.astype(float)
     plays["proe_sum"] = np.where(neutral, plays["pass_oe"], 0.0)
 
+    # Matchup inputs: pass rush vs pass protection (sacks + QB hits per dropback), run efficiency, play mix.
+    db_ = plays["qb_dropback"].fillna(0).eq(1)
+    plays["db"] = db_.astype(float)
+    plays["press"] = (db_ & (plays["sack"].fillna(0).eq(1) | plays["qb_hit"].fillna(0).eq(1))).astype(float)
+    plays["is_rush"] = (plays["rush"] == 1).astype(float)
+    plays["wrush_epa"] = plays["wepa"] * plays["is_rush"]
+    plays["wrush"] = plays["w"] * plays["is_rush"]
+    neutral_all = ed & plays["wp"].between(0.2, 0.8)
+    plays["nd"] = neutral_all.astype(float)
+    plays["nd_pass"] = (neutral_all & (plays["pass"] == 1)).astype(float)
+
     key = ["game_id", "posteam"]
     agg = plays.groupby(key).agg(
+        db=("db", "sum"), press=("press", "sum"), wrush_epa=("wrush_epa", "sum"), wrush=("wrush", "sum"),
+        nd=("nd", "sum"), nd_pass=("nd_pass", "sum"),
         w_ed=("w_ed", "sum"), wepa_ed=("wepa_ed", "sum"), wsucc_ed=("wsucc_ed", "sum"),
         proe_n=("proe_n", "sum"), proe_sum=("proe_sum", "sum"),
         defteam=("defteam", "first"), w=("w", "sum"), wepa=("wepa", "sum"), wsucc=("wsucc", "sum"),
@@ -114,6 +127,9 @@ def team_games(pbp: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
     agg["epa_adj"] = agg["wepa_adj"] / agg["w"]
     agg["epa_nto"] = agg["wepa_nto"] / agg["w_nto"].clip(lower=1)
     agg["to_rate"] = agg["wto"] / agg["w"]
+    agg["press_rate"] = agg["press"] / agg["db"].clip(lower=1)
+    agg["rush_epa"] = agg["wrush_epa"] / agg["wrush"].clip(lower=1)
+    agg["pass_share"] = (agg["nd_pass"] / agg["nd"].clip(lower=1)).where(agg["nd"] >= 8)
     agg["ed_epa"] = agg["wepa_ed"] / agg["w_ed"].clip(lower=1)
     agg["ed_sr"] = agg["wsucc_ed"] / agg["w_ed"].clip(lower=1)
     agg["proe"] = (agg["proe_sum"] / agg["proe_n"].clip(lower=1)).where(agg["proe_n"] >= 5)
@@ -154,6 +170,7 @@ def team_games(pbp: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
     keep = ["game_id", "season", "week", "game_type", "gameday", "team", "opp", "is_home", "points",
             "plays", "drives", "ppd", "off_td", "off_fg", "epa", "sr", "pass_epa", "st_net",
             "epa_adj", "epa_nto", "to_rate", "ed_epa", "ed_sr", "proe", "qb_cpoe_n", "qb_cpoe_sum",
+            "press_rate", "rush_epa", "pass_share",
             "qb_id", "qb_name", "qb_db", "qb_epa_sum"]
     return tg[keep].dropna(subset=["points"]).sort_values(["gameday", "game_id", "team"]).reset_index(drop=True)
 

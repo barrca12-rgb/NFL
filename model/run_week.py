@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from .calibrate import build_features, injury_table
+from .coaches import coach_h2h
 from .data import HERE, REPO, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
 from .features import FEATURES, game_features
@@ -135,34 +136,65 @@ class Pricer:
 
 
 def add_verdicts(out: pd.DataFrame, phase: str) -> pd.DataFrame:
-    """One clear call per game: BET / SMALL / WATCH / PASS, a stake in units, and the reason in plain words.
+    """One clear call per game, a stake in units, and the reason in plain words.
 
     BET   - the best available offer is a bet under the phase's rule (see FLAG_RULES). Stake by flag (STAKES).
-    SMALL - Weeks 1-4 only: model cover clears 53% but the realistic price is not +EV (often a favorite laying a key
-            number): 0.5u.
+            Coach head-to-head (loose rule) agreeing is noted; disagreeing halves the stake (backtest: model picks
+            54.0% when it agrees, 50.4% when it disagrees).
+    H2H   - strict coach head-to-head fade (model/coaches.py; 57.2% since 1999): 0.5u, or 1u when the model's pick
+            is the same side. Replaces a model bet on the other side (54.3% vs ~50% in that case).
+    SMALL - Weeks 1-4 only: model cover clears 53% but the realistic price is not +EV: 0.5u.
     WATCH - not a bet at the best number available, but becomes one if a line moves to `bet_at`.
     PASS  - no edge worth betting."""
-    verdicts, stakes, reasons = [], [], []
+    verdicts, stakes, reasons, sides = [], [], [], []
     for r in out.itertuples():
         flag, ev = getattr(r, "flag", ""), getattr(r, "spread_ev", np.nan)
         flag = flag if isinstance(flag, str) else ""
         at = f" at {r.best_book}" if getattr(r, "best_book", "") else ""
-        if flag:
-            v, u = "BET", STAKES[flag]
+        strict = getattr(r, "h2h_strict", None)
+        strict = strict if isinstance(strict, str) else None
+        loose = getattr(r, "h2h_loose", None)
+        loose = loose if isinstance(loose, str) else None
+        pick = getattr(r, "spread_pick", None)
+        if strict and not (flag and pick == strict):
+            # strict head-to-head fade: on its own, or overriding a model bet on the other side
+            u = 1.0 if pick == strict else 0.5
+            v, side = "H2H", strict
+            better = r.away_coach if strict == r.home_team else r.home_coach
+            why = (f"Coach head-to-head: {better}'s teams have covered by {abs(r.h2h_total):.0f} pts total in "
+                   f"{int(r.h2h_meetings)} meetings; fading that has won 57% since 1999"
+                   + ("; model agrees" if pick == strict else ""))
+        elif flag:
+            v, u, side = "BET", STAKES[flag], pick
             why = f"{flag}{at}: model covers {r.p_cover_raw:.0%}, realistic {r.p_cover_blend:.0%}, EV {ev:+.3f}"
+            if strict == pick:
+                u += 0.5
+                why += f"; strict coach head-to-head agrees ({int(r.h2h_meetings)} meetings)"
+            elif loose == pick:
+                why += "; coach head-to-head agrees"
+            elif loose and loose != pick:
+                u /= 2
+                why += "; coach head-to-head disagrees, stake halved"
         elif phase == "early" and getattr(r, "p_cover_raw", 0) >= FLAG_RULES["early"][-1][1]:
-            v, u = "SMALL", 0.5
+            v, u, side = "SMALL", 0.5, pick
             why = f"Model likes it ({r.p_cover_raw:.0%}) but the realistic price is thin ({r.p_cover_blend:.0%})"
         elif pd.notna(getattr(r, "bet_at", np.nan)):
-            v, u = "WATCH", 0.0
+            v, u, side = "WATCH", 0.0, pick
             why = f"Becomes a bet at {r.spread_pick} {_fmt_spread(r.bet_at)}"
         else:
-            v, u = "PASS", 0.0
+            v, u, side = "PASS", 0.0, pick
             why = "No edge at any book's number"
         verdicts.append(v)
         stakes.append(u)
         reasons.append(why)
-    return out.assign(verdict=verdicts, stake_units=stakes, reason=reasons)
+        sides.append(side)
+    out = out.assign(verdict=verdicts, stake_units=stakes, reason=reasons, bet_side=sides)
+    # what to actually bet: the model's best offer, or the head-to-head side's best number
+    h2h_bet = out["verdict"].eq("H2H")
+    for a_, b_ in (("bet_line", "pick_line"), ("bet_odds", "pick_odds"), ("bet_book", "best_book")):
+        alt = {"bet_line": "h2h_line", "bet_odds": "h2h_odds", "bet_book": "h2h_book"}[a_]
+        out[a_] = np.where(h2h_bet, out.get(alt), out.get(b_))
+    return out
 
 
 def _payout(odds):
@@ -266,6 +298,7 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     f["pred"] = f["pred"] + f["team"].map(pts_adj).fillna(0)
 
     lines = load_lines(lines_path, wk, books)
+    h2h = coach_h2h(games, wk).set_index("game_id")
     phase = season_phase(week, wk["game_type"].iloc[0])
     cfg = SimConfig.calibrated(n_sims=n_sims)
     rows = []
@@ -315,6 +348,21 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
                 "flag": best["flag"], "offers": priced,
                 **pr.ladder(best_L, best["odds"]),
             })
+            # Coach head-to-head (model/coaches.py): price the fade side too, so it can be bet on its own.
+            hh = h2h.loc[g.game_id]
+            row.update({"home_coach": hh["home_coach"], "away_coach": hh["away_coach"],
+                        "h2h_meetings": int(hh["h2h_meetings"]), "h2h_total": float(hh["h2h_total"]),
+                        "h2h_loose": hh["h2h_loose"], "h2h_strict": hh["h2h_strict"]})
+            if hh["h2h_strict"]:
+                fside = "home" if hh["h2h_strict"] == g.home_team else "away"
+                fp = Pricer(sim, s["sim_margin"], spread_nv, bt, h["exp_drives"], playoff, cfg, rng, phase, fside)
+                fo = sorted(({"book": o.book, "line": fp.pick_line(-o.home_spread),
+                              "odds": getattr(o, f"{fside}_spread_odds"),
+                              **fp.price(-o.home_spread, getattr(o, f"{fside}_spread_odds"))}
+                             for o in offers.itertuples()), key=lambda x: (x["line"], -abs(x["odds"] or 110)),
+                            reverse=True)[0]   # most points, then best price
+                row.update({"h2h_line": fo["line"], "h2h_odds": fo["odds"], "h2h_book": fo["book"],
+                            "h2h_p_blend": fo["p_blend"]})
             # Straight-up: model blended with the consensus line (66.8% of winners in the 2016-2025 backtest).
             bm = spread_nv + 0.35 * row["spread_edge"]
             win = summarize(simulate_game((bt + bm) / 2, (bt - bm) / 2, h["exp_drives"], playoff,
@@ -399,16 +447,18 @@ def _injury_section(out: pd.DataFrame, mode: str | None, players: pd.DataFrame |
 def _flagged_section(out: pd.DataFrame, phase: str) -> list[str]:
     """The bets, at the top of the report."""
     L = ["## Bets\n"]
-    fl = out[out["verdict"].isin(["BET", "SMALL"])].copy() if "verdict" in out else out.iloc[0:0]
+    fl = out[out["verdict"].isin(["BET", "H2H", "SMALL"])].copy() if "verdict" in out else out.iloc[0:0]
     if fl.empty:
         return L + ["No bets at the available numbers. " + FLAG_TEXT[phase], ""]
     fl = fl.sort_values(["stake_units", "p_cover_raw"], ascending=False)
     L += ["| Call | Stake | Bet | Book | Good down to | Model cover | Realistic cover | EV/unit |",
           "|---|---|---|---|---|---|---|---|"]
     for r in fl.itertuples():
-        L.append(f"| **{r.verdict}** {r.flag} | {r.stake_units:g}u | **{r.spread_pick} {_fmt_spread(r.pick_line)} "
-                 f"{_fmt_ml(r.pick_odds)}** ({r.away_team} @ {r.home_team}) | {r.best_book} | "
-                 f"{_fmt_spread(r.bet_down_to)} | {r.p_cover_raw:.1%} | {r.p_cover_blend:.1%} | {r.spread_ev:+.3f} |")
+        h2h = r.verdict == "H2H"
+        L.append(f"| **{r.verdict}** {'' if h2h else r.flag} | {r.stake_units:g}u | **{r.bet_side} "
+                 f"{_fmt_spread(r.bet_line)} {_fmt_ml(r.bet_odds)}** ({r.away_team} @ {r.home_team}) | {r.bet_book} | "
+                 f"{'-' if h2h else _fmt_spread(r.bet_down_to)} | {'-' if h2h else f'{r.p_cover_raw:.1%}'} | "
+                 f"{(r.h2h_p_blend if h2h else r.p_cover_blend):.1%} | {'-' if h2h else f'{r.spread_ev:+.3f}'} |")
     L += ["", FLAG_TEXT[phase] + " Breakeven at -110 is 52.4%.", ""]
     return L
 
