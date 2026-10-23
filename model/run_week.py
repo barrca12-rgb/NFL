@@ -165,6 +165,9 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
                 "p_cover_raw": s[f"p_{side}_cover"] / (s["p_home_cover"] + s["p_away_cover"]),
                 "p_cover_blend": p_win / (p_win + p_lose),
                 "spread_ev": p_win * _payout(ln[f"{side}_spread_odds"]) - p_lose,
+                # Straight-up: the blended (35% model, 65% line) view picked 66.8% of winners in 2016-2025 vs
+                # 66.4% for the closing-line favorite and 65.3% for the model alone.
+                "p_home_win_blend": b["p_home_win"],
             })
             if pd.notna(ln["total"]):
                 row["total_edge"] = s["sim_total"] - ln["total"]
@@ -214,6 +217,16 @@ def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: 
                  f"{r.p_home_win:.0%} | {_fmt_ml(r.fair_away_ml)}/{_fmt_ml(r.fair_home_ml)} | "
                  f"{_fmt_ml(r.away_ml)}/{_fmt_ml(r.home_ml)} |")
     L += ["", "Spread edge = model margin minus the line, in points (+ favors the home side).", ""]
+
+    pw = out["p_home_win_blend"] if "p_home_win_blend" in out else out["p_home_win"]
+    su = out.assign(pw=pw.fillna(out["p_home_win"]))
+    su["winner"] = np.where(su["pw"] >= 0.5, su["home_team"], su["away_team"])
+    su["conf"] = np.maximum(su["pw"], 1 - su["pw"])
+    L += ["## Winner picks (straight up, most confident first)\n", "| Matchup | Winner | Win % |", "|---|---|---|"]
+    for r in su.sort_values("conf", ascending=False).itertuples():
+        L.append(f"| {r.away_team} @ {r.home_team} | **{r.winner}** | {r.conf:.0%} |")
+    L += ["", "Win % blends the model (35%) with the line (65%). In the 2016-2025 backtest this picked 66.8% of "
+          "winners (closing-line favorite: 66.4%).", ""]
 
     if "spread_edge" in out:
         sp = out[out["spread_edge"].notna()].sort_values("p_cover_raw", ascending=False)
