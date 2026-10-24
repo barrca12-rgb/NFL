@@ -85,22 +85,16 @@ TEMPLATE = r"""<!doctype html>
 <style>
 /* Layout: a bet slip up top (the only thing to act on), then sortable reference tables below. */
 :root {
-  --bg: #f3f5f2; --surface: #ffffff; --ink: #18211b; --muted: #5d6a61; --line: #d9dfd9;
-  --turf: #1f7a45; --turf-soft: #e3f1e8; --amber: #a86400; --amber-soft: #fbefdc;
-  --chalk: #eef1ee; --pass: #8a948d; --neg: #b3402f;
+  /* Sportsbook-style dark theme: near-black canvas, raised cards, neon green for anything actionable */
+  --bg: #0a0e13; --surface: #141a22; --ink: #f3f6f9; --muted: #8d99a8; --line: #222b37;
+  --turf: #2fe27a; --turf-soft: #10301f; --amber: #ffb627; --amber-soft: #382a0c; --blue: #2f9bff;
+  --chalk: #1c2430; --pass: #6d7887; --neg: #ff5c61; --on-accent: #06110b;
   --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #111613; --surface: #18201b; --ink: #e6ece7; --muted: #9aa69e; --line: #2a352e;
-  --turf: #4cc27c; --turf-soft: #183323; --amber: #f0a53c; --amber-soft: #33270f;
-  --chalk: #1e2722; --pass: #76817a; --neg: #ef7b67; color-scheme: dark } }
-:root[data-theme="dark"] {
-  --bg: #111613; --surface: #18201b; --ink: #e6ece7; --muted: #9aa69e; --line: #2a352e;
-  --turf: #4cc27c; --turf-soft: #183323; --amber: #f0a53c; --amber-soft: #33270f;
-  --chalk: #1e2722; --pass: #76817a; --neg: #ef7b67; color-scheme: dark }
 * { box-sizing: border-box }
-body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+body { margin: 0; background: radial-gradient(1200px 500px at 50% -200px, #12301f 0%, var(--bg) 60%) no-repeat, var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
 .wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 64px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: grid; gap: 36px; }
@@ -116,7 +110,7 @@ header { display: grid; gap: 10px }
 .update { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--surface);
   border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px }
 .update button { font: 700 15px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
-  padding: 10px 16px; border-radius: 8px; border: 0; background: var(--turf); color: var(--surface) }
+  padding: 11px 18px; border-radius: 999px; border: 0; background: var(--turf); color: var(--on-accent); box-shadow: 0 0 24px rgba(47,226,122,.35) }
 .update button:disabled { opacity: .55; cursor: progress }
 .update .link { background: none; color: var(--muted); padding: 0; font: 600 13px/1 var(--body); text-transform: none;
   letter-spacing: 0; text-decoration: underline }
@@ -129,15 +123,16 @@ section { display: grid; gap: 14px; min-width: 0 }
 .plays { display: grid; gap: 10px }
 .play { display: grid; grid-template-columns: 64px 1fr auto; gap: 4px 14px; align-items: center; background: var(--surface);
   border: 1px solid var(--line); border-left: 4px solid var(--turf); border-radius: 10px; padding: 12px 16px }
-.play.small { border-left-color: var(--amber) } .play.tz { border-left-color: var(--ink) }
-.play .units { grid-row: span 2; font: 700 26px/1 var(--display); text-align: center }
+.play.small { border-left-color: var(--amber) } .play.tz { border-left-color: var(--blue) }
+.play .units { grid-row: span 2; font: 700 26px/1 var(--display); text-align: center; color: var(--turf) }
+.play.tz .units { color: var(--blue) } .play.small .units { color: var(--amber) }
 .play .units small { display: block; font: 600 11px/1.2 var(--body); color: var(--muted); letter-spacing: .06em; text-transform: uppercase }
 .play .pick { font: 700 24px/1.1 var(--display) }
 .play .pick .price { color: var(--muted); font-weight: 600 }
 .play .where { text-align: right; font-size: 14px; color: var(--muted) }
 .play .bk { display: inline-block; margin-top: 6px; font: 700 14px/1 var(--display); letter-spacing: .06em; text-transform: uppercase;
   padding: 6px 10px; border-radius: 6px; background: var(--turf-soft); color: var(--turf) }
-.play.tz .bk { background: var(--chalk); color: var(--ink) }
+.play.tz .bk { background: #0f2740; color: var(--blue) }
 .play .sub { grid-column: 2 / 4; color: var(--muted); font-size: 14px }
 @media (max-width: 560px) { .play { grid-template-columns: 52px 1fr } .play .where { grid-column: 2; text-align: left }
   .play .sub { grid-column: 1 / 3 } }
@@ -147,18 +142,21 @@ section { display: grid; gap: 14px; min-width: 0 }
 .slate { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px }
 @media (max-width: 400px) { .slate { grid-template-columns: 1fr } }
 .game { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
-.game.has-play { box-shadow: inset 0 3px 0 var(--turf) }
+.game.has-play { box-shadow: inset 0 3px 0 var(--turf), 0 0 0 1px rgba(47,226,122,.25) }
 .g-top { display: flex; justify-content: space-between; align-items: center; gap: 8px }
 .g-title { font: 700 22px/1 var(--display) }
 .g-kick { color: var(--muted); font-size: 13px }
-table.odds { font-size: 14px; width: 100% }
-table.odds th, table.odds td { padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap }
+table.odds { font-size: 14px; width: 100%; border-collapse: separate; border-spacing: 4px; margin: -4px }
+table.odds th, table.odds td { padding: 7px 8px; border: 0; white-space: nowrap }
+table.odds td:not(:first-child) { background: var(--chalk); border-radius: 6px; text-align: center; font-weight: 600 }
 table.odds thead th { position: static; background: none; cursor: default; font-size: 11px; text-align: right }
-table.odds thead th:first-child { text-align: left }
-table.odds td:first-child { text-align: left; color: var(--muted) }
-table.odds tr.grp td { border-bottom: 2px solid var(--line) }
+table.odds thead th { text-align: center } table.odds thead th:first-child { text-align: left }
+table.odds td:first-child { text-align: left; color: var(--muted); padding-left: 0 }
+table.odds tr.grp + tr td { border-top: 8px solid transparent; background-clip: padding-box }
+table.odds tr.grp + tr td:first-child { border-top-width: 8px }
 table.odds td small { color: var(--muted); font-size: 12px; margin-left: 3px }
-table.odds td.best { color: var(--turf); font-weight: 700 } table.odds td.best small { color: var(--turf) }
+table.odds td.best { color: var(--turf); font-weight: 700; background: var(--turf-soft); box-shadow: inset 0 0 0 1px var(--turf) }
+table.odds td.best small { color: var(--turf) }
 table.odds tr.mine td:first-child { color: var(--ink); font-weight: 700 }
 table.odds tr.mine td:first-child::before { content: "\2713 "; color: var(--turf) }
 .best-key { color: var(--turf) }
@@ -168,9 +166,9 @@ table.odds tr.mine td:first-child::before { content: "\2713 "; color: var(--turf
 
 /* Verdict pills */
 .v { display: inline-block; font: 700 12px/1 var(--display); letter-spacing: .08em; padding: 5px 8px; border-radius: 4px }
-.v.BET { background: var(--turf); color: var(--surface) }
+.v.BET { background: var(--turf); color: var(--on-accent) }
 .v.SMALL { background: var(--amber-soft); color: var(--amber) }
-.v.H2H { background: var(--ink); color: var(--bg) }
+.v.H2H { background: var(--blue); color: #fff }
 .v.WATCH { background: var(--chalk); color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber) }
 .v.PASS { background: var(--chalk); color: var(--pass) }
 
@@ -223,7 +221,7 @@ details[open] summary { margin-bottom: 10px }
 
   <section aria-labelledby="slate-h">
     <div class="sec-head"><h2 id="slate-h">Full slate</h2>
-      <span class="note">Every game at every book. <b class="best-key">Bold green</b> is the best number for that bet; &#10003; marks a model play.</span></div>
+      <span class="note">Every game at every book. <b class="best-key">Green</b> is the best number for that bet; &#10003; marks a model play.</span></div>
     <div class="slate" id="slate"></div>
   </section>
 
