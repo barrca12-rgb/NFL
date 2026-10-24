@@ -437,6 +437,13 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     return out
 
 
+def _all_books(src: pd.Series) -> str:
+    """Every book used anywhere on the card (games can differ when a book hasn't posted all of them yet)."""
+    note = next((x[x.index(" (live"):] for x in src.dropna() if " (live" in x), "")
+    books = sorted({b for x in src.dropna() for b in x.split(" (live")[0].split(", ")})
+    return ", ".join(books) + note
+
+
 def _fmt_spread(x):
     if pd.isna(x):
         return "-"
@@ -530,7 +537,7 @@ def render(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_sims: 
            tz: pd.DataFrame | None = None, tpairs: pd.DataFrame | None = None) -> str:
     L = [f"# {season} Week {week} projections\n",
          f"{n_sims:,} Monte Carlo simulations per game. Spreads use sportsbook convention (home -3 = home favored by 3). "
-         f"Lines: {out['line_source'].iloc[0]}.\n"]
+         f"Lines: {_all_books(out['line_source'])}.\n"]
     phase = season_phase(week)
     L += _flagged_section(out, phase)
     L += _teaser_section(tz, tpairs)
