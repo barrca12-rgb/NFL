@@ -642,16 +642,24 @@ if __name__ == "__main__":
         # SportsGameOdds when its key is set, then The Odds API, then the newest saved snapshot
         sources = [(p, os.environ.get(k)) for p, k in (("sgo", "SGO_API_KEY"), ("theoddsapi", "ODDS_API_KEY"))
                    if os.environ.get(k)]
+        log = [f"{pd.Timestamp.now(tz='UTC'):%Y-%m-%d %H:%M} UTC  keys set: "
+               + (", ".join(p for p, _ in sources) or "none")]
         for provider, key in sources:
             try:
                 lines_path = pull_live(key, books, provider=provider)
+                log.append(f"{provider}: ok -> {os.path.basename(lines_path)}")
                 break
             except Exception as e:  # network, quota or format trouble: try the next source
-                print(f"live odds pull from {provider} failed ({e})")
+                detail = e.read().decode(errors="replace")[:300] if hasattr(e, "read") else ""
+                log.append(f"{provider}: FAILED {e} {detail}".strip())
+                print(f"live odds pull from {provider} failed ({e}) {detail}")
         if sources and not lines_path:
             lines_path = latest_snapshot()
-            print(f"using {lines_path or 'nflverse lines'}")
+            log.append(f"fell back to {lines_path or 'nflverse lines'}")
         if not sources:
             print("no odds key set (SGO_API_KEY or ODDS_API_KEY): using nflverse consensus lines")
+        # which source the last run used (and why not the first choice), kept in the repo for troubleshooting
+        with open(os.path.join(REPO, "lines", "last_pull.txt"), "w") as fh:
+            fh.write("\n".join(log) + "\n")
     run(a.season, a.week, a.sims, lines_path, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
         books=books)
