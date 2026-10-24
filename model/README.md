@@ -49,6 +49,13 @@ Every bet also shows the **book** to bet it at and **good down to**: the worst n
 * Within a picked side, no column (model cover %, point edge, realistic cover %) predicted covering much better
   than another. The value is mostly in which side to take.
 
+**Website.** The card is published at https://barrca12-rgb.github.io/NFL/ by the `Update bet card` GitHub Actions
+workflow (`.github/workflows/update.yml`). It runs on Tuesday, Thursday and Sunday mornings, from the Actions tab, or
+from the page's **Update now** button: live odds, a fresh model run, the report and odds snapshot committed to the
+repo, and the page redeployed (about 5-10 minutes). One-time setup: add the `ODDS_API_KEY` repository secret, set
+Settings → Pages → Source to "GitHub Actions", and for the button, paste a fine-grained token (this repo only,
+Actions: Read and write) via the page's "GitHub token" link; it stays in that browser.
+
 **Lines from several books** (recommended): `--lines` accepts the flattened export from The Odds API or its
 Google Sheets add-on (columns `game_id, commence_time, bookmaker, home_team, away_team, market, label_1, odd_1,
 point_1, ...`). Download the sheet as CSV into `lines/` and run:
