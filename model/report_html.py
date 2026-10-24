@@ -49,6 +49,7 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
         "p_total_raw", "winner", "win_pct", "away_inj_pts", "home_inj_pts", "qb_note",
         "best_book", "pick_odds", "offers", "n_books", "bet_side", "bet_line", "bet_odds", "bet_book",
         "h2h_meetings", "h2h_total", "h2h_strict", "h2h_loose", "h2h_p_blend", "home_coach", "away_coach",
+        "kickoff", "book_lines", "total_edge",
     ])
     p = pt.reset_index().rename(columns={"index": "team"})
     p["rank"] = range(1, len(p) + 1)
@@ -64,7 +65,7 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
         "games": games, "ratings": ratings, "injuries": players,
         "teasers": _records(tz, ["matchup", "team", "grade", "line", "teased_line", "book", "total", "p_leg"])
         if tz is not None and len(tz) else [],
-        "teaser_pairs": _records(tpairs, ["teaser", "grades", "p_both", "p_both_model", "ev", "stake_units"])
+        "teaser_pairs": _records(tpairs, ["teaser", "grades", "legs", "p_both", "p_both_model", "ev", "stake_units"])
         if tpairs is not None and len(tpairs) else [],
     }
     payload = json.dumps(data).replace("</", "<\\/")
@@ -124,24 +125,43 @@ section { display: grid; gap: 14px; min-width: 0 }
 .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px }
 .note { color: var(--muted); font-size: 14px; max-width: 80ch; margin: 0 }
 
-/* Bet slip */
-.slip { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px }
-.ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px;
-  display: grid; gap: 10px; border-top: 4px solid var(--turf) }
-.ticket.small { border-top-color: var(--amber) }
-.ticket .pick { font: 700 32px/1 var(--display) }
-.ticket .game { color: var(--muted); font-size: 14px }
-.ticket dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 14px }
-.ticket dt { color: var(--muted) }
-.ticket dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600 }
-.stake { font: 700 15px/1 var(--display); letter-spacing: .06em; text-transform: uppercase }
-.ticket .price { font-size: 20px; color: var(--muted) }
-.ticket .book { font-size: 14px }
-table.books { font-size: 13px; width: 100% }
-table.books td { padding: 3px 0; border: 0; text-align: left }
-table.books td:nth-child(2), table.books td:nth-child(3) { text-align: right }
-table.books tr.best td { font-weight: 700 }
+/* Model plays: one row per bet */
+.plays { display: grid; gap: 10px }
+.play { display: grid; grid-template-columns: 64px 1fr auto; gap: 4px 14px; align-items: center; background: var(--surface);
+  border: 1px solid var(--line); border-left: 4px solid var(--turf); border-radius: 10px; padding: 12px 16px }
+.play.small { border-left-color: var(--amber) } .play.tz { border-left-color: var(--ink) }
+.play .units { grid-row: span 2; font: 700 26px/1 var(--display); text-align: center }
+.play .units small { display: block; font: 600 11px/1.2 var(--body); color: var(--muted); letter-spacing: .06em; text-transform: uppercase }
+.play .pick { font: 700 24px/1.1 var(--display) }
+.play .pick .price { color: var(--muted); font-weight: 600 }
+.play .where { text-align: right; font-size: 14px } .play .where b { display: block; font-size: 16px }
+.play .sub { grid-column: 2 / 4; color: var(--muted); font-size: 14px }
+@media (max-width: 560px) { .play { grid-template-columns: 52px 1fr } .play .where { grid-column: 2; text-align: left }
+  .play .where b { display: inline } .play .sub { grid-column: 1 / 3 } }
 .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; color: var(--muted) }
+
+/* Full slate: one ticket per game, books side by side */
+.slate { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px }
+@media (max-width: 400px) { .slate { grid-template-columns: 1fr } }
+.game { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
+.game.has-play { box-shadow: inset 0 3px 0 var(--turf) }
+.g-top { display: flex; justify-content: space-between; align-items: center; gap: 8px }
+.g-title { font: 700 22px/1 var(--display) }
+.g-kick { color: var(--muted); font-size: 13px }
+table.odds { font-size: 14px; width: 100% }
+table.odds th, table.odds td { padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap }
+table.odds thead th { position: static; background: none; cursor: default; font-size: 11px; text-align: right }
+table.odds thead th:first-child { text-align: left }
+table.odds td:first-child { text-align: left; color: var(--muted) }
+table.odds tr.grp td { border-bottom: 2px solid var(--line) }
+table.odds td small { color: var(--muted); font-size: 12px; margin-left: 3px }
+table.odds td.best { color: var(--turf); font-weight: 700 } table.odds td.best small { color: var(--turf) }
+table.odds tr.mine td:first-child { color: var(--ink); font-weight: 700 }
+table.odds tr.mine td:first-child::before { content: "\2713 "; color: var(--turf) }
+.best-key { color: var(--turf) }
+.g-model { font-size: 14px; color: var(--muted) } .g-model b { color: var(--ink) }
+.g-play { font: 700 16px/1.2 var(--display); letter-spacing: .02em; color: var(--turf) }
+.g-play.none { color: var(--pass); font-weight: 600 }
 
 /* Verdict pills */
 .v { display: inline-block; font: 700 12px/1 var(--display); letter-spacing: .08em; padding: 5px 8px; border-radius: 4px }
@@ -169,7 +189,8 @@ thead th[aria-sort="descending"]::after { content: " \25BC"; font-size: 9px }
 tbody tr:hover { background: var(--chalk) }
 td.pos { color: var(--turf); font-weight: 600 } td.neg { color: var(--neg) }
 td.strong { font-weight: 700 }
-details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; display: grid; gap: 10px }
+details > :not(summary) { margin-top: 10px }
 summary { cursor: pointer; font: 700 18px/1.2 var(--display) }
 details[open] summary { margin-bottom: 10px }
 .glossary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px }
@@ -191,52 +212,48 @@ details[open] summary { margin-bottom: 10px }
     </div>
   </header>
 
-  <section aria-labelledby="slip-h">
-    <div class="sec-head"><h2 id="slip-h">Bets</h2><span class="note" id="slip-sum"></span></div>
-    <div class="slip" id="slip"></div>
+  <section aria-labelledby="plays-h">
+    <div class="sec-head"><h2 id="plays-h">Model plays</h2><span class="note" id="plays-sum"></span></div>
+    <div class="plays" id="plays"></div>
     <p class="note" id="flagtext"></p>
   </section>
 
-  <section aria-labelledby="tz-h" id="tz-sec">
-    <div class="sec-head"><h2 id="tz-h">Teasers</h2><span class="note">6-point, 2-team teasers through 3 and 7. Grade A legs have won about 78% since 2006; break-even is 73.9% per leg at -120.</span></div>
-    <div class="tbl"><table id="t-tzp"></table></div>
-    <div class="tbl"><table id="t-tz"></table></div>
+  <section aria-labelledby="slate-h">
+    <div class="sec-head"><h2 id="slate-h">Full slate</h2>
+      <span class="note">Every game at every book. <b class="best-key">Bold green</b> is the best number for that bet; &#10003; marks a model play.</span></div>
+    <div class="slate" id="slate"></div>
   </section>
 
-  <section aria-labelledby="watch-h" id="watch-sec">
-    <div class="sec-head"><h2 id="watch-h">Watch list</h2><span class="note">Not bets at today's number. Bet them only if the line reaches the number shown.</span></div>
-    <div class="tbl"><table id="t-watch"></table></div>
-  </section>
+  <details id="watch-sec"><summary>Watch list</summary>
+    <p class="note">Not bets at today's number. Bet them only if the line reaches the number shown.</p>
+    <div class="tbl"><table id="t-watch"></table></div></details>
 
-  <section aria-labelledby="all-h">
-    <div class="sec-head"><h2 id="all-h">All games, against the spread</h2>
-      <div class="filters" role="group" aria-label="Filter by verdict" id="vfilter"></div></div>
+  <details><summary>All games: model numbers</summary>
+    <div class="filters" role="group" aria-label="Filter by verdict" id="vfilter"></div>
     <div class="tbl"><table id="t-games"></table></div>
-    <p class="note">Click any column to sort. Spreads use sportsbook convention: -3 means that team is favored by 3. Edge is the model's margin minus the line, from the home team's side.</p>
-  </section>
+    <p class="note">Click any column to sort. Spreads use sportsbook convention: -3 means that team is favored by 3. Edge is the model's margin minus the line, from the home team's side.</p></details>
 
-  <section aria-labelledby="win-h">
-    <div class="sec-head"><h2 id="win-h">Winner picks</h2></div>
+  <details><summary>Winner picks</summary>
     <div class="tbl"><table id="t-win"></table></div>
-    <p class="note">Win % blends the model (35%) with the line (65%). In the 2016-2025 backtest this picked 66.8% of winners; the closing-line favorite won 66.4%.</p>
-  </section>
+    <p class="note">Win % blends the model (35%) with the line (65%). In the 2016-2025 backtest this picked 66.8% of winners; the closing-line favorite won 66.4%.</p></details>
 
-  <section aria-labelledby="tot-h">
-    <div class="sec-head"><h2 id="tot-h">Totals</h2><span class="note">Leans only. The model showed no reliable edge on totals in the backtest.</span></div>
-    <div class="tbl"><table id="t-tot"></table></div>
-  </section>
+  <details><summary>Totals (leans only)</summary>
+    <p class="note">The model showed no reliable edge on totals in the backtest. Not bets.</p>
+    <div class="tbl"><table id="t-tot"></table></div></details>
 
-  <section aria-labelledby="gl-h">
-    <h2 id="gl-h">How to read this</h2>
+  <details id="tz-sec"><summary>Teaser legs</summary>
+    <p class="note" id="tz-note">Every leg that qualifies this week. Only the pairings listed under Model plays are bets; this list is for building your own if a book has a better teaser price. 6-point teasers through 3 and 7: grade A legs have won about 78% since 2006; break-even is 73.9% per leg at -120.</p>
+    <div class="tbl"><table id="t-tz"></table></div></details>
+
+  <details><summary>How to read this</summary>
     <div class="glossary">
       <div><b>Model cover %</b>How often the pick covers in 20,000 simulations if the model's projection is exactly right. Used to pick and rank plays; it runs high (a 70% here has historically won about 56%).</div>
-      <div><b>Realistic cover %</b>The same simulation centered between the market consensus and the model (45% toward the model in Weeks 1-4, 20% after), which matches the model's real track record. It is then priced at each book's own number, so a better number at one book shows up as real value. Use this for whether a bet is worth it and how much.</div>
+      <div><b>Realistic cover %</b>The same simulation centered between the market consensus and the model (45% toward the model in Weeks 1-4, 20% after), which matches the model's real track record, then priced at each book's own number. Use this for whether a bet is worth it.</div>
       <div><b>EV / unit</b>Expected profit per unit staked at the posted odds, from the realistic cover %. Above 0 means the price is worth taking.</div>
-      <div><b>Good down to</b>The worst number you can still take the bet at, at the same price. If the line moves past it, pass.</div>
-      <div><b>H2H</b>Coach head-to-head angle: fade the head coach whose teams have covered more in 4+ past meetings with this coach. Won 57% since 1999 (58% in 2021-25), and 57% when the model agrees.</div>
-      <div><b>Every book</b>Each sportsbook's number and price for the pick. The bold one is the best; always bet there.</div>
-    </div>
-  </section>
+      <div><b>Good down to</b>The worst number you can still take the bet at. If the line moves past it, pass.</div>
+      <div><b>H2H</b>Coach head-to-head angle: fade the head coach whose teams have covered more in 4+ past meetings with this coach. Won 57% since 1999.</div>
+      <div><b>Teaser</b>Two legs moved 6 points each, both must win. Break-even at -120 is 54.5% for the pair (73.9% per leg).</div>
+    </div></details>
 
   <details id="inj-sec"><summary>Injuries and quarterbacks</summary><p class="note" id="inj-note"></p>
     <div class="tbl"><table id="t-inj"></table></div></details>
@@ -260,10 +277,6 @@ details[open] summary { margin-bottom: 10px }
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
   const units = (u) => u + "u";
   const ml = (x) => x == null ? "" : (x > 0 ? "+" : "") + Math.round(x);
-  const offersHtml = (g) => !g.offers || g.offers.length < 2 ? "" :
-    '<table class="books"><tbody>' + g.offers.map((o) => "<tr" + (o.book === g.best_book ? ' class="best"' : "") + "><td>" +
-      esc(o.book) + "</td><td>" + sp(o.line) + " " + ml(o.odds) + '</td><td class="' + (o.ev > 0 ? "pos" : "neg") + '">' + ev(o.ev) + "</td></tr>").join("") +
-    "</tbody></table>";
   const booksCell = (r) => (r.offers || []).map((o) => (o.book === r.best_book ? "<b>" : "") + esc(o.book.replace(/\.ag$/, "")) + " " +
     sp(o.line) + " " + ml(o.odds) + (o.book === r.best_book ? "</b>" : "")).join("<br>");
 
@@ -271,10 +284,12 @@ details[open] summary { margin-bottom: 10px }
   $("eyebrow").textContent = D.season + " NFL season · " + (D.phase === "early" ? "Weeks 1-4: strongest part of the season" : "Week 5 on: thin edges, smaller stakes");
   $("h1").textContent = "Week " + D.week + " Bet Card";
   const bets = D.games.filter((g) => g.verdict === "BET" || g.verdict === "SMALL" || g.verdict === "H2H");
-  const units_total = bets.reduce((s, g) => s + (g.stake_units || 0), 0);
-  $("lede").textContent = bets.length
-    ? bets.length + (bets.length === 1 ? " play" : " plays") + " this week, " + units_total + " units total. Everything else is a pass unless a watch-list line moves."
-    : "No bets at the current numbers. Check the watch list for lines that would turn into bets.";
+  const nPlays = bets.length + D.teaser_pairs.length;
+  const units_total = Math.round((bets.reduce((s, g) => s + (g.stake_units || 0), 0) +
+    D.teaser_pairs.reduce((s, t) => s + (t.stake_units || 0), 0)) * 100) / 100;
+  $("lede").textContent = nPlays
+    ? nPlays + (nPlays === 1 ? " play" : " plays") + " this week, " + units_total + " units total. Everything else is a pass."
+    : "No bets at the current numbers. The full slate below shows every line.";
   const injLabel = {thursday: "Thursday practice report applied", final: "Final injury report applied", monday: "Injury report not out yet (Monday run)"};
   [D.n_sims.toLocaleString() + " sims per game", "Lines: " + D.line_source, injLabel[D.inj_mode] || "No injury report"]
     .forEach((t) => { const c = document.createElement("span"); c.className = "chip"; c.textContent = t; $("meta").appendChild(c); });
@@ -332,35 +347,89 @@ details[open] summary { margin-bottom: 10px }
     if (run && run.status !== "completed") followRun(new Date(run.created_at));
   }).catch(() => {});
 
-  // Bet slip
-  if (!bets.length) {
-    $("slip").innerHTML = '<div class="empty">No game meets the betting rule at today\'s lines. That is the right call most weeks after Week 4.</div>';
-  } else {
-    bets.sort((a, b) => b.stake_units - a.stake_units || b.p_cover_raw - a.p_cover_raw).forEach((g) => {
-      const el = document.createElement("article");
-      el.className = "ticket" + (g.verdict === "SMALL" ? " small" : "");
-      el.innerHTML = '<div class="stake" style="color:var(' + (g.verdict === "SMALL" ? "--amber" : "--turf") + ')">' +
-        esc(g.verdict) + " · " + units(g.stake_units) + (g.flag ? " · " + esc(g.flag) : "") + "</div>" +
-        '<div class="pick">' + esc(g.bet_side) + " " + sp(g.bet_line) + ' <span class="price">' + ml(g.bet_odds) + "</span></div>" +
-        '<div class="book">Bet at <b>' + esc(g.bet_book) + "</b></div>" +
-        '<div class="game">' + esc(g.matchup) + " · " + esc(g.gameday) + "</div>" +
-        (g.verdict === "H2H"
-          ? "<dl><dt>Coaches</dt><dd>" + esc(g.away_coach) + " vs " + esc(g.home_coach) + "</dd>" +
-            "<dt>Meetings</dt><dd>" + g.h2h_meetings + "</dd>" +
-            "<dt>Realistic cover</dt><dd>" + pct(g.h2h_p_blend) + "</dd>" +
-            "<dt>Angle record</dt><dd>57% since 1999</dd>"
-          : "<dl><dt>Good down to</dt><dd>" + esc(g.spread_pick) + " " + sp(g.bet_down_to) + "</dd>" +
-            "<dt>Realistic cover</dt><dd>" + pct(g.p_cover_blend) + "</dd>" +
-            "<dt>Model cover</dt><dd>" + pct(g.p_cover_raw) + "</dd>" +
-            "<dt>EV / unit</dt><dd>" + ev(g.spread_ev) + "</dd>") +
-        "<dt>Projection</dt><dd>" + esc(g.away_team) + " " + num1(g.proj_away) + " – " + esc(g.home_team) + " " + num1(g.proj_home) + "</dd></dl>" +
-        '<div class="game">' + esc(g.reason) + "</div>" +
-        (g.verdict === "H2H" ? "" : offersHtml(g)) +
-        (g.qb_note ? '<div class="game">QB: ' + esc(g.qb_note) + "</div>" : "");
-      $("slip").appendChild(el);
+  // Kickoff label, e.g. "Sun Nov 1 · 1:00 PM ET"
+  const kick = (g) => {
+    const d = new Date(g.gameday + "T12:00:00");
+    const t = String(g.kickoff || "").split(" ")[1] || "";
+    let time = "";
+    if (/^\d{1,2}:\d{2}$/.test(t)) { let [h, m] = t.split(":").map(Number); time = (h % 12 || 12) + ":" + String(m).padStart(2, "0") + (h < 12 ? " AM" : " PM") + " ET"; }
+    return d.toLocaleDateString([], {weekday: "short", month: "short", day: "numeric"}) + (time ? " · " + time : "");
+  };
+  const byKick = (a, b) => String(a.gameday).localeCompare(String(b.gameday)) || String(a.kickoff).localeCompare(String(b.kickoff));
+
+  // Model plays: straight bets first (biggest stake, then strongest), then teasers
+  const plays = $("plays");
+  const addPlay = (cls, unitsTxt, label, pickHtml, whereHtml, sub) => {
+    const el = document.createElement("article");
+    el.className = "play " + cls;
+    el.innerHTML = '<div class="units">' + unitsTxt + "<small>" + esc(label) + "</small></div>" +
+      '<div class="pick">' + pickHtml + "</div>" + '<div class="where">' + whereHtml + "</div>" +
+      '<div class="sub">' + sub + "</div>";
+    plays.appendChild(el);
+  };
+  bets.sort((a, b) => b.stake_units - a.stake_units || b.p_cover_blend - a.p_cover_blend).forEach((g) => {
+    const h2h = g.verdict === "H2H";
+    const stats = h2h
+      ? esc(g.reason || "Coach head-to-head angle") + " · realistic cover " + pct(g.h2h_p_blend)
+      : "Realistic cover " + pct(g.p_cover_blend) + " · EV " + ev(g.spread_ev) + "/unit · good down to " + sp(g.bet_down_to);
+    addPlay(g.verdict === "SMALL" ? "small" : "", units(g.stake_units), g.flag || g.verdict,
+      esc(g.bet_side) + " " + sp(g.bet_line) + ' <span class="price">' + ml(g.bet_odds) + "</span>",
+      "<b>" + esc(g.bet_book) + "</b> " + kick(g),
+      esc(g.matchup) + " · " + stats + (g.qb_note ? " · QB: " + esc(g.qb_note) : ""));
+  });
+  D.teaser_pairs.forEach((t) => {
+    const legs = (t.legs || []);
+    const books = [...new Set(legs.map((l) => l.book))].join(" / ");
+    addPlay("tz", units(t.stake_units), "Teaser " + t.grades, esc(t.teaser) + ' <span class="price">-120</span>',
+      "<b>" + esc(books || "best teaser price") + "</b> 2-team, 6 points",
+      "Both legs win about " + pct0(t.p_both) + " historically (break-even 54.5% at -120) · " +
+      legs.map((l) => esc(l.team) + " from " + sp(l.line)).join(", "));
+  });
+  if (!nPlays) plays.innerHTML = '<div class="empty">No game meets the betting rule at today\'s lines. That is the right call most weeks after Week 4.</div>';
+  $("plays-sum").textContent = nPlays ? units_total + " units across " + nPlays + " plays" : "";
+
+  // Full slate: one ticket per game; books side by side so the best number is easy to spot
+  const pay = (o) => o == null ? -1 : (o > 0 ? o / 100 : 100 / -o);
+  const slate = $("slate");
+  D.games.slice().sort(byKick).forEach((g) => {
+    const bl = g.book_lines || [];
+    const A = g.away_team, H = g.home_team;
+    const isPlay = ["BET", "SMALL", "H2H"].includes(g.verdict);
+    // rows: [label, value(book) -> {num, price}, better(a, b) -> true if a beats b, mine?]
+    const rows = [
+      {lab: A + " spread", get: (b) => b.home_spread == null ? null : {n: -b.home_spread, p: b.away_spread_odds, txt: sp(-b.home_spread)}, hi: true, mine: isPlay && g.bet_side === A},
+      {lab: H + " spread", get: (b) => b.home_spread == null ? null : {n: b.home_spread, p: b.home_spread_odds, txt: sp(b.home_spread)}, hi: true, mine: isPlay && g.bet_side === H, grp: 1},
+      {lab: "Over", get: (b) => b.total == null ? null : {n: -b.total, p: b.over_odds, txt: "O " + b.total}, hi: true},
+      {lab: "Under", get: (b) => b.total == null ? null : {n: b.total, p: b.under_odds, txt: "U " + b.total}, hi: true, grp: 1},
+      {lab: A + " ML", get: (b) => b.away_ml == null ? null : {n: 0, p: b.away_ml, txt: ml(b.away_ml), noPrice: 1}, hi: true},
+      {lab: H + " ML", get: (b) => b.home_ml == null ? null : {n: 0, p: b.home_ml, txt: ml(b.home_ml), noPrice: 1}, hi: true},
+    ];
+    let tbl = '<table class="odds"><thead><tr><th></th>' + bl.map((b) => "<th>" + esc(b.book) + "</th>").join("") + "</tr></thead><tbody>";
+    rows.forEach((r) => {
+      const vals = bl.map(r.get);
+      let best = -1;
+      if (bl.length > 1) vals.forEach((v, i) => { if (v && (best < 0 || v.n > vals[best].n || (v.n === vals[best].n && pay(v.p) > pay(vals[best].p)))) best = i; });
+      const tie = best >= 0 && vals.every((v) => v && v.n === vals[best].n && v.p === vals[best].p);
+      const cls = [r.grp ? "grp" : "", r.mine ? "mine" : ""].join(" ").trim();
+      tbl += "<tr" + (cls ? ' class="' + cls + '"' : "") + "><td>" + esc(r.lab) + "</td>" + vals.map((v, i) =>
+        '<td class="' + ((r.mine ? bl[i].book === g.bet_book : i === best && !tie) ? "best" : "") + '">' + (v ? v.txt + (v.noPrice ? "" : "<small>" + ml(v.p) + "</small>") : "–") + "</td>").join("") + "</tr>";
     });
-  }
-  $("slip-sum").textContent = bets.length ? units_total + " units across " + bets.length + " plays" : "";
+    tbl += "</tbody></table>";
+    const fav = g.model_home_spread == null ? "" : (g.model_home_spread <= 0 ? H + " " + sp(g.model_home_spread) : A + " " + sp(-g.model_home_spread));
+    const el = document.createElement("article");
+    el.className = "game" + (isPlay ? " has-play" : "");
+    el.innerHTML = '<div class="g-top"><div><div class="g-title">' + esc(A) + " @ " + esc(H) + '</div><div class="g-kick">' + kick(g) + "</div></div>" +
+      '<span class="v ' + g.verdict + '">' + g.verdict + "</span></div>" +
+      (bl.length ? tbl : '<div class="note">No lines posted yet.</div>') +
+      '<div class="g-model">Model: <b>' + esc(A) + " " + num1(g.proj_away) + ", " + esc(H) + " " + num1(g.proj_home) + "</b> · line " + esc(fav) +
+      " · total " + num1(g.model_total) + " · " + esc(g.winner) + " wins " + pct0(g.win_pct) + "</div>" +
+      (isPlay
+        ? '<div class="g-play">&#10003; Play: ' + esc(g.bet_side) + " " + sp(g.bet_line) + " " + ml(g.bet_odds) + " at " + esc(g.bet_book) + " · " + units(g.stake_units) + "</div>"
+        : g.verdict === "WATCH"
+          ? '<div class="g-play none">Watch: bet ' + esc(g.spread_pick) + " only at " + sp(g.bet_at) + " or better</div>"
+          : '<div class="g-play none">No play</div>');
+    slate.appendChild(el);
+  });
 
   // Generic sortable table
   function table(id, cols, rows, initial) {
@@ -395,18 +464,10 @@ details[open] summary { margin-bottom: 10px }
   const verdictOrder = {BET: 4, H2H: 3, SMALL: 2, WATCH: 1, PASS: 0};
   const vpill = (r) => '<span class="v ' + r.verdict + '">' + r.verdict + "</span>";
 
-  // Teasers
+  // Teaser legs (the recommended pairings are listed with the model plays)
   if (!D.teasers.length) {
-    $("tz-sec").querySelector(".note").textContent = "No qualifying teaser legs this week (underdogs +1.5 to +2.5, or favorites -7.5 to -8.5 the model likes).";
+    $("tz-note").textContent = "No qualifying teaser legs this week (underdogs +1.5 to +2.5, or favorites -7.5 to -8.5 the model likes).";
   } else {
-    if (D.teaser_pairs.length) table("t-tzp", [
-      {k: "teaser", h: "Teaser to bet", l: 1, cls: () => "strong"},
-      {k: "grades", h: "Grades", l: 1},
-      {k: "p_both", h: "Both legs win (backtest)", f: (r) => pct(r.p_both)},
-      {k: "p_both_model", h: "Model estimate", f: (r) => pct(r.p_both_model)},
-      {k: "ev", h: "EV at -120", f: (r) => ev(r.ev), cls: (r) => r.ev > 0 ? "pos" : "neg"},
-      {k: "stake_units", h: "Stake", f: (r) => units(r.stake_units)},
-    ], D.teaser_pairs, ["ev", -1]);
     table("t-tz", [
       {k: "team", h: "Leg", l: 1, f: (r) => esc(r.team) + " · " + esc(r.matchup)},
       {k: "grade", h: "Grade", l: 1},

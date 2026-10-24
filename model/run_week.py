@@ -243,6 +243,21 @@ def load_lines(path: str | None, wk: pd.DataFrame, books=DEFAULT_BOOKS) -> pd.Da
     return out
 
 
+def book_lines(gl: pd.DataFrame) -> list[dict]:
+    """Every book's full menu for one game (spread, total, moneyline with prices) for the slate tickets.
+    The nflverse consensus is shown only when no sportsbook has posted the game."""
+    real = gl[gl["book"] != "nflverse"]
+    gl = real if len(real) else gl
+    cols = ["home_spread", "home_spread_odds", "away_spread_odds", "total", "over_odds", "under_odds", "home_ml",
+            "away_ml"]
+    out = []
+    for r in gl.sort_values("book").to_dict("records"):
+        d = {"book": "Consensus" if r["book"] == "nflverse" else r["book"]}
+        d.update({c: None if pd.isna(r.get(c)) else float(r[c]) for c in cols})
+        out.append(d)
+    return out
+
+
 def load_adjustments(season: int, week: int) -> pd.DataFrame:
     if not os.path.exists(ADJ_PATH):
         return pd.DataFrame(columns=["team", "qb_id", "points", "note"])
@@ -339,6 +354,8 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
             "home_ml": lines.loc[lines["game_id"] == g.game_id, "home_ml"].median(),
             "away_ml": lines.loc[lines["game_id"] == g.game_id, "away_ml"].median(),
             "line_source": (", ".join(sorted(offers["book"].unique())) or "none") + snap_note,
+            "kickoff": f"{g.weekday} {g.gametime}" if isinstance(g.gametime, str) else g.weekday,
+            "book_lines": book_lines(lines[lines["game_id"] == g.game_id]),
         }
         if len(offers):
             row["spread_edge"] = s["sim_margin"] - spread_nv          # + = model likes HOME vs the consensus
