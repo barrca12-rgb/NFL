@@ -314,7 +314,9 @@ details[open] summary { margin-bottom: 10px }
     sp(o.line) + " " + ml(o.odds) + (o.book === r.best_book ? "</b>" : "")).join("<br>");
 
   // Header
-  $("eyebrow").textContent = D.season + " NFL season · " + (D.phase === "early" ? "Weeks 1-4: strongest part of the season" : "Week 5 on: thin edges, smaller stakes");
+  const days = D.games.map((g) => g.gameday).filter(Boolean).sort();
+  const md = (d) => new Date(d + "T12:00:00").toLocaleDateString([], {month: "short", day: "numeric"});
+  $("eyebrow").textContent = D.season + " NFL season" + (days.length ? " · " + md(days[0]) + (days[0] !== days[days.length - 1] ? " – " + md(days[days.length - 1]) : "") : "");
   $("h1").textContent = "Week " + D.week + " Bet Card";
   const bets = D.games.filter((g) => g.verdict === "BET" || g.verdict === "SMALL" || g.verdict === "H2H");
   const nPlays = bets.length + D.teaser_pairs.length;
