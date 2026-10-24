@@ -438,7 +438,7 @@ details[open] summary { margin-bottom: 10px }
       '</tr></thead><tbody><tr class="mine"><th scope="row">' + esc(g.bet_side) + "</th>" + cells.map((c) => {
         const inner = sp(c.n) + "<small>" + ml(c.p) + "</small>";
         return '<td class="' + (c.b.book === g.bet_book ? "best" : "") + '">' + (c.link
-          ? '<a class="t" href="' + esc(c.link) + '" target="_blank" rel="noopener">' + inner + "</a>" : '<span class="t">' + inner + "</span>") + "</td>";
+          ? '<a class="t" href="' + esc(c.link) + '"' + (c.b.book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">' + inner + "</a>" : '<span class="t">' + inner + "</span>") + "</td>";
       }).join("") + "</tr></tbody></table></div>";
   };
   const addTicket = (cls, html) => { const el = document.createElement("article"); el.className = "pk " + cls; el.innerHTML = html; plays.appendChild(el); };
@@ -466,7 +466,7 @@ details[open] summary { margin-bottom: 10px }
       sideTiles(g) + '<div class="stats">' + stats + "</div>" +
       (g.qb_note ? '<div class="pk-why">QB: ' + esc(g.qb_note) + "</div>" : "") +
       (why ? '<div class="pk-why">' + why + "</div>" : "") +
-      (link ? '<a class="cta" href="' + esc(link) + '" target="_blank" rel="noopener">Bet ' + esc(g.bet_side) + " " + sp(g.bet_line) + " at " + esc(g.bet_book) + " &#8599;</a>"
+      (link ? '<a class="cta" href="' + esc(link) + '"' + (g.bet_book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">Bet ' + esc(g.bet_side) + " " + sp(g.bet_line) + " at " + esc(g.bet_book) + " &#8599;</a>"
         : '<span class="cta">Bet at ' + esc(g.bet_book) + "</span>"));
   });
   D.teaser_pairs.forEach((t) => {
@@ -538,7 +538,7 @@ details[open] summary { margin-bottom: 10px }
         const inner = (v.noPrice ? v.txt : v.txt + "<small>" + ml(v.p) + "</small>");
         const link = bl[i][r.link];
         return '<td class="' + (hi ? "best" : "") + '">' + (link
-          ? '<a class="t" href="' + esc(link) + '" target="_blank" rel="noopener" title="Open in ' + esc(bl[i].book) + '">' + inner + "</a>"
+          ? '<a class="t" href="' + esc(link) + '"' + (bl[i].book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener" title="Open in ' + esc(bl[i].book) + '">' + inner + "</a>"
           : '<span class="t">' + inner + "</span>") + "</td>";
       }).join("") + "</tr>";
     });
@@ -552,7 +552,7 @@ details[open] summary { margin-bottom: 10px }
       '<div class="g-model">Model: <b>' + esc(A) + " " + num1(g.proj_away) + ", " + esc(H) + " " + num1(g.proj_home) + "</b> · line " + esc(fav) +
       " · total " + num1(g.model_total) + " · " + esc(g.winner) + " wins " + pct0(g.win_pct) + "</div>" +
       (isPlay
-        ? '<div class="g-play">' + (betLink(g) ? '<a href="' + esc(betLink(g)) + '" target="_blank" rel="noopener">' : "") +
+        ? '<div class="g-play">' + (betLink(g) ? '<a href="' + esc(betLink(g)) + '"' + (g.bet_book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">' : "") +
           "&#10003; Play: " + esc(g.bet_side) + " " + sp(g.bet_line) + " " + ml(g.bet_odds) + " at " + esc(g.bet_book) + " · " + units(g.stake_units) +
           (betLink(g) ? " &#8599;</a>" : "") + "</div>"
         : g.verdict === "WATCH"
