@@ -311,8 +311,7 @@ details[open] summary { margin-bottom: 10px }
   const ST = (D.bet_state || "pa").toLowerCase();
   const fixLink = (u) => !u ? u : u
     .replace(/^https:\/\/sports\.[a-z]{2}\.betmgm\.com/, "https://sports." + ST + ".betmgm.com")
-    .replace(/^(https:\/\/sportsbook\.caesars\.com\/us\/)[a-z]{2}\//, "$1" + ST + "/")
-    .replace(/^https:\/\/(?:[a-z]{2}\.)?sportsbook\.fanduel\.com\/addToBetslip\?/, "https://" + ST + ".sportsbook.fanduel.com/addToBetslip?");
+    .replace(/^(https:\/\/sportsbook\.caesars\.com\/us\/)[a-z]{2}\//, "$1" + ST + "/");
   D.games.forEach((g) => (g.book_lines || []).forEach((b) => Object.keys(b).forEach((k) => { if (k.endsWith("_link")) b[k] = fixLink(b[k]); })));
   const pct = (x) => x == null ? "–" : (x * 100).toFixed(1) + "%";
   const pct0 = (x) => x == null ? "–" : Math.round(x * 100) + "%";
