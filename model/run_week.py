@@ -34,7 +34,7 @@ from .data import HERE, REPO, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
 from .features import FEATURES, game_features
 from .injuries import FEATURES as INJ_FEATURES, add_injury_features, live_table
-from .odds import DEFAULT_BOOKS, latest_snapshot, load_book_lines, pull_live
+from .odds import DEFAULT_BOOKS, LINK_COLS, latest_snapshot, load_book_lines, pull_live
 from .projection import fit_points_model
 from .ratings import build_ratings, power_table
 from .report_html import build_html
@@ -254,6 +254,7 @@ def book_lines(gl: pd.DataFrame) -> list[dict]:
     for r in gl.sort_values("book").to_dict("records"):
         d = {"book": "Consensus" if r["book"] == "nflverse" else r["book"]}
         d.update({c: None if pd.isna(r.get(c)) else float(r[c]) for c in cols})
+        d.update({c: r[c] for c in LINK_COLS if isinstance(r.get(c), str) and r[c].startswith("https://")})
         out.append(d)
     return out
 

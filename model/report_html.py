@@ -137,29 +137,40 @@ section { display: grid; gap: 14px; min-width: 0 }
 .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; color: var(--muted) }
 
 /* Full slate: one ticket per game, books side by side */
-.slate { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px }
-@media (max-width: 400px) { .slate { grid-template-columns: 1fr } }
-.game { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
+.slate { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 500px), 1fr)); gap: 14px }
+.game { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
 .game.has-play { box-shadow: inset 0 3px 0 var(--turf), 0 0 0 1px rgba(47,226,122,.25) }
 .g-top { display: flex; justify-content: space-between; align-items: center; gap: 8px }
 .g-title { font: 700 22px/1 var(--display) }
 .g-kick { color: var(--muted); font-size: 13px }
-table.odds { font-size: 14px; width: 100%; border-collapse: separate; border-spacing: 4px; margin: -4px }
-table.odds th, table.odds td { padding: 7px 8px; border: 0; white-space: nowrap }
-table.odds td:not(:first-child) { background: var(--chalk); border-radius: 6px; text-align: center; font-weight: 600 }
-table.odds thead th { position: static; background: none; cursor: default; font-size: 11px; text-align: right }
-table.odds thead th { text-align: center } table.odds thead th:first-child { text-align: left }
-table.odds td:first-child { text-align: left; color: var(--muted); padding-left: 0 }
-table.odds tr.grp + tr td { border-top: 8px solid transparent; background-clip: padding-box }
-table.odds tr.grp + tr td:first-child { border-top-width: 8px }
-table.odds td small { color: var(--muted); font-size: 12px; margin-left: 3px }
-table.odds td.best { color: var(--turf); font-weight: 700; background: var(--turf-soft); box-shadow: inset 0 0 0 1px var(--turf) }
+/* odds grid: books are columns; on narrow screens it scrolls sideways with the row labels pinned */
+.oddswrap { overflow-x: auto; margin: 0 -6px; padding: 0 6px; scrollbar-width: thin }
+table.odds { font-size: 14px; width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: auto }
+table.odds.few { width: auto } table.odds.few td { min-width: 96px }
+table.odds th, table.odds td { padding: 0; border: 0; white-space: nowrap }
+table.odds thead th { position: static; background: none; cursor: default; font: 700 11px/1.1 var(--body);
+  letter-spacing: .05em; text-transform: uppercase; color: var(--muted); text-align: center; padding: 0 2px 2px }
+table.odds .abbr { display: none }
+table.odds tbody th { text-align: left; font: 600 13px/1.1 var(--body); color: var(--muted); padding-right: 6px;
+  position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 46px }
+table.odds tr.cap th { font: 700 10px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--pass); padding-top: 8px }
+table.odds td { background: var(--chalk); border-radius: 8px; text-align: center; font-weight: 700; min-width: 58px }
+table.odds td .t { display: block; padding: 7px 4px; color: inherit; text-decoration: none; line-height: 1.15 }
+table.odds td small { display: block; color: var(--muted); font-size: 12px; font-weight: 600 }
+table.odds td a.t:hover, table.odds td a.t:focus-visible { background: #263142; border-radius: 8px; outline: none }
+table.odds td.best { color: var(--turf); background: var(--turf-soft); box-shadow: inset 0 0 0 1px var(--turf) }
 table.odds td.best small { color: var(--turf) }
-table.odds tr.mine td:first-child { color: var(--ink); font-weight: 700 }
-table.odds tr.mine td:first-child::before { content: "\2713 "; color: var(--turf) }
+table.odds td.none { background: transparent; color: var(--pass); font-weight: 400 }
+table.odds tr.mine th { color: var(--ink); font-weight: 700 }
+table.odds tr.mine th::before { content: "\2713 "; color: var(--turf) }
+@media (max-width: 700px) { table.odds .full { display: none } table.odds .abbr { display: inline } table.odds td { min-width: 52px } }
+.swipe { display: none; font-size: 12px; color: var(--pass) }
+@media (max-width: 700px) { .swipe.on { display: block } }
 .best-key { color: var(--turf) }
 .g-model { font-size: 14px; color: var(--muted) } .g-model b { color: var(--ink) }
 .g-play { font: 700 16px/1.2 var(--display); letter-spacing: .02em; color: var(--turf) }
+.g-play a, a.bk { color: inherit; text-decoration: none } .g-play a:hover { text-decoration: underline }
+a.bk:hover { filter: brightness(1.2) }
 .g-play.none { color: var(--pass); font-weight: 600 }
 
 /* Verdict pills */
@@ -218,7 +229,7 @@ details[open] summary { margin-bottom: 10px }
 
   <section aria-labelledby="slate-h">
     <div class="sec-head"><h2 id="slate-h">Full slate</h2>
-      <span class="note">Every game at every book. <b class="best-key">Green</b> is the best number for that bet; &#10003; marks a model play.</span></div>
+      <span class="note">Every game at every book. <b class="best-key">Green</b> is the best number for that bet; &#10003; marks a model play. Tap any price to open that bet at the book.</span></div>
     <div class="slate" id="slate"></div>
   </section>
 
@@ -354,13 +365,20 @@ details[open] summary { margin-bottom: 10px }
   };
   const byKick = (a, b) => String(a.gameday).localeCompare(String(b.gameday)) || String(a.kickoff).localeCompare(String(b.kickoff));
 
+  // Betslip link for a game's recommended spread bet at the recommended book (SportsGameOdds deeplinks)
+  const betLink = (g) => {
+    const b = (g.book_lines || []).find((x) => x.book === g.bet_book);
+    return b ? b[g.bet_side === g.home_team ? "home_spread_link" : "away_spread_link"] || "" : "";
+  };
+
   // Model plays: straight bets first (biggest stake, then strongest), then teasers
   const plays = $("plays");
-  const addPlay = (cls, unitsTxt, label, pickHtml, bookTxt, whereHtml, sub) => {
+  const addPlay = (cls, unitsTxt, label, pickHtml, bookTxt, whereHtml, sub, link) => {
     const el = document.createElement("article");
     el.className = "play " + cls;
     el.innerHTML = '<div class="units">' + unitsTxt + "<small>" + esc(label) + "</small></div>" +
-      '<div class="pick">' + pickHtml + '<br><span class="bk">' + bookTxt + "</span></div>" + '<div class="where">' + whereHtml + "</div>" +
+      '<div class="pick">' + pickHtml + "<br>" + (link ? '<a class="bk" href="' + esc(link) + '" target="_blank" rel="noopener">' + bookTxt + " &#8599;</a>"
+        : '<span class="bk">' + bookTxt + "</span>") + "</div>" + '<div class="where">' + whereHtml + "</div>" +
       '<div class="sub">' + sub + "</div>";
     plays.appendChild(el);
   };
@@ -372,7 +390,7 @@ details[open] summary { margin-bottom: 10px }
     addPlay(g.verdict === "SMALL" ? "small" : "", units(g.stake_units), g.flag || g.verdict,
       esc(g.bet_side) + " " + sp(g.bet_line) + ' <span class="price">' + ml(g.bet_odds) + "</span>",
       "Bet at " + esc(g.bet_book), kick(g),
-      esc(g.matchup) + " · " + stats + (g.qb_note ? " · QB: " + esc(g.qb_note) : ""));
+      esc(g.matchup) + " · " + stats + (g.qb_note ? " · QB: " + esc(g.qb_note) : ""), betLink(g));
   });
   D.teaser_pairs.forEach((t) => {
     const legs = (t.legs || []);
@@ -395,24 +413,34 @@ details[open] summary { margin-bottom: 10px }
     const isPlay = ["BET", "SMALL", "H2H"].includes(g.verdict);
     // rows: [label, value(book) -> {num, price}, better(a, b) -> true if a beats b, mine?]
     const rows = [
-      {lab: A + " spread", get: (b) => b.home_spread == null ? null : {n: -b.home_spread, p: b.away_spread_odds, txt: sp(-b.home_spread)}, hi: true, mine: isPlay && g.bet_side === A},
-      {lab: H + " spread", get: (b) => b.home_spread == null ? null : {n: b.home_spread, p: b.home_spread_odds, txt: sp(b.home_spread)}, hi: true, mine: isPlay && g.bet_side === H, grp: 1},
-      {lab: "Over", get: (b) => b.total == null ? null : {n: -b.total, p: b.over_odds, txt: "O " + b.total}, hi: true},
-      {lab: "Under", get: (b) => b.total == null ? null : {n: b.total, p: b.under_odds, txt: "U " + b.total}, hi: true, grp: 1},
-      {lab: A + " ML", get: (b) => b.away_ml == null ? null : {n: 0, p: b.away_ml, txt: ml(b.away_ml), noPrice: 1}, hi: true},
-      {lab: H + " ML", get: (b) => b.home_ml == null ? null : {n: 0, p: b.home_ml, txt: ml(b.home_ml), noPrice: 1}, hi: true},
+      {lab: A, link: "away_spread_link", get: (b) => b.home_spread == null ? null : {n: -b.home_spread, p: b.away_spread_odds, txt: sp(-b.home_spread)}, mine: isPlay && g.bet_side === A},
+      {lab: H, link: "home_spread_link", get: (b) => b.home_spread == null ? null : {n: b.home_spread, p: b.home_spread_odds, txt: sp(b.home_spread)}, mine: isPlay && g.bet_side === H},
+      {lab: "Over", link: "over_link", get: (b) => b.total == null ? null : {n: -b.total, p: b.over_odds, txt: "O " + b.total}},
+      {lab: "Under", link: "under_link", get: (b) => b.total == null ? null : {n: b.total, p: b.under_odds, txt: "U " + b.total}},
+      {lab: A, link: "away_ml_link", get: (b) => b.away_ml == null ? null : {n: 0, p: b.away_ml, txt: ml(b.away_ml), noPrice: 1}},
+      {lab: H, link: "home_ml_link", get: (b) => b.home_ml == null ? null : {n: 0, p: b.home_ml, txt: ml(b.home_ml), noPrice: 1}},
     ];
-    let tbl = '<table class="odds"><thead><tr><th></th>' + bl.map((b) => "<th>" + esc(b.book) + "</th>").join("") + "</tr></thead><tbody>";
-    rows.forEach((r) => {
+    const SHORT = {FanDuel: "FD", DraftKings: "DK", BetMGM: "MGM", Caesars: "CZR", Fanatics: "FAN", bet365: "365"};
+    const head = (b) => '<span class="full">' + esc(b.book) + '</span><span class="abbr">' + esc(SHORT[b.book] || b.book) + "</span>";
+    let tbl = '<div class="oddswrap"><table class="odds' + (bl.length < 3 ? " few" : "") + '"><thead><tr><th></th>' + bl.map((b) => '<th title="' + esc(b.book) + '">' + head(b) + "</th>").join("") + "</tr></thead><tbody>";
+    const caps = {0: "Spread", 2: "Total", 4: "Moneyline"};
+    rows.forEach((r, ri) => {
+      if (caps[ri]) tbl += '<tr class="cap"><th colspan="' + (bl.length + 1) + '">' + caps[ri] + "</th></tr>";
       const vals = bl.map(r.get);
       let best = -1;
       if (bl.length > 1) vals.forEach((v, i) => { if (v && (best < 0 || v.n > vals[best].n || (v.n === vals[best].n && pay(v.p) > pay(vals[best].p)))) best = i; });
       const tie = best >= 0 && vals.every((v) => v && v.n === vals[best].n && v.p === vals[best].p);
-      const cls = [r.grp ? "grp" : "", r.mine ? "mine" : ""].join(" ").trim();
-      tbl += "<tr" + (cls ? ' class="' + cls + '"' : "") + "><td>" + esc(r.lab) + "</td>" + vals.map((v, i) =>
-        '<td class="' + ((r.mine ? bl[i].book === g.bet_book : i === best && !tie) ? "best" : "") + '">' + (v ? v.txt + (v.noPrice ? "" : "<small>" + ml(v.p) + "</small>") : "–") + "</td>").join("") + "</tr>";
+      tbl += "<tr" + (r.mine ? ' class="mine"' : "") + '><th scope="row">' + esc(r.lab) + "</th>" + vals.map((v, i) => {
+        if (!v) return '<td class="none">–</td>';
+        const hi = r.mine ? bl[i].book === g.bet_book : i === best && !tie;
+        const inner = (v.noPrice ? v.txt : v.txt + "<small>" + ml(v.p) + "</small>");
+        const link = bl[i][r.link];
+        return '<td class="' + (hi ? "best" : "") + '">' + (link
+          ? '<a class="t" href="' + esc(link) + '" target="_blank" rel="noopener" title="Open in ' + esc(bl[i].book) + '">' + inner + "</a>"
+          : '<span class="t">' + inner + "</span>") + "</td>";
+      }).join("") + "</tr>";
     });
-    tbl += "</tbody></table>";
+    tbl += '</tbody></table></div><div class="swipe' + (bl.length > 4 ? " on" : "") + '">Swipe for more books &rarr;</div>';
     const fav = g.model_home_spread == null ? "" : (g.model_home_spread <= 0 ? H + " " + sp(g.model_home_spread) : A + " " + sp(-g.model_home_spread));
     const el = document.createElement("article");
     el.className = "game" + (isPlay ? " has-play" : "");
@@ -422,7 +450,9 @@ details[open] summary { margin-bottom: 10px }
       '<div class="g-model">Model: <b>' + esc(A) + " " + num1(g.proj_away) + ", " + esc(H) + " " + num1(g.proj_home) + "</b> · line " + esc(fav) +
       " · total " + num1(g.model_total) + " · " + esc(g.winner) + " wins " + pct0(g.win_pct) + "</div>" +
       (isPlay
-        ? '<div class="g-play">&#10003; Play: ' + esc(g.bet_side) + " " + sp(g.bet_line) + " " + ml(g.bet_odds) + " at " + esc(g.bet_book) + " · " + units(g.stake_units) + "</div>"
+        ? '<div class="g-play">' + (betLink(g) ? '<a href="' + esc(betLink(g)) + '" target="_blank" rel="noopener">' : "") +
+          "&#10003; Play: " + esc(g.bet_side) + " " + sp(g.bet_line) + " " + ml(g.bet_odds) + " at " + esc(g.bet_book) + " · " + units(g.stake_units) +
+          (betLink(g) ? " &#8599;</a>" : "") + "</div>"
         : g.verdict === "WATCH"
           ? '<div class="g-play none">Watch: bet ' + esc(g.spread_pick) + " only at " + sp(g.bet_at) + " or better</div>"
           : '<div class="g-play none">No play</div>');

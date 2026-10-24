@@ -27,9 +27,11 @@ import pandas as pd
 
 # The four books we price by default; others in the data are kept only if asked for.
 DEFAULT_BOOKS = ["FanDuel", "DraftKings", "BetMGM", "Caesars"]
-API_BOOK_KEYS = {"FanDuel": "fanduel", "DraftKings": "draftkings", "BetMGM": "betmgm", "Caesars": "williamhill_us"}
+API_BOOK_KEYS = {"FanDuel": "fanduel", "DraftKings": "draftkings", "BetMGM": "betmgm", "Caesars": "williamhill_us",
+                 "Fanatics": "fanatics"}
 BOOK_ALIASES = {"William Hill (US)": "Caesars", "Caesars Sportsbook": "Caesars", "williamhill_us": "Caesars",
-                "fanduel": "FanDuel", "draftkings": "DraftKings", "betmgm": "BetMGM", "caesars": "Caesars"}
+                "fanduel": "FanDuel", "draftkings": "DraftKings", "betmgm": "BetMGM", "caesars": "Caesars",
+                "fanatics": "Fanatics", "bet365": "bet365"}
 
 TEAMS = {
     "Arizona Cardinals": "ARI", "Atlanta Falcons": "ATL", "Baltimore Ravens": "BAL", "Buffalo Bills": "BUF",
@@ -45,6 +47,8 @@ TEAMS = {
 
 COLS = ["book", "away_team", "home_team", "commence_time", "home_spread", "home_spread_odds", "away_spread_odds",
         "total", "over_odds", "under_odds", "home_ml", "away_ml"]
+# betslip links for each bet (SportsGameOdds only; empty for other sources)
+LINK_COLS = ["home_spread_link", "away_spread_link", "over_link", "under_link", "home_ml_link", "away_ml_link"]
 
 
 def _book(name: str) -> str:
@@ -79,11 +83,12 @@ def _combine(rows: list[dict]) -> pd.DataFrame:
     if not rows:
         return pd.DataFrame(columns=COLS)
     d = pd.DataFrame(rows)
+    cols = COLS + [c for c in LINK_COLS if c in d]
     for c in COLS:
         if c not in d:
             d[c] = np.nan
     # one row per book and game, merging the spread / total / moneyline markets
-    return d.groupby(["book", "away_team", "home_team"], as_index=False).first()[COLS]
+    return d.groupby(["book", "away_team", "home_team"], as_index=False).first()[cols]
 
 
 def read_odds_export(path: str) -> pd.DataFrame:
@@ -116,13 +121,14 @@ def fetch_odds_api(api_key: str, books=DEFAULT_BOOKS, markets=("spreads", "total
 
 # SportsGameOdds (api.sportsgameodds.com/v2): bookmaker IDs and the six full-game markets we price.
 SGO_BOOK_IDS = {"FanDuel": "fanduel", "DraftKings": "draftkings", "BetMGM": "betmgm", "Caesars": "caesars",
-                "ESPN BET": "espnbet", "BetRivers": "betrivers", "Fanatics": "fanatics", "Hard Rock": "hardrockbet"}
-SGO_ODDS = {"points-home-game-sp-home": ("home_spread", "home_spread_odds"),
-            "points-away-game-sp-away": (None, "away_spread_odds"),
-            "points-all-game-ou-over": ("total", "over_odds"),
-            "points-all-game-ou-under": (None, "under_odds"),
-            "points-home-game-ml-home": (None, "home_ml"),
-            "points-away-game-ml-away": (None, "away_ml")}
+                "ESPN BET": "espnbet", "BetRivers": "betrivers", "Fanatics": "fanatics", "Hard Rock": "hardrockbet",
+                "bet365": "bet365"}
+SGO_ODDS = {"points-home-game-sp-home": ("home_spread", "home_spread_odds", "home_spread_link"),
+            "points-away-game-sp-away": (None, "away_spread_odds", "away_spread_link"),
+            "points-all-game-ou-over": ("total", "over_odds", "over_link"),
+            "points-all-game-ou-under": (None, "under_odds", "under_link"),
+            "points-home-game-ml-home": (None, "home_ml", "home_ml_link"),
+            "points-away-game-ml-away": (None, "away_ml", "away_ml_link")}
 _TEAM_KEYS = {k.lower(): v for k, v in TEAMS.items()}
 
 
@@ -167,13 +173,15 @@ def fetch_sgo(api_key: str, books=DEFAULT_BOOKS, raw_path: str | None = None) ->
         home, away = _sgo_team(teams.get("home") or {}), _sgo_team(teams.get("away") or {})
         start = (ev.get("status") or {}).get("startsAt")
         per_book: dict[str, dict] = {}
-        for odd_id, (line_col, price_col) in SGO_ODDS.items():
+        for odd_id, (line_col, price_col, link_col) in SGO_ODDS.items():
             for bk, o in ((ev.get("odds") or {}).get(odd_id, {}).get("byBookmaker") or {}).items():
                 if bk not in ids or o.get("available") is False:
                     continue
                 r = per_book.setdefault(bk, {"book": ids[bk], "home_team": home, "away_team": away,
                                              "commence_time": start})
                 r[price_col] = _num(o.get("odds"))
+                if o.get("deeplink"):
+                    r[link_col] = o["deeplink"]
                 if line_col == "home_spread":
                     r["home_spread"] = _num(o.get("spread"))
                 elif line_col == "total":
