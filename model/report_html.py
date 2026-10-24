@@ -58,8 +58,9 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
 
     data = {
         "season": season, "week": week, "n_sims": n_sims, "phase": phase, "flag_text": flag_text,
+        "generated_at": pd.Timestamp.now(tz="UTC").isoformat(timespec="seconds"),
         "inj_mode": inj_mode,
-        "line_source": ", ".join(sorted({b for x in out["line_source"].dropna() for b in str(x).split(", ")})),
+        "line_source": ", ".join(sorted({b for x in out["line_source"].dropna() for b in str(x).split(" (live")[0].split(", ")})),
         "games": games, "ratings": ratings, "injuries": players,
         "teasers": _records(tz, ["matchup", "team", "grade", "line", "teased_line", "book", "total", "p_leg"])
         if tz is not None and len(tz) else [],
@@ -71,7 +72,11 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
     return TEMPLATE.replace("__TITLE__", html.escape(title)).replace("__DATA__", payload)
 
 
-TEMPLATE = r"""<title>__TITLE__</title>
+TEMPLATE = r"""<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -106,6 +111,15 @@ h2 { font-size: 26px; line-height: 1.1 }
 header { display: grid; gap: 10px }
 .meta { display: flex; flex-wrap: wrap; gap: 8px }
 .chip { font: 600 13px/1 var(--body); padding: 6px 10px; border-radius: 999px; background: var(--chalk); color: var(--muted) }
+/* Update bar: re-runs the model with live odds through GitHub Actions */
+.update { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px }
+.update button { font: 700 15px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+  padding: 10px 16px; border-radius: 8px; border: 0; background: var(--turf); color: var(--surface) }
+.update button:disabled { opacity: .55; cursor: progress }
+.update .link { background: none; color: var(--muted); padding: 0; font: 600 13px/1 var(--body); text-transform: none;
+  letter-spacing: 0; text-decoration: underline }
+.update #upd-status { color: var(--muted); flex: 1 1 220px }
 section { display: grid; gap: 14px; min-width: 0 }
 .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px }
 .note { color: var(--muted); font-size: 14px; max-width: 80ch; margin: 0 }
@@ -170,6 +184,11 @@ details[open] summary { margin-bottom: 10px }
     <h1 id="h1"></h1>
     <p class="lede" id="lede"></p>
     <div class="meta" id="meta"></div>
+    <div class="update">
+      <button id="upd-btn" type="button">Update now</button>
+      <span id="upd-status"></span>
+      <button id="upd-key" class="link" type="button">GitHub token</button>
+    </div>
   </header>
 
   <section aria-labelledby="slip-h">
@@ -260,6 +279,58 @@ details[open] summary { margin-bottom: 10px }
   [D.n_sims.toLocaleString() + " sims per game", "Lines: " + D.line_source, injLabel[D.inj_mode] || "No injury report"]
     .forEach((t) => { const c = document.createElement("span"); c.className = "chip"; c.textContent = t; $("meta").appendChild(c); });
   $("flagtext").textContent = D.flag_text + " Breakeven at -110 is 52.4%.";
+
+  // Update bar. The button starts the "Update bet card" GitHub Actions workflow, which pulls live odds, re-runs the
+  // model and republishes this page (about 5-10 minutes). It needs a fine-grained GitHub token with Actions
+  // read/write on this repo, kept only in this browser.
+  const REPO = "barrca12-rgb/NFL", WF = "update.yml", API = "https://api.github.com/repos/" + REPO + "/actions";
+  const RUNS_URL = "https://github.com/" + REPO + "/actions/workflows/" + WF;
+  const store = { get: () => { try { return localStorage.getItem("gh_token") || ""; } catch (e) { return ""; } },
+                  set: (v) => { try { v ? localStorage.setItem("gh_token", v) : localStorage.removeItem("gh_token"); } catch (e) {} } };
+  const gen = D.generated_at ? new Date(D.generated_at) : null;
+  const ago = (d) => { const m = Math.round((Date.now() - d) / 60000);
+    return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; };
+  const idle = () => { $("upd-status").textContent = gen ? "Odds and picks as of " + gen.toLocaleString([], {weekday: "short", hour: "numeric", minute: "2-digit"}) + " (" + ago(gen) + ")" : ""; };
+  idle();
+  const askKey = () => {
+    const t = prompt("Paste a GitHub fine-grained token for " + REPO + " with Actions: Read and write.\nIt is saved only in this browser. Leave blank to remove it.", store.get());
+    if (t !== null) store.set(t.trim());
+    return store.get();
+  };
+  $("upd-key").onclick = askKey;
+  const gh = (path, opts) => fetch(API + path, Object.assign({ headers: { Accept: "application/vnd.github+json",
+    Authorization: "Bearer " + store.get(), "X-GitHub-Api-Version": "2022-11-28" } }, opts || {}));
+  const followRun = (since) => {
+    const btn = $("upd-btn"); btn.disabled = true;
+    const t0 = Date.now();
+    const tick = async () => {
+      try {
+        const r = await gh("/workflows/" + WF + "/runs?per_page=1");
+        const run = (await r.json()).workflow_runs?.[0];
+        const mins = Math.floor((Date.now() - t0) / 60000);
+        if (!run || new Date(run.created_at) < since) { $("upd-status").textContent = "Starting run…"; }
+        else if (run.status !== "completed") { $("upd-status").innerHTML = "Pulling live odds and running the model… " + mins + " min (usually 5–10). <a href='" + run.html_url + "' target='_blank' rel='noopener'>Progress</a>"; }
+        else if (run.conclusion === "success") { $("upd-status").textContent = "Done. Loading the new card…"; setTimeout(() => location.replace(location.pathname + "?t=" + Date.now()), 4000); return; }
+        else { $("upd-status").innerHTML = "The run failed (" + esc(run.conclusion) + "). <a href='" + run.html_url + "' target='_blank' rel='noopener'>See why</a>"; btn.disabled = false; return; }
+      } catch (e) { $("upd-status").textContent = "Lost contact with GitHub, retrying…"; }
+      setTimeout(tick, 10000);
+    };
+    tick();
+  };
+  $("upd-btn").onclick = async () => {
+    if (!store.get() && !askKey()) { window.open(RUNS_URL, "_blank", "noopener"); $("upd-status").innerHTML = "No token saved: on GitHub, click <b>Run workflow</b>, then reload this page when it finishes."; return; }
+    const since = new Date(Date.now() - 5000);
+    $("upd-status").textContent = "Starting run…";
+    const r = await gh("/workflows/" + WF + "/dispatches", { method: "POST", body: JSON.stringify({ ref: "main" }) }).catch(() => null);
+    if (r && r.status === 204) followRun(since);
+    else if (r && (r.status === 401 || r.status === 403 || r.status === 404)) { $("upd-status").textContent = "GitHub refused the token (" + r.status + "). Check it has Actions: Read and write on " + REPO + "."; }
+    else { $("upd-status").textContent = "Couldn't reach GitHub. Try again in a minute."; }
+  };
+  // a run already going (started from another device or the schedule): follow it
+  if (store.get()) gh("/workflows/" + WF + "/runs?per_page=1").then((r) => r.json()).then((j) => {
+    const run = j.workflow_runs?.[0];
+    if (run && run.status !== "completed") followRun(new Date(run.created_at));
+  }).catch(() => {});
 
   // Bet slip
   if (!bets.length) {
