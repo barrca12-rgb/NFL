@@ -55,6 +55,7 @@ jobs:
 
       - name: Run the model with live odds
         env:
+          SGO_API_KEY: ${{ secrets.ODDS_KEY_NEW }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: |
           WEEK_ARG=""

@@ -4,6 +4,7 @@ Two sources, one output format:
   * read_odds_export(path) - the flattened export from The Odds API / its Google Sheets add-on
     (columns: game_id, commence_time, bookmaker, home_team, away_team, market, label_1, odd_1, point_1, label_2, ...)
   * fetch_odds_api(api_key) - The Odds API v4 directly (needs api.the-odds-api.com reachable and an API key)
+  * fetch_sgo(api_key) - SportsGameOdds v2 (api.sportsgameodds.com; used when SGO_API_KEY is set)
 
 Output: one row per (book, game) with nflverse team codes and sportsbook-convention numbers:
     book, away_team, home_team, commence_time, home_spread, home_spread_odds, away_spread_odds,
@@ -18,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import urllib.parse
 import urllib.request
 
 import numpy as np
@@ -27,7 +29,7 @@ import pandas as pd
 DEFAULT_BOOKS = ["FanDuel", "DraftKings", "BetMGM", "Caesars"]
 API_BOOK_KEYS = {"FanDuel": "fanduel", "DraftKings": "draftkings", "BetMGM": "betmgm", "Caesars": "williamhill_us"}
 BOOK_ALIASES = {"William Hill (US)": "Caesars", "Caesars Sportsbook": "Caesars", "williamhill_us": "Caesars",
-                "fanduel": "FanDuel", "draftkings": "DraftKings", "betmgm": "BetMGM"}
+                "fanduel": "FanDuel", "draftkings": "DraftKings", "betmgm": "BetMGM", "caesars": "Caesars"}
 
 TEAMS = {
     "Arizona Cardinals": "ARI", "Atlanta Falcons": "ATL", "Baltimore Ravens": "BAL", "Buffalo Bills": "BUF",
@@ -112,21 +114,94 @@ def fetch_odds_api(api_key: str, books=DEFAULT_BOOKS, markets=("spreads", "total
     return _combine(rows)
 
 
-def pull_live(api_key: str, books=DEFAULT_BOOKS, out_dir: str | None = None) -> str:
+# SportsGameOdds (api.sportsgameodds.com/v2): bookmaker IDs and the six full-game markets we price.
+SGO_BOOK_IDS = {"FanDuel": "fanduel", "DraftKings": "draftkings", "BetMGM": "betmgm", "Caesars": "caesars",
+                "ESPN BET": "espnbet", "BetRivers": "betrivers", "Fanatics": "fanatics", "Hard Rock": "hardrockbet"}
+SGO_ODDS = {"points-home-game-sp-home": ("home_spread", "home_spread_odds"),
+            "points-away-game-sp-away": (None, "away_spread_odds"),
+            "points-all-game-ou-over": ("total", "over_odds"),
+            "points-all-game-ou-under": (None, "under_odds"),
+            "points-home-game-ml-home": (None, "home_ml"),
+            "points-away-game-ml-away": (None, "away_ml")}
+_TEAM_KEYS = {k.lower(): v for k, v in TEAMS.items()}
+
+
+def _sgo_team(t: dict) -> str:
+    """nflverse code from an SGO team object (teamID like KANSAS_CITY_CHIEFS_NFL, names.long like Kansas City Chiefs)."""
+    names = t.get("names") or {}
+    for cand in (names.get("long"), str(t.get("teamID", "")).removesuffix("_NFL").replace("_", " ")):
+        if cand and cand.lower() in _TEAM_KEYS:
+            return _TEAM_KEYS[cand.lower()]
+    return names.get("short") or t.get("teamID")
+
+
+def _num(x):
+    try:
+        return float(str(x).replace("+", ""))
+    except (TypeError, ValueError):
+        return np.nan
+
+
+def fetch_sgo(api_key: str, books=DEFAULT_BOOKS, raw_path: str | None = None) -> pd.DataFrame:
+    """Upcoming NFL games from SportsGameOdds, one row per (book, game), same columns as fetch_odds_api."""
+    ids = {SGO_BOOK_IDS.get(b, b.lower()): b for b in books}
+    events, cursor = [], None
+    while True:
+        q = {"leagueID": "NFL", "oddsAvailable": "true", "limit": 50, "oddID": ",".join(SGO_ODDS)}
+        if cursor:
+            q["cursor"] = cursor
+        req = urllib.request.Request("https://api.sportsgameodds.com/v2/events?" + urllib.parse.urlencode(q),
+                                     headers={"X-Api-Key": api_key, "User-Agent": "nfl-model"})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = json.load(resp)
+        events += body.get("data") or []
+        cursor = body.get("nextCursor")
+        if not cursor or len(events) > 400:
+            break
+    if raw_path:   # keep the raw response so field changes are easy to diagnose
+        with open(raw_path, "w") as fh:
+            json.dump(events, fh, indent=1)
+    rows = []
+    for ev in events:
+        teams = ev.get("teams") or {}
+        home, away = _sgo_team(teams.get("home") or {}), _sgo_team(teams.get("away") or {})
+        start = (ev.get("status") or {}).get("startsAt")
+        per_book: dict[str, dict] = {}
+        for odd_id, (line_col, price_col) in SGO_ODDS.items():
+            for bk, o in ((ev.get("odds") or {}).get(odd_id, {}).get("byBookmaker") or {}).items():
+                if bk not in ids or o.get("available") is False:
+                    continue
+                r = per_book.setdefault(bk, {"book": ids[bk], "home_team": home, "away_team": away,
+                                             "commence_time": start})
+                r[price_col] = _num(o.get("odds"))
+                if line_col == "home_spread":
+                    r["home_spread"] = _num(o.get("spread"))
+                elif line_col == "total":
+                    r["total"] = _num(o.get("overUnder"))
+        rows += per_book.values()
+    return _combine(rows)
+
+
+def pull_live(api_key: str, books=DEFAULT_BOOKS, out_dir: str | None = None, provider: str = "theoddsapi") -> str:
     """Pull live odds and save a timestamped snapshot (lines/odds_live_<UTC time>.csv), so every run's numbers are
     on record for line-movement and CLV checks. Returns the snapshot path."""
-    t = fetch_odds_api(api_key, books or DEFAULT_BOOKS)
-    stamp = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d_%H%M")
     out_dir = out_dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lines")
     os.makedirs(out_dir, exist_ok=True)
+    if provider == "sgo":
+        t = fetch_sgo(api_key, books or DEFAULT_BOOKS, raw_path=os.path.join(out_dir, "sgo_raw_latest.json"))
+    else:
+        t = fetch_odds_api(api_key, books or DEFAULT_BOOKS)
+    if not len(t):
+        raise RuntimeError("no lines returned for the requested books")
+    stamp = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d_%H%M")
     path = os.path.join(out_dir, f"odds_live_{stamp}.csv")
     t.to_csv(path, index=False)
     got = sorted(t["book"].unique()) if len(t) else []
     missing = [b for b in (books or DEFAULT_BOOKS) if b not in got]
-    c = getattr(fetch_odds_api, "credits", {})
-    print(f"live odds: {len(t)} book-game rows from {', '.join(got) or 'no books'}"
-          + (f" (no lines from {', '.join(missing)})" if missing else "")
-          + f"; API credits used {c.get('last')}, remaining {c.get('remaining')}  -> {path}")
+    c = getattr(fetch_odds_api, "credits", {}) if provider != "sgo" else {}
+    print(f"live odds ({'SportsGameOdds' if provider == 'sgo' else 'The Odds API'}): {len(t)} book-game rows from "
+          f"{', '.join(got) or 'no books'}" + (f" (no lines from {', '.join(missing)})" if missing else "")
+          + (f"; API credits used {c.get('last')}, remaining {c.get('remaining')}" if c else "") + f"  -> {path}")
     return path
 
 

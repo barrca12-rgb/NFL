@@ -629,7 +629,7 @@ if __name__ == "__main__":
     ap.add_argument("--week", type=int)
     ap.add_argument("--sims", type=int, default=20000)
     ap.add_argument("--lines", help="CSV of sportsbook lines to compare against (default: pull live odds when "
-                                     "ODDS_API_KEY is set)")
+                                     "SGO_API_KEY or ODDS_API_KEY is set)")
     ap.add_argument("--no-live", action="store_true", help="don't pull live odds; use --lines or nflverse lines")
     ap.add_argument("--no-refresh", action="store_true", help="don't download fresh nflverse data")
     ap.add_argument("--no-injuries", action="store_true", help="ignore this week's injury report")
@@ -639,14 +639,19 @@ if __name__ == "__main__":
     books = None if a.books == "all" else a.books.split(",")
     lines_path = a.lines
     if not lines_path and not a.no_live:
-        key = os.environ.get("ODDS_API_KEY")
-        if key:
+        # SportsGameOdds when its key is set, then The Odds API, then the newest saved snapshot
+        sources = [(p, os.environ.get(k)) for p, k in (("sgo", "SGO_API_KEY"), ("theoddsapi", "ODDS_API_KEY"))
+                   if os.environ.get(k)]
+        for provider, key in sources:
             try:
-                lines_path = pull_live(key, books)
-            except Exception as e:  # network or quota trouble: fall back to the newest saved snapshot
-                lines_path = latest_snapshot()
-                print(f"live odds pull failed ({e}); using {lines_path or 'nflverse lines'}")
-        else:
-            print("ODDS_API_KEY not set: using nflverse consensus lines (pass --lines or set the key for live odds)")
+                lines_path = pull_live(key, books, provider=provider)
+                break
+            except Exception as e:  # network, quota or format trouble: try the next source
+                print(f"live odds pull from {provider} failed ({e})")
+        if sources and not lines_path:
+            lines_path = latest_snapshot()
+            print(f"using {lines_path or 'nflverse lines'}")
+        if not sources:
+            print("no odds key set (SGO_API_KEY or ODDS_API_KEY): using nflverse consensus lines")
     run(a.season, a.week, a.sims, lines_path, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
         books=books)
