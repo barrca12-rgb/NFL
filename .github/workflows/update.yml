@@ -1,5 +1,5 @@
 # Runs the weekly model with live odds and publishes the bet card to GitHub Pages.
-# Triggered by the "Update now" button on the site, from the Actions tab, or on the schedule below.
+# Triggered by the "Update now" button on the site, from the Actions tab, by code changes, or on the schedule below.
 name: Update bet card
 
 on:
@@ -9,6 +9,11 @@ on:
         description: "Week number (blank = next week)"
         required: false
         default: ""
+  push:                     # rebuild the site when the page or model code changes
+    branches: [main]
+    paths:
+      - "model/**.py"
+      - ".github/workflows/update.yml"
   schedule:
     - cron: "37 14 * * 2"   # Tuesday 10:37 ET, after Monday night: fresh lines for the new week
     - cron: "37 20 * * 4"   # Thursday 16:37 ET: practice injury report
