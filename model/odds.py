@@ -169,6 +169,8 @@ def fetch_sgo(api_key: str, books=DEFAULT_BOOKS, raw_path: str | None = None) ->
             json.dump(events, fh, indent=1)
     rows = []
     for ev in events:
+        if (ev.get("status") or {}).get("started"):   # in-game lines aren't pregame prices
+            continue
         teams = ev.get("teams") or {}
         home, away = _sgo_team(teams.get("home") or {}), _sgo_team(teams.get("away") or {})
         start = (ev.get("status") or {}).get("startsAt")

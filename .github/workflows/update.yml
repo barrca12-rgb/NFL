@@ -64,9 +64,10 @@ jobs:
 
       - name: Build site
         run: |
-          mkdir -p _site/reports
-          cp reports/*.html _site/reports/
-          cp "$(ls -t reports/*.html | head -1)" _site/index.html
+          mkdir -p _site
+          cp reports/*.html reports/weeks.json _site/
+          CUR=$(python -c "import json; w=json.load(open('reports/weeks.json')); print(f\"{w['season']}_week{w['current']:02d}.html\")")
+          cp "reports/$CUR" _site/index.html
           touch _site/.nojekyll
 
       - name: Save report and odds snapshot to the repo

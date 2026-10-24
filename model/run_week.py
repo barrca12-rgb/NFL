@@ -20,6 +20,7 @@ starting QB (gsis id); `points` adds/subtracts expected points for that team (no
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import zlib
 
@@ -214,9 +215,24 @@ def _payout(odds):
 
 
 def default_week(games: pd.DataFrame, season: int) -> int:
+    """The current week: the earliest week that still has a game to play (so a played Thursday game doesn't skip
+    the rest of its week)."""
     s = games[games["season"] == season]
-    played = s[s["result"].notna()]
-    return int(played["week"].max()) + 1 if len(played) else 1
+    left = s[s["result"].isna()]
+    if len(left):
+        return int(left["week"].min())
+    return int(s["week"].max()) + 1 if len(s) else 1
+
+
+def game_state(g) -> str:
+    """'final' when the score is in, 'live' once kickoff (US Eastern) has passed, else 'upcoming'."""
+    if pd.notna(getattr(g, "result", np.nan)):
+        return "final"
+    try:
+        ko = pd.Timestamp(f"{pd.Timestamp(g.gameday).date()} {g.gametime}", tz="America/New_York")
+        return "live" if pd.Timestamp.now(tz="America/New_York") >= ko else "upcoming"
+    except (TypeError, ValueError):
+        return "upcoming"
 
 
 def load_lines(path: str | None, wk: pd.DataFrame, books=DEFAULT_BOOKS) -> pd.DataFrame:
@@ -257,6 +273,14 @@ def book_lines(gl: pd.DataFrame) -> list[dict]:
         d.update({c: r[c] for c in LINK_COLS if isinstance(r.get(c), str) and r[c].startswith("https://")})
         out.append(d)
     return out
+
+
+def write_week_index(season: int, current: int) -> None:
+    """reports/weeks.json: the season's report pages and which one is current, for the site's week switcher."""
+    weeks = sorted(int(f[len(f"{season}_week"):-5]) for f in os.listdir(REPORTS)
+                   if f.startswith(f"{season}_week") and f.endswith(".html"))
+    with open(os.path.join(REPORTS, "weeks.json"), "w") as fh:
+        json.dump({"season": season, "current": current, "weeks": weeks}, fh)
 
 
 def load_adjustments(season: int, week: int) -> pd.DataFrame:
@@ -356,6 +380,9 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
             "away_ml": lines.loc[lines["game_id"] == g.game_id, "away_ml"].median(),
             "line_source": (", ".join(sorted(offers["book"].unique())) or "none") + snap_note,
             "kickoff": f"{g.weekday} {g.gametime}" if isinstance(g.gametime, str) else g.weekday,
+            "state": game_state(g),
+            "away_score": None if pd.isna(g.away_score) else int(g.away_score),
+            "home_score": None if pd.isna(g.home_score) else int(g.home_score),
             "book_lines": book_lines(lines[lines["game_id"] == g.game_id]),
         }
         if len(offers):
@@ -426,6 +453,11 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     out = pd.DataFrame(rows)
     out["flag"] = out.get("flag", pd.Series("", index=out.index)).fillna("")
     out = add_verdicts(out, phase)
+    # Games already finished or under way can't be bet pregame: show them, but never as plays.
+    done = out["state"] != "upcoming"
+    out.loc[done, "verdict"] = out.loc[done, "state"].str.upper()
+    out.loc[done, "stake_units"] = 0.0
+    teasers = [t for t in teasers if t["game_id"] in set(out.loc[~done, "game_id"])]
     tz = pd.DataFrame(teasers)
     tpairs = pairs_table(pair_legs(tz)) if len(tz) else pd.DataFrame()
     if len(tpairs):
@@ -662,5 +694,16 @@ if __name__ == "__main__":
         # which source the last run used (and why not the first choice), kept in the repo for troubleshooting
         with open(os.path.join(REPO, "lines", "last_pull.txt"), "w") as fh:
             fh.write("\n".join(log) + "\n")
-    run(a.season, a.week, a.sims, lines_path, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
-        books=books)
+    if a.week:
+        run(a.season, a.week, a.sims, lines_path, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
+            books=books)
+    else:
+        # no week given: the current week and the next one, so the site can switch between them
+        g = load_games(refresh=not a.no_refresh)
+        season = a.season or int(g.loc[g["result"].notna(), "season"].max())
+        cur = default_week(g, season)
+        weeks = [w for w in (cur, cur + 1) if ((g["season"] == season) & (g["week"] == w)).any()]
+        for i, w in enumerate(weeks):
+            run(season, w, a.sims, lines_path, refresh=not a.no_refresh and i == 0,
+                use_injuries=not a.no_injuries, books=books)
+        write_week_index(season, cur)
