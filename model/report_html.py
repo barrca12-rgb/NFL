@@ -134,10 +134,13 @@ section { display: grid; gap: 14px; min-width: 0 }
 .play .units small { display: block; font: 600 11px/1.2 var(--body); color: var(--muted); letter-spacing: .06em; text-transform: uppercase }
 .play .pick { font: 700 24px/1.1 var(--display) }
 .play .pick .price { color: var(--muted); font-weight: 600 }
-.play .where { text-align: right; font-size: 14px } .play .where b { display: block; font-size: 16px }
+.play .where { text-align: right; font-size: 14px; color: var(--muted) }
+.play .bk { display: inline-block; margin-top: 6px; font: 700 14px/1 var(--display); letter-spacing: .06em; text-transform: uppercase;
+  padding: 6px 10px; border-radius: 6px; background: var(--turf-soft); color: var(--turf) }
+.play.tz .bk { background: var(--chalk); color: var(--ink) }
 .play .sub { grid-column: 2 / 4; color: var(--muted); font-size: 14px }
 @media (max-width: 560px) { .play { grid-template-columns: 52px 1fr } .play .where { grid-column: 2; text-align: left }
-  .play .where b { display: inline } .play .sub { grid-column: 1 / 3 } }
+  .play .sub { grid-column: 1 / 3 } }
 .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; color: var(--muted) }
 
 /* Full slate: one ticket per game, books side by side */
@@ -359,11 +362,11 @@ details[open] summary { margin-bottom: 10px }
 
   // Model plays: straight bets first (biggest stake, then strongest), then teasers
   const plays = $("plays");
-  const addPlay = (cls, unitsTxt, label, pickHtml, whereHtml, sub) => {
+  const addPlay = (cls, unitsTxt, label, pickHtml, bookTxt, whereHtml, sub) => {
     const el = document.createElement("article");
     el.className = "play " + cls;
     el.innerHTML = '<div class="units">' + unitsTxt + "<small>" + esc(label) + "</small></div>" +
-      '<div class="pick">' + pickHtml + "</div>" + '<div class="where">' + whereHtml + "</div>" +
+      '<div class="pick">' + pickHtml + '<br><span class="bk">' + bookTxt + "</span></div>" + '<div class="where">' + whereHtml + "</div>" +
       '<div class="sub">' + sub + "</div>";
     plays.appendChild(el);
   };
@@ -374,14 +377,15 @@ details[open] summary { margin-bottom: 10px }
       : "Realistic cover " + pct(g.p_cover_blend) + " · EV " + ev(g.spread_ev) + "/unit · good down to " + sp(g.bet_down_to);
     addPlay(g.verdict === "SMALL" ? "small" : "", units(g.stake_units), g.flag || g.verdict,
       esc(g.bet_side) + " " + sp(g.bet_line) + ' <span class="price">' + ml(g.bet_odds) + "</span>",
-      "<b>" + esc(g.bet_book) + "</b> " + kick(g),
+      "Bet at " + esc(g.bet_book), kick(g),
       esc(g.matchup) + " · " + stats + (g.qb_note ? " · QB: " + esc(g.qb_note) : ""));
   });
   D.teaser_pairs.forEach((t) => {
     const legs = (t.legs || []);
     const books = [...new Set(legs.map((l) => l.book))].join(" / ");
     addPlay("tz", units(t.stake_units), "Teaser " + t.grades, esc(t.teaser) + ' <span class="price">-120</span>',
-      "<b>" + esc(books || "best teaser price") + "</b> 2-team, 6 points",
+      books.includes(" / ") ? "Bet at " + esc(books) + " (whichever has both numbers)" : "Bet at " + esc(books || "the best teaser price"),
+      "2-team, 6 points",
       "Both legs win about " + pct0(t.p_both) + " historically (break-even 54.5% at -120) · " +
       legs.map((l) => esc(l.team) + " from " + sp(l.line)).join(", "));
   });
