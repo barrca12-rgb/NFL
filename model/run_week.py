@@ -34,7 +34,7 @@ from .data import HERE, REPO, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
 from .features import FEATURES, game_features
 from .injuries import FEATURES as INJ_FEATURES, add_injury_features, live_table
-from .odds import DEFAULT_BOOKS, load_book_lines
+from .odds import DEFAULT_BOOKS, latest_snapshot, load_book_lines, pull_live
 from .projection import fit_points_model
 from .ratings import build_ratings, power_table
 from .report_html import build_html
@@ -309,6 +309,9 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     f["pred"] = f["pred"] + f["team"].map(pts_adj).fillna(0)
 
     lines = load_lines(lines_path, wk, books)
+    snap = os.path.basename(lines_path or "")
+    snap_note = (f" (live odds pulled {snap[10:20]} {snap[21:23]}:{snap[23:25]} UTC)"
+                 if snap.startswith("odds_live_") else "")
     teasers = []
     h2h = coach_h2h(games, wk).set_index("game_id")
     phase = season_phase(week, wk["game_type"].iloc[0])
@@ -335,7 +338,7 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
             "home_spread": cons_spread, "total": cons_total, "n_books": int(offers["book"].nunique()),
             "home_ml": lines.loc[lines["game_id"] == g.game_id, "home_ml"].median(),
             "away_ml": lines.loc[lines["game_id"] == g.game_id, "away_ml"].median(),
-            "line_source": ", ".join(sorted(offers["book"].unique())) or "none",
+            "line_source": (", ".join(sorted(offers["book"].unique())) or "none") + snap_note,
         }
         if len(offers):
             row["spread_edge"] = s["sim_margin"] - spread_nv          # + = model likes HOME vs the consensus
@@ -601,11 +604,25 @@ if __name__ == "__main__":
     ap.add_argument("--season", type=int)
     ap.add_argument("--week", type=int)
     ap.add_argument("--sims", type=int, default=20000)
-    ap.add_argument("--lines", help="CSV of sportsbook lines to compare against")
+    ap.add_argument("--lines", help="CSV of sportsbook lines to compare against (default: pull live odds when "
+                                     "ODDS_API_KEY is set)")
+    ap.add_argument("--no-live", action="store_true", help="don't pull live odds; use --lines or nflverse lines")
     ap.add_argument("--no-refresh", action="store_true", help="don't download fresh nflverse data")
     ap.add_argument("--no-injuries", action="store_true", help="ignore this week's injury report")
     ap.add_argument("--books", default=",".join(DEFAULT_BOOKS),
                     help="books to shop from the lines file (comma list, or 'all'); default: " + ",".join(DEFAULT_BOOKS))
     a = ap.parse_args()
-    run(a.season, a.week, a.sims, a.lines, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
-        books=None if a.books == "all" else a.books.split(","))
+    books = None if a.books == "all" else a.books.split(",")
+    lines_path = a.lines
+    if not lines_path and not a.no_live:
+        key = os.environ.get("ODDS_API_KEY")
+        if key:
+            try:
+                lines_path = pull_live(key, books)
+            except Exception as e:  # network or quota trouble: fall back to the newest saved snapshot
+                lines_path = latest_snapshot()
+                print(f"live odds pull failed ({e}); using {lines_path or 'nflverse lines'}")
+        else:
+            print("ODDS_API_KEY not set: using nflverse consensus lines (pass --lines or set the key for live odds)")
+    run(a.season, a.week, a.sims, lines_path, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
+        books=books)

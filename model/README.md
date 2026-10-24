@@ -10,9 +10,16 @@ to the sportsbook lines so you can find where the Monday number is off. All data
 
 ```bash
 pip install -r model/requirements.txt
-python -m model.run_week                       # next week; downloads fresh nflverse data
-python -m model.run_week --lines lines.csv     # compare against your book's Monday numbers
+python -m model.run_week                       # next week; fresh nflverse data and LIVE odds from all four books
+python -m model.run_week --lines lines.csv     # use a saved lines file instead
+python -m model.run_week --no-live             # nflverse consensus lines only
 ```
+
+**Live odds are automatic.** When the environment has `ODDS_API_KEY` set (The Odds API) and
+`api.the-odds-api.com` is allowed, every run pulls FanDuel, DraftKings, BetMGM and Caesars spreads, totals and
+moneylines at that moment (3 API credits per run), saves a snapshot to `lines/odds_live_<UTC time>.csv`, and the
+report header shows when they were pulled. Snapshots are kept so line movement and closing line value can be checked
+later. If the pull fails, the run falls back to the newest saved snapshot, then to nflverse lines.
 
 Writes the **bet card** `reports/<season>_week<NN>.html` (open it in a browser), plus a Markdown copy, the full
 numbers in `model/output/week_<season>_<week>.csv`, and `power_ratings_<season>_<week>.csv`.

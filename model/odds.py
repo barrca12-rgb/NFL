@@ -101,6 +101,7 @@ def fetch_odds_api(api_key: str, books=DEFAULT_BOOKS, markets=("spreads", "total
            f"?apiKey={api_key}&regions=us&markets={','.join(markets)}&oddsFormat=american&bookmakers={keys}")
     with urllib.request.urlopen(url, timeout=30) as resp:
         events = json.load(resp)
+        fetch_odds_api.credits = {k: resp.headers.get(f"x-requests-{k}") for k in ("used", "remaining", "last")}
     rows = []
     for ev in events:
         for bk in ev.get("bookmakers", []):
@@ -109,6 +110,32 @@ def fetch_odds_api(api_key: str, books=DEFAULT_BOOKS, markets=("spreads", "total
                 rows.append(_rows_from_outcomes(bk.get("title", bk.get("key")), ev["home_team"], ev["away_team"],
                                                 ev.get("commence_time"), mk["key"], outs))
     return _combine(rows)
+
+
+def pull_live(api_key: str, books=DEFAULT_BOOKS, out_dir: str | None = None) -> str:
+    """Pull live odds and save a timestamped snapshot (lines/odds_live_<UTC time>.csv), so every run's numbers are
+    on record for line-movement and CLV checks. Returns the snapshot path."""
+    t = fetch_odds_api(api_key, books or DEFAULT_BOOKS)
+    stamp = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d_%H%M")
+    out_dir = out_dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lines")
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, f"odds_live_{stamp}.csv")
+    t.to_csv(path, index=False)
+    got = sorted(t["book"].unique()) if len(t) else []
+    missing = [b for b in (books or DEFAULT_BOOKS) if b not in got]
+    c = getattr(fetch_odds_api, "credits", {})
+    print(f"live odds: {len(t)} book-game rows from {', '.join(got) or 'no books'}"
+          + (f" (no lines from {', '.join(missing)})" if missing else "")
+          + f"; API credits used {c.get('last')}, remaining {c.get('remaining')}  -> {path}")
+    return path
+
+
+def latest_snapshot(out_dir: str | None = None) -> str | None:
+    out_dir = out_dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lines")
+    if not os.path.isdir(out_dir):
+        return None
+    snaps = sorted(f for f in os.listdir(out_dir) if f.startswith("odds_live_") and f.endswith(".csv"))
+    return os.path.join(out_dir, snaps[-1]) if snaps else None
 
 
 def load_book_lines(path: str, books=DEFAULT_BOOKS) -> pd.DataFrame:
@@ -143,6 +170,7 @@ if __name__ == "__main__":
         t = load_book_lines(a.export, books)
     elif a.api_key:
         t = fetch_odds_api(a.api_key, books or DEFAULT_BOOKS)
+        print("API credits:", getattr(fetch_odds_api, "credits", {}))
     else:
         raise SystemExit("give --export FILE or --api-key KEY (or set ODDS_API_KEY)")
     if a.out:
