@@ -112,8 +112,6 @@ header { display: grid; gap: 10px }
 .update button { font: 700 15px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
   padding: 11px 18px; border-radius: 999px; border: 0; background: var(--turf); color: var(--on-accent); box-shadow: 0 0 24px rgba(47,226,122,.35) }
 .update button:disabled { opacity: .55; cursor: progress }
-.update .link { background: none; color: var(--muted); padding: 0; font: 600 13px/1 var(--body); text-transform: none;
-  letter-spacing: 0; text-decoration: underline }
 .update #upd-status { color: var(--muted); flex: 1 1 220px }
 section { display: grid; gap: 14px; min-width: 0 }
 .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px }
@@ -209,7 +207,6 @@ details[open] summary { margin-bottom: 10px }
     <div class="update">
       <button id="upd-btn" type="button">Update now</button>
       <span id="upd-status"></span>
-      <button id="upd-key" class="link" type="button">GitHub token</button>
     </div>
   </header>
 
@@ -313,7 +310,6 @@ details[open] summary { margin-bottom: 10px }
     if (t !== null) store.set(t.trim());
     return store.get();
   };
-  $("upd-key").onclick = askKey;
   const gh = (path, opts) => fetch(API + path, Object.assign({ headers: { Accept: "application/vnd.github+json",
     Authorization: "Bearer " + store.get(), "X-GitHub-Api-Version": "2022-11-28" } }, opts || {}));
   const followRun = (since) => {
@@ -339,7 +335,7 @@ details[open] summary { margin-bottom: 10px }
     $("upd-status").textContent = "Starting run…";
     const r = await gh("/workflows/" + WF + "/dispatches", { method: "POST", body: JSON.stringify({ ref: "main" }) }).catch(() => null);
     if (r && r.status === 204) followRun(since);
-    else if (r && (r.status === 401 || r.status === 403 || r.status === 404)) { $("upd-status").textContent = "GitHub refused the token (" + r.status + "). Check it has Actions: Read and write on " + REPO + "."; }
+    else if (r && (r.status === 401 || r.status === 403 || r.status === 404)) { store.set(""); $("upd-status").textContent = "GitHub refused the saved token (" + r.status + "). Click Update now to enter a new one."; }
     else { $("upd-status").textContent = "Couldn't reach GitHub. Try again in a minute."; }
   };
   // a run already going (started from another device or the schedule): follow it
