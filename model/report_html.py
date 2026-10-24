@@ -7,10 +7,15 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import math
 
 import numpy as np
 import pandas as pd
+
+
+# Two-letter state for sportsbook links that are state-specific (BetMGM, Caesars). Override with BET_STATE.
+BET_STATE = os.environ.get("BET_STATE", "pa").lower()
 
 
 def _clean(v):
@@ -59,6 +64,7 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
 
     data = {
         "season": season, "week": week, "n_sims": n_sims, "phase": phase, "flag_text": flag_text,
+        "bet_state": BET_STATE,
         "generated_at": pd.Timestamp.now(tz="UTC").isoformat(timespec="seconds"),
         "inj_mode": inj_mode,
         "line_source": ", ".join(sorted({b for x in out["line_source"].dropna() for b in str(x).split(" (live")[0].split(", ")}
@@ -301,6 +307,13 @@ details[open] summary { margin-bottom: 10px }
 (function () {
   const D = JSON.parse(document.getElementById("report-data").textContent);
   const $ = (id) => document.getElementById(id);
+  // Betslip links: point state-specific books at the bettor's state, and use FanDuel's indexed betslip format
+  const ST = (D.bet_state || "pa").toLowerCase();
+  const fixLink = (u) => !u ? u : u
+    .replace(/^https:\/\/sports\.[a-z]{2}\.betmgm\.com/, "https://sports." + ST + ".betmgm.com")
+    .replace(/^(https:\/\/sportsbook\.caesars\.com\/us\/)[a-z]{2}\//, "$1" + ST + "/")
+    .replace(/(sportsbook\.fanduel\.com\/addToBetslip\?)marketId=([^&]+)&selectionId=([^&]+)/, "$1marketId[0]=$2&selectionId[0]=$3");
+  D.games.forEach((g) => (g.book_lines || []).forEach((b) => Object.keys(b).forEach((k) => { if (k.endsWith("_link")) b[k] = fixLink(b[k]); })));
   const pct = (x) => x == null ? "–" : (x * 100).toFixed(1) + "%";
   const pct0 = (x) => x == null ? "–" : Math.round(x * 100) + "%";
   const sp = (x) => x == null ? "–" : (Math.abs(x) < 0.05 ? "PK" : (x > 0 ? "+" : "") + x.toFixed(1));
