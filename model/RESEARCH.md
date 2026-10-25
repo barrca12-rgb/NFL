@@ -67,3 +67,36 @@ are not more modeling of the same data:
 3. **New information the market is slow on:** confirmed starters, injury news after Monday, weather. These need
    data sources beyond nflverse (live injury/news feeds, forecasts).
 4. **Concentrate stakes in Weeks 1-4,** where the model's edge is large and stable (9 of 10 seasons profitable).
+
+## Glide test: coach head-to-head fade (October 2026, analysis only, no rule change)
+
+`python -m model.coaches` prints the full grid. Walk-forward 1999-2025 on games.csv, same data and same running
+head-to-head sums as `coach_h2h` (only earlier meetings count; pushes and zero ratings dropped). The question: does
+the fade's win rate rise steadily as the thresholds get stricter (a real effect), or does it only spike at the
+cutoff in use (4 meetings, |rating| >= 1.0, shrink 20: 255-191, 57.2%)? The full grid has 264 cells (meetings 1-8 ×
+|rating| 0-2.5 by 0.25 × shrink 6/10/20).
+
+Win % by minimum |rating|, 4+ meetings (bets in brackets):
+
+| shrink | 0 | 0.5 | 1.0 | 1.5 | 2.0 | 2.5 |
+|---|---|---|---|---|---|---|
+| 6 | 51.0 (1190) | 52.2 (1038) | 53.4 (844) | 55.5 (677) | 56.4 (491) | 57.5 (348) |
+| 10 | 51.0 (1190) | 52.9 (982) | 54.2 (736) | 56.0 (491) | 58.2 (306) | 59.7 (181) |
+| 20 | 51.0 (1190) | 53.5 (824) | **57.2 (446)** | 57.4 (202) | 54.7 (75) | 45.2 (31) |
+
+Disjoint bands (shrink 20, 4+ meetings), so each game counts once: |rating| 0-0.5 45.4% (366), 0.5-1 49.2% (378),
+1-1.5 57.0% (244), 1.5-2 59.1% (127), 2+ 54.7% (75). By meetings (shrink 20, |rating| >= 1): 1 meeting 45.4% (163),
+2-3 50.4% (355), 4-5 57.8% (204), 6-8 60.4% (134), 9+ 51.9% (108).
+
+Nearby cells (shrink 10-20, 3-5 meetings, |rating| 0.75-1.25, 18 cells) average 54.7%; the current cutoff is the best
+of them except two at |rating| 1.25. By era at the current cutoff: 58.0% (138) / 58.7% (92) / 53.5% (101) / 58.3%
+(108). The weak 2016-20 era is weak across the neighborhood (42-55%, average 49% in those 18 cells), and with 6+
+meetings 2016-20 is under 50% in most cells (average 47%). The other three eras are above 50% in every one of those cells (averages 55.6-56.2%).
+
+**Verdict.** Mostly a glide, not a lone spike. Under shrink 6 and 10 the win rate climbs almost steadily from 51% to
+56-60% as the rating threshold tightens, and with 4+ meetings it rises with every step, which is what a real effect
+looks like. Fewer than 4 meetings is close to a coin flip, so the 4-meeting floor is a real step, not an arbitrary
+choice. Two cautions: at shrink 20 the curve falls back above |rating| 2 (on under 120 bets, so mostly noise), and
+the exact cutoff in use is one of the best cells in its neighborhood, so some of its 57.2% is selection luck. Plan
+on about 55% going forward rather than 57%: still above the 52.4% break-even, and the live tracker will show if it
+is lower. The 2016-20 dip across every nearby cell is the one real warning sign.

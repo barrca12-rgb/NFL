@@ -30,7 +30,7 @@ import pandas as pd
 from .calibrate import build_features, injury_table
 from .coaches import coach_h2h
 from .teasers import TEASE, grade_leg, pair_legs, pairs_table
-from .tracker import stake_multipliers
+from .tracker import logged_bets, stake_multipliers
 from .data import HERE, REPO, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
 from .features import FEATURES, game_features
@@ -207,6 +207,34 @@ def add_verdicts(out: pd.DataFrame, phase: str) -> pd.DataFrame:
     for a_, b_ in (("bet_line", "pick_line"), ("bet_odds", "pick_odds"), ("bet_book", "best_book")):
         alt = {"bet_line": "h2h_line", "bet_odds": "h2h_odds", "bet_book": "h2h_book"}[a_]
         out[a_] = np.where(h2h_bet, out.get(alt), out.get(b_))
+    return out
+
+
+def resist_moves(out: pd.DataFrame, logged: pd.DataFrame) -> pd.DataFrame:
+    """Market resistance: never add to a side already bet this week once the line has moved against it.
+
+    `logged` is the week's straight bets from bets/bets.csv (model/tracker.py). For a side already bet, if the best
+    number now on offer for that side across books is worse than the logged line, the stake is capped at what is
+    already logged on that side (so a re-run never adds to it)."""
+    if not len(logged) or "bet_side" not in out:
+        return out
+    out = out.copy()
+    for i, r in out.iterrows():
+        side = r["bet_side"]
+        mine = logged[(logged["game_id"] == r["game_id"]) & (logged["team"] == side)]
+        if not len(mine) or not r["stake_units"] > 0:
+            continue
+        home = side == r["home_team"]
+        menu = r.get("book_lines")
+        nums = [(b["home_spread"] if home else -b["home_spread"]) for b in (menu if isinstance(menu, list) else [])
+                if b.get("home_spread") is not None]
+        if not nums or max(nums) >= mine["line"].max():
+            continue
+        cap = float(mine["stake"].sum())
+        if r["stake_units"] > cap:
+            out.at[i, "stake_units"] = cap
+        out.at[i, "reason"] = (f"{r['reason']}; line moved against: no add (logged {side} "
+                               f"{_fmt_spread(mine['line'].max())}, now {_fmt_spread(max(nums))})")
     return out
 
 
@@ -462,6 +490,7 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     out = pd.DataFrame(rows)
     out["flag"] = out.get("flag", pd.Series("", index=out.index)).fillna("")
     out = add_verdicts(out, phase)
+    out = resist_moves(out, logged_bets(season, week))
     # Games already finished or under way can't be bet pregame: show them, but never as plays.
     done = out["state"] != "upcoming"
     out.loc[done, "verdict"] = out.loc[done, "state"].str.upper()

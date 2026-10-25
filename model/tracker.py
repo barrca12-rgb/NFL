@@ -15,6 +15,12 @@ Closing line value: points you got versus the closing number from the same side'
 better than close). Beating the close is the fastest honest signal that an edge is real: it shows up after dozens of
 bets, while win rates need hundreds.
 
+CLV in win probability (clv_prob): the same comparison priced with the simulator's key-number margin distribution
+(model/simulate.py with calibration.json), centered on the closing line: the cover probability at your number minus
+the cover probability at the close (a push counts half). Getting +3 when it closes +2.5 is worth far more than
+getting +9 when it closes +8.5. To beat -110 an angle needs to average more than half the vig (CLV_TARGET, 2.4%);
+after MIN_CLV_PROB_BETS bets an angle short of that is flagged "below target" (information only, no stake change).
+
 Shutoff: each angle starts from its backtested win rate as a Beta prior worth PRIOR_BETS bets. Live results update
 it; the stake multiplier is how far the updated win rate still sits above break-even, relative to the backtest:
     multiplier = clip((posterior - breakeven) / (backtest - breakeven), 0, 1)
@@ -31,6 +37,7 @@ import numpy as np
 import pandas as pd
 
 from .data import HERE, REPO, load_games
+from .simulate import SimConfig, simulate_game
 
 BETS_DIR = os.path.join(REPO, "bets")
 BETS = os.path.join(BETS_DIR, "bets.csv")
@@ -48,9 +55,11 @@ ANGLES = {
 }
 PRIOR_BETS = 100
 MIN_CLV_BETS = 25
+MIN_CLV_PROB_BETS = 50
+CLV_TARGET = 0.5 * (2 * 110 / 210 - 1)    # half the vig at -110: 2.4% of cover probability
 
 COLS = ["bet_id", "season", "week", "angle", "selection", "game_id", "team", "line", "odds", "book", "stake",
-        "legs", "close_line", "clv_pts", "result", "profit", "status"]
+        "legs", "close_line", "clv_pts", "clv_prob", "result", "profit", "status"]
 
 
 TEXT_COLS = ["angle", "selection", "game_id", "team", "book", "legs", "result", "status"]
@@ -60,7 +69,7 @@ def _load() -> pd.DataFrame:
     b = pd.read_csv(BETS, dtype={c: str for c in TEXT_COLS}) if os.path.exists(BETS) else pd.DataFrame(columns=COLS)
     for c in TEXT_COLS:
         b[c] = b[c].astype(object)
-    return b
+    return b.reindex(columns=COLS)
 
 
 def _save(b: pd.DataFrame) -> None:
@@ -107,6 +116,36 @@ def log(season: int, week: int, only: list[str] | None = None) -> pd.DataFrame:
     return new
 
 
+def logged_bets(season: int, week: int) -> pd.DataFrame:
+    """Straight (non-teaser) bets already logged for this season/week; empty when there are none."""
+    b = _load()
+    if not len(b):
+        return b
+    return b[(b["season"].astype(int) == season) & (b["week"].astype(int) == week) & (b["angle"] != "TEASER")]
+
+
+_DIST: dict = {}
+
+
+def _margin_dist(close: float, total: float):
+    """Simulated margins (and key-number weights) for a side whose closing number is `close` (sportsbook sign)."""
+    total = 44.0 if total is None or pd.isna(total) else float(total)
+    key = (round(close * 2) / 2, round(total))
+    if key not in _DIST:
+        sim = simulate_game((key[1] - key[0]) / 2, (key[1] + key[0]) / 2, cfg=SimConfig.calibrated(seed=11))
+        _DIST[key] = (sim["home"] - sim["away"], sim["w"] / sim["w"].sum())
+    return _DIST[key]
+
+
+def clv_prob(line: float, close: float, total: float | None = None) -> float:
+    """Cover probability at `line` minus at `close`, both from the bet side's view, under the closing market."""
+    m, w = _margin_dist(close, total)
+
+    def cover(L):
+        return float(w[m + L > 0].sum() + 0.5 * w[m + L == 0].sum())
+    return cover(line) - cover(close)
+
+
 def _side_close_and_margin(g: pd.Series, team: str):
     """Closing line from this team's view (sportsbook sign) and its final margin."""
     home = team == g["home_team"]
@@ -121,7 +160,7 @@ def settle(refresh: bool = True) -> pd.DataFrame:
     for i, r in b[b["status"] == "open"].iterrows():
         if r["angle"] == "TEASER":
             legs = json.loads(r["legs"])
-            outcomes, clv = [], []
+            outcomes, clv, clvp = [], [], []
             for leg in legs:
                 g = games.loc[leg["game_id"]]
                 if pd.isna(g["result"]):
@@ -130,6 +169,7 @@ def settle(refresh: bool = True) -> pd.DataFrame:
                 cover = margin + leg["teased_line"]
                 outcomes.append("W" if cover > 0 else "P" if cover == 0 else "L")
                 clv.append(leg["line"] - close)
+                clvp.append(clv_prob(leg["line"], close, g["total_line"]))
             else:
                 # 2-team teaser: any loss loses; a push reduces to a straight bet on the other leg (book rules vary)
                 if "L" in outcomes:
@@ -138,7 +178,8 @@ def settle(refresh: bool = True) -> pd.DataFrame:
                     res, prof = "W", r["stake"] * _payout(r["odds"])
                 else:
                     res, prof = "P", 0.0
-                b.loc[i, ["result", "profit", "clv_pts", "status"]] = [res, prof, float(np.mean(clv)), "settled"]
+                b.loc[i, ["result", "profit", "clv_pts", "clv_prob", "status"]] = [res, prof, float(np.mean(clv)),
+                                                                                  float(np.mean(clvp)), "settled"]
             continue
         g = games.loc[r["game_id"]]
         if pd.isna(g["result"]):
@@ -147,8 +188,11 @@ def settle(refresh: bool = True) -> pd.DataFrame:
         cover = margin + r["line"]
         res = "W" if cover > 0 else "P" if cover == 0 else "L"
         prof = r["stake"] * _payout(r["odds"]) if res == "W" else (-r["stake"] if res == "L" else 0.0)
-        b.loc[i, ["close_line", "clv_pts", "result", "profit", "status"]] = [close, r["line"] - close, res, prof,
-                                                                            "settled"]
+        b.loc[i, ["close_line", "clv_pts", "clv_prob", "result", "profit", "status"]] = [
+            close, r["line"] - close, clv_prob(r["line"], close, g["total_line"]), res, prof, "settled"]
+    # backfill clv_prob on straight bets settled before it existed
+    for i, r in b[(b["status"] == "settled") & b["clv_prob"].isna() & b["close_line"].notna()].iterrows():
+        b.loc[i, "clv_prob"] = clv_prob(r["line"], r["close_line"], games.loc[r["game_id"], "total_line"])
     _save(b)
     return b
 
@@ -165,12 +209,17 @@ def angle_status(b: pd.DataFrame | None = None) -> dict:
         post = (p0 * PRIOR_BETS + w) / (PRIOR_BETS + w + l)
         mult = float(np.clip((post - be) / (p0 - be), 0, 1))
         clv = float(a["clv_pts"].mean()) if len(a) else None
+        clvp = float(a["clv_prob"].mean()) if a["clv_prob"].notna().any() else None
         note = ""
         if len(a) >= MIN_CLV_BETS and clv is not None and clv < 0:
             mult = min(mult, 0.5)
             note = "negative CLV"
+        below = len(a) >= MIN_CLV_PROB_BETS and clvp is not None and clvp < CLV_TARGET
+        if below:
+            note = "; ".join(x for x in (note, f"below target (CLV {clvp:+.1%} < {CLV_TARGET:.1%})") if x)
         out[angle] = {"bets": len(a), "wins": w, "losses": l, "units": float(a["profit"].sum()),
                       "staked": float(a["stake"].sum()), "avg_clv_pts": clv,
+                      "avg_clv_prob": clvp, "below_target": bool(below),
                       "beat_close_pct": float((a["clv_pts"] > 0).mean()) if len(a) else None,
                       "posterior_win_rate": post, "stake_multiplier": mult, "note": note}
     os.makedirs(BETS_DIR, exist_ok=True)
@@ -195,6 +244,7 @@ def report() -> None:
         rows.append({"angle": angle, "bets": v["bets"], "record": f"{v['wins']}-{v['losses']}",
                      "units": round(v["units"], 2), "roi": None if roi is None else round(roi, 3),
                      "avg CLV (pts)": None if v["avg_clv_pts"] is None else round(v["avg_clv_pts"], 2),
+                     "avg CLV (prob)": None if v.get("avg_clv_prob") is None else f"{v['avg_clv_prob']:+.1%}",
                      "beat close": None if v["beat_close_pct"] is None else f"{v['beat_close_pct']:.0%}",
                      "win rate (updated)": f"{v['posterior_win_rate']:.1%}",
                      "stake x": round(v["stake_multiplier"], 2), "note": v["note"]})

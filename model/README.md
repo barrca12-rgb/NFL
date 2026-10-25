@@ -113,6 +113,15 @@ Each angle (STRONG, PLAY, VALUE, H2H, SMALL, TEASER) starts from its backtested 
 the next card's stakes for that angle are scaled down as its updated win rate slides toward break-even (zero at
 break-even), or capped at half if it averages negative CLV after 25 bets.
 
+`settle` also records **CLV in win probability** (`clv_prob`): the cover probability at your number minus at the
+close, priced with the simulator's key-number margin distribution, so half a point through 3 counts about 4% and
+half a point at 9 under 1%. After 50 bets, an angle averaging under half the vig (2.4%) is flagged "below target" in
+the report (information only; stakes are unchanged).
+
+**Market resistance.** If a side is already logged in `bets/bets.csv` for the week and its best number across books
+has since moved against it, a re-run never raises that side's stake above what is logged; the reason says "line
+moved against: no add". Tests: `python -m unittest tests.test_bets`.
+
 ## Weekly schedule: Monday run, Thursday re-run
 
 Run the same command again later in the week. It detects which nflverse injury report is available and uses it automatically:
