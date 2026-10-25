@@ -1,2 +1,5 @@
-2026-10-25 21:01 UTC  keys set: sgo, theoddsapi
-sgo: ok -> odds_live_2026-10-25_2101.csv
+2026-10-25 21:07 UTC  keys set: theoddsapi, sgo
+theoddsapi: ok (BetMGM 5, DraftKings 12, FanDuel 5)
+sgo: ok (BetMGM 2, Caesars 13, DraftKings 9, FanDuel 2)
+theoddsapi credits used 3, remaining 451
+-> odds_live_2026-10-25_2107.csv
