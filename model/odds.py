@@ -169,6 +169,8 @@ def fetch_sgo(api_key: str, books=DEFAULT_BOOKS, raw_path: str | None = None) ->
         with open(raw_path, "w") as fh:
             json.dump(events, fh, indent=1)
     rows = []
+    # per-book counts of what the feed sent, for lines/last_pull.txt
+    diag: dict[str, dict] = {b: {"sent": 0, "unavailable": 0, "stale": 0} for b in ids.values()}
     for ev in events:
         if (ev.get("status") or {}).get("started"):   # in-game lines aren't pregame prices
             continue
@@ -178,11 +180,16 @@ def fetch_sgo(api_key: str, books=DEFAULT_BOOKS, raw_path: str | None = None) ->
         per_book: dict[str, dict] = {}
         for odd_id, (line_col, price_col, link_col) in SGO_ODDS.items():
             for bk, o in ((ev.get("odds") or {}).get(odd_id, {}).get("byBookmaker") or {}).items():
-                if bk not in ids or o.get("available") is False:
+                if bk not in ids:
+                    continue
+                diag[ids[bk]]["sent"] += 1
+                if o.get("available") is False:
+                    diag[ids[bk]]["unavailable"] += 1
                     continue
                 # a price the book hasn't touched in hours is probably stale (the line moved and the feed lags)
                 upd = pd.to_datetime(o.get("lastUpdatedAt"), utc=True, errors="coerce")
                 if pd.notna(upd) and pd.Timestamp.now(tz="UTC") - upd > pd.Timedelta(hours=SGO_MAX_AGE_HOURS):
+                    diag[ids[bk]]["stale"] += 1
                     continue
                 r = per_book.setdefault(bk, {"book": ids[bk], "home_team": home, "away_team": away,
                                              "commence_time": start})
@@ -194,6 +201,7 @@ def fetch_sgo(api_key: str, books=DEFAULT_BOOKS, raw_path: str | None = None) ->
                 elif line_col == "total":
                     r["total"] = _num(o.get("overUnder"))
         rows += per_book.values()
+    fetch_sgo.diag = {"events": len(events), **diag}
     return _combine(rows)
 
 
@@ -267,6 +275,11 @@ def pull_all(keys: dict, books=DEFAULT_BOOKS, out_dir: str | None = None) -> tup
             got[provider] = t
             per = ", ".join(f"{b} {n}" for b, n in t.groupby("book").size().items()) if len(t) else "no lines"
             log.append(f"{provider}: ok ({per})")
+            if provider == "sgo":
+                dg = getattr(fetch_sgo, "diag", {})
+                log.append(f"  sgo feed: {dg.get('events')} events; " + "; ".join(
+                    f"{b} sent {v['sent']}, unavailable {v['unavailable']}, stale {v['stale']}"
+                    for b, v in dg.items() if isinstance(v, dict)))
         except Exception as e:  # network, quota or format trouble: use whatever else came back
             detail = e.read().decode(errors="replace")[:300] if hasattr(e, "read") else ""
             log.append(f"{provider}: FAILED {e} {detail}".strip())
