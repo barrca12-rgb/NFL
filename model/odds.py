@@ -130,7 +130,8 @@ SGO_ODDS = {"points-home-game-sp-home": ("home_spread", "home_spread_odds", "hom
             "points-home-game-ml-home": (None, "home_ml", "home_ml_link"),
             "points-away-game-ml-away": (None, "away_ml", "away_ml_link")}
 _TEAM_KEYS = {k.lower(): v for k, v in TEAMS.items()}
-SGO_MAX_AGE_HOURS = 6   # ignore SportsGameOdds prices last updated longer ago than this
+SGO_MAX_AGE_HOURS = 6       # games within 24h of kickoff: ignore prices not updated in this many hours
+SGO_MAX_AGE_DAYS_FAR = 3    # games further out: ignore prices not updated in this many days
 
 
 def _sgo_team(t: dict) -> str:
@@ -174,6 +175,10 @@ def fetch_sgo(api_key: str, books=DEFAULT_BOOKS, raw_path: str | None = None) ->
     for ev in events:
         if (ev.get("status") or {}).get("started"):   # in-game lines aren't pregame prices
             continue
+        # close to kickoff lines move constantly, so an untouched price is stale sooner than one a week out
+        ko = pd.to_datetime((ev.get("status") or {}).get("startsAt"), utc=True, errors="coerce")
+        soon = pd.notna(ko) and ko - pd.Timestamp.now(tz="UTC") < pd.Timedelta(hours=24)
+        max_age = pd.Timedelta(hours=SGO_MAX_AGE_HOURS) if soon else pd.Timedelta(days=SGO_MAX_AGE_DAYS_FAR)
         teams = ev.get("teams") or {}
         home, away = _sgo_team(teams.get("home") or {}), _sgo_team(teams.get("away") or {})
         start = (ev.get("status") or {}).get("startsAt")
@@ -188,7 +193,7 @@ def fetch_sgo(api_key: str, books=DEFAULT_BOOKS, raw_path: str | None = None) ->
                     continue
                 # a price the book hasn't touched in hours is probably stale (the line moved and the feed lags)
                 upd = pd.to_datetime(o.get("lastUpdatedAt"), utc=True, errors="coerce")
-                if pd.notna(upd) and pd.Timestamp.now(tz="UTC") - upd > pd.Timedelta(hours=SGO_MAX_AGE_HOURS):
+                if pd.notna(upd) and pd.Timestamp.now(tz="UTC") - upd > max_age:
                     diag[ids[bk]]["stale"] += 1
                     continue
                 r = per_book.setdefault(bk, {"book": ids[bk], "home_team": home, "away_team": away,
