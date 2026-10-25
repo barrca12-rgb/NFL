@@ -345,7 +345,8 @@ details[open] summary { margin-bottom: 10px }
   // Week switcher (weeks.json is written next to the pages by the site build)
   const navWeeks = (list, cur) => {
     $("weeks").innerHTML = list.map((w) => '<a href="' + D.season + "_week" + String(w).padStart(2, "0") + '.html"' +
-      (w === D.week ? ' aria-current="page"' : "") + ">Week " + w + (w === cur ? '<span class="tag">Now</span>' : "") + "</a>").join("");
+      (w === D.week ? ' aria-current="page"' : "") + ">Week " + w + (w === cur ? '<span class="tag">Now</span>' : "") + "</a>").join("") +
+      '<a href="record.html">Record</a>';
   };
   navWeeks([D.week], null);
   fetch("weeks.json", {cache: "no-store"}).then((r) => r.json()).then((w) => {
@@ -689,6 +690,92 @@ details[open] summary { margin-bottom: 10px }
     {k: "st", h: "Special teams", f: (r) => sgn1(r.st)}, {k: "elo", h: "Elo", f: (r) => r.elo == null ? "–" : Math.round(r.elo)},
     {k: "market", h: "Market", f: (r) => sgn1(r.market)},
   ], D.ratings, ["net_pts", -1]);
+})();
+</script>
+"""
+
+
+def build_record_html(summary: dict, season: int) -> str:
+    """The Record page: the model's graded plays (spreads and teasers) in the same theme as the bet card."""
+    style = TEMPLATE[TEMPLATE.index("<style>"):TEMPLATE.index("</style>") + len("</style>")]
+    payload = json.dumps({"season": season, **summary}, default=str).replace("</", "<\\/")
+    return RECORD_TEMPLATE.replace("__STYLE__", style).replace("__DATA__", payload)
+
+
+RECORD_TEMPLATE = r"""<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+__STYLE__
+<style>
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px }
+.kpi span { display: block; font: 700 11px/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted) }
+.kpi b { display: block; font: 700 34px/1.1 var(--display); margin-top: 4px }
+.kpi b.pos { color: var(--turf) } .kpi b.neg { color: var(--neg) }
+.res { display: inline-block; min-width: 26px; text-align: center; font: 700 13px/1 var(--display); padding: 5px 7px; border-radius: 4px }
+.res.W { background: var(--turf); color: var(--on-accent) } .res.L { background: var(--neg); color: #fff }
+.res.P { background: var(--chalk); color: var(--muted) } .res.pend { background: var(--chalk); color: var(--amber) }
+</style>
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>Model Record</h1>
+    <p class="lede">Every play the site recommended, as it stood at kickoff, graded against the final score. Units use the stake and price shown on the card.</p>
+    <nav class="weeks" id="weeks" aria-label="Weeks"><a href="record.html" aria-current="page">Record</a></nav>
+  </header>
+  <section><div class="kpis" id="kpis"></div></section>
+  <section aria-labelledby="type-h"><div class="sec-head"><h2 id="type-h">By bet type</h2></div><div class="tbl"><table id="t-type"></table></div></section>
+  <section aria-labelledby="wk-h"><div class="sec-head"><h2 id="wk-h">By week</h2></div><div class="tbl"><table id="t-week"></table></div></section>
+  <section aria-labelledby="pl-h"><div class="sec-head"><h2 id="pl-h">Every play</h2><span class="note">CLV = points better than the closing line (positive is good).</span></div>
+    <div class="tbl"><table id="t-plays"></table></div></section>
+</div>
+<script id="record-data" type="application/json">__DATA__</script>
+<script>
+(function () {
+  const R = JSON.parse(document.getElementById("record-data").textContent);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+  const u = (x) => x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(2) + "u";
+  const pc = (x) => x == null ? "–" : (x > 0 ? "+" : "") + (x * 100).toFixed(1) + "%";
+  const rec = (a) => a.w + "-" + a.l + (a.p ? "-" + a.p : "");
+  const ml = (x) => x == null ? "" : (x > 0 ? "+" : "") + Math.round(x);
+  $("eyebrow").textContent = R.season + " NFL season";
+  const o = R.overall;
+  const winp = o.w + o.l ? o.w / (o.w + o.l) : null;
+  [["Record", rec(o), ""], ["Win %", winp == null ? "–" : (winp * 100).toFixed(1) + "%", ""],
+   ["Units", u(o.units), o.units > 0 ? "pos" : o.units < 0 ? "neg" : ""], ["ROI", pc(o.roi), o.roi > 0 ? "pos" : o.roi < 0 ? "neg" : ""],
+   ["Avg CLV", o.clv == null ? "–" : (o.clv > 0 ? "+" : "") + o.clv.toFixed(2) + " pts", o.clv > 0 ? "pos" : o.clv < 0 ? "neg" : ""],
+   ["Pending", String(o.pending), ""]].forEach(([k, v, c]) => {
+    $("kpis").insertAdjacentHTML("beforeend", '<div class="kpi"><span>' + k + '</span><b class="' + c + '">' + v + "</b></div>");
+  });
+  const aggRows = (obj, label) => Object.entries(obj).map(([k, a]) => "<tr><td>" + esc(label(k)) + "</td><td>" + rec(a) + "</td><td>" +
+    (a.w + a.l ? ((a.w / (a.w + a.l)) * 100).toFixed(1) + "%" : "–") + '</td><td class="' + (a.units > 0 ? "pos" : a.units < 0 ? "neg" : "") + '">' + u(a.units) +
+    "</td><td>" + pc(a.roi) + "</td><td>" + (a.clv == null ? "–" : (a.clv > 0 ? "+" : "") + a.clv.toFixed(2)) + "</td><td>" + a.pending + "</td></tr>").join("");
+  const head = (first) => "<thead><tr><th class=\"l\">" + first + "</th><th>Record</th><th>Win %</th><th>Units</th><th>ROI</th><th>CLV</th><th>Pending</th></tr></thead>";
+  $("t-type").innerHTML = head("Type") + "<tbody>" + aggRows(R.by_type, (k) => k) + "</tbody>";
+  $("t-week").innerHTML = head("Week") + "<tbody>" + aggRows(R.by_week, (k) => "Week " + k.split("-")[1]) + "</tbody>";
+  const plays = R.plays.slice().sort((a, b) => String(b.kickoff).localeCompare(String(a.kickoff)));
+  const now = new Date();
+  $("t-plays").innerHTML = '<thead><tr><th class="l">Result</th><th class="l">Play</th><th class="l">Type</th><th class="l">Game</th><th class="l">Book</th><th>Stake</th><th>Profit</th><th>Close</th><th>CLV</th><th class="l">Kickoff</th></tr></thead><tbody>' +
+    plays.map((p) => {
+      const started = p.kickoff && new Date(p.kickoff) <= now;
+      const res = p.result ? '<span class="res ' + p.result + '">' + p.result + "</span>" : '<span class="res pend">' + (started ? "Live" : "Open") + "</span>";
+      const t = p.kickoff ? new Date(p.kickoff).toLocaleString([], {weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit"}) : "";
+      return "<tr><td class=\"l\">" + res + '</td><td class="l strong">' + esc(p.selection) + " " + ml(p.odds) + '</td><td class="l">' + esc(p.angle) +
+        '</td><td class="l">' + esc(p.matchup || "Teaser") + '</td><td class="l">' + esc(p.book) + "</td><td>" + p.stake + "u</td>" +
+        '<td class="' + (p.profit > 0 ? "pos" : p.profit < 0 ? "neg" : "") + '">' + (p.profit == null ? "–" : u(p.profit)) + "</td><td>" +
+        (p.close_line == null ? "–" : (p.close_line > 0 ? "+" : "") + p.close_line) + "</td><td>" + (p.clv_pts == null ? "–" : (p.clv_pts > 0 ? "+" : "") + p.clv_pts.toFixed(1)) +
+        '</td><td class="l">' + t + "</td></tr>";
+    }).join("") + "</tbody>";
+  fetch("weeks.json", {cache: "no-store"}).then((r) => r.json()).then((w) => {
+    $("weeks").innerHTML = w.weeks.map((k) => '<a href="' + w.season + "_week" + String(k).padStart(2, "0") + '.html">Week ' + k +
+      (k === w.current ? '<span class="tag">Now</span>' : "") + "</a>").join("") + '<a href="record.html" aria-current="page">Record</a>';
+  }).catch(() => {});
 })();
 </script>
 """

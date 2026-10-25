@@ -38,7 +38,8 @@ from .injuries import FEATURES as INJ_FEATURES, add_injury_features, live_table
 from .odds import DEFAULT_BOOKS, LINK_COLS, latest_snapshot, load_book_lines, pull_live
 from .projection import fit_points_model
 from .ratings import build_ratings, power_table
-from .report_html import build_html
+from . import ledger
+from .report_html import build_html, build_record_html
 from .simulate import SimConfig, american, simulate_game, summarize
 
 OUT = os.path.join(HERE, "output")
@@ -275,6 +276,14 @@ def book_lines(gl: pd.DataFrame) -> list[dict]:
     return out
 
 
+def write_record(season: int) -> None:
+    """Grade finished plays and write the site's Record page (reports/record.html)."""
+    d = ledger.settle(ledger.load(), load_games(refresh=False))
+    ledger.save(d)
+    with open(os.path.join(REPORTS, "record.html"), "w") as fh:
+        fh.write(build_record_html(ledger.summary(d[d["season"] == season]), season))
+
+
 def write_week_index(season: int, current: int) -> None:
     """reports/weeks.json: the season's report pages and which one is current, for the site's week switcher."""
     weeks = sorted(int(f[len(f"{season}_week"):-5]) for f in os.listdir(REPORTS)
@@ -462,6 +471,9 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
     tpairs = pairs_table(pair_legs(tz)) if len(tz) else pd.DataFrame()
     if len(tpairs):
         tpairs["stake_units"] = (tpairs["stake_units"] * stake_multipliers().get("TEASER", 1.0)).round(2)
+    # the model's own record (model/ledger.py): keep this card's plays for games that haven't kicked off
+    ledger.save(ledger.record_card(season, week, out.to_dict("records"),
+                                   tpairs.to_dict("records") if len(tpairs) else [], ledger.kickoffs(games, season)))
 
     tag = f"{season}_{week:02d}"
     out.to_csv(os.path.join(OUT, f"week_{tag}.csv"), index=False)
@@ -695,8 +707,9 @@ if __name__ == "__main__":
         with open(os.path.join(REPO, "lines", "last_pull.txt"), "w") as fh:
             fh.write("\n".join(log) + "\n")
     if a.week:
-        run(a.season, a.week, a.sims, lines_path, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
-            books=books)
+        out = run(a.season, a.week, a.sims, lines_path, refresh=not a.no_refresh, use_injuries=not a.no_injuries,
+                  books=books)
+        write_record(a.season or int(load_games(refresh=False).loc[lambda g: g["result"].notna(), "season"].max()))
     else:
         # no week given: the current week and the next one, so the site can switch between them
         g = load_games(refresh=not a.no_refresh)
@@ -707,3 +720,4 @@ if __name__ == "__main__":
             run(season, w, a.sims, lines_path, refresh=not a.no_refresh and i == 0,
                 use_injuries=not a.no_injuries, books=books)
         write_week_index(season, cur)
+        write_record(season)
