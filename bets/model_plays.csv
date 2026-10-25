@@ -2,13 +2,10 @@ season,week,kind,angle,game_id,kickoff,matchup,selection,team,line,odds,book,sta
 2026,7,spread,VALUE,2026_07_NYG_HOU,2026-10-25T17:00:00+00:00,NYG @ HOU,NYG +10.5,NYG,10.5,-110.0,BetMGM,0.5,,2026-10-25T14:21+00:00,W,0.4545454545454545,10.0,0.5
 2026,7,spread,VALUE,2026_07_SF_ATL,2026-10-25T17:00:00+00:00,SF @ ATL,SF -2.5,SF,-2.5,-115.0,BetMGM,0.5,,2026-10-25T14:21+00:00,L,-0.5,-2.5,0.0
 2026,7,teaser,TEASER AB,"2026_07_CLE_TEN,2026_07_SF_ATL",2026-10-25T17:00:00+00:00,,TEN +8.5 / ATL +8.5,TEN/ATL,,-120.0,BetMGM/DraftKings,0.5,"[{""game_id"": ""2026_07_CLE_TEN"", ""team"": ""TEN"", ""line"": 2.5, ""teased_line"": 8.5, ""book"": ""DraftKings""}, {""game_id"": ""2026_07_SF_ATL"", ""team"": ""ATL"", ""line"": 2.5, ""teased_line"": 8.5, ""book"": ""BetMGM""}]",2026-10-25T14:21+00:00,W,0.4166666666666667,,0.5
-2026,7,spread,VALUE,2026_07_KC_SEA,2026-10-26T00:20:00+00:00,KC @ SEA,SEA -3,SEA,-3.0,-102.0,BetMGM,0.5,,2026-10-25T21:08+00:00,,,,
-2026,7,spread,VALUE,2026_07_DAL_PHI,2026-10-27T00:15:00+00:00,DAL @ PHI,PHI +4.5,PHI,4.5,-105.0,FanDuel,0.5,,2026-10-25T21:08+00:00,,,,
-2026,8,spread,VALUE,2026_08_ARI_DAL,2026-11-01T18:00:00+00:00,ARI @ DAL,ARI +6.5,ARI,6.5,-110.0,Caesars,0.5,,2026-10-25T21:09+00:00,,,,
-2026,8,spread,VALUE,2026_08_ATL_TB,2026-11-01T18:00:00+00:00,ATL @ TB,TB -1.5,TB,-1.5,-110.0,DraftKings,0.5,,2026-10-25T21:09+00:00,,,,
-2026,8,teaser,TEASER AB,"2026_08_ATL_TB,2026_08_NE_MIA",2026-11-01T18:00:00+00:00,,ATL +7.5 / NE -1.5,ATL/NE,,-120.0,DraftKings,0.5,"[{""game_id"": ""2026_08_ATL_TB"", ""team"": ""ATL"", ""line"": 1.5, ""teased_line"": 7.5, ""book"": ""DraftKings""}, {""game_id"": ""2026_08_NE_MIA"", ""team"": ""NE"", ""line"": -7.5, ""teased_line"": -1.5, ""book"": ""DraftKings""}]",2026-10-25T21:09+00:00,,,,
-2026,8,teaser,TEASER AA,"2026_08_MIN_DET,2026_08_KC_DEN",2026-11-01T18:00:00+00:00,,MIN +8.5 / DEN +7.5,MIN/DEN,,-120.0,Caesars,1.0,"[{""game_id"": ""2026_08_MIN_DET"", ""team"": ""MIN"", ""line"": 2.5, ""teased_line"": 8.5, ""book"": ""Caesars""}, {""game_id"": ""2026_08_KC_DEN"", ""team"": ""DEN"", ""line"": 1.5, ""teased_line"": 7.5, ""book"": ""Caesars""}]",2026-10-25T21:09+00:00,,,,
-2026,8,spread,VALUE,2026_08_LAC_LA,2026-11-01T21:05:00+00:00,LAC @ LA,LAC +7,LAC,7.0,-110.0,Caesars,0.5,,2026-10-25T21:09+00:00,,,,
-2026,8,spread,H2H,2026_08_KC_DEN,2026-11-01T21:25:00+00:00,KC @ DEN,KC -1.5,KC,-1.5,-110.0,Caesars,0.5,,2026-10-25T21:09+00:00,,,,
-2026,8,spread,VALUE,2026_08_NE_MIA,2026-11-01T21:25:00+00:00,NE @ MIA,MIA +8.5,MIA,8.5,-113.0,Caesars,0.5,,2026-10-25T21:09+00:00,,,,
-2026,8,spread,VALUE,2026_08_PHI_WAS,2026-11-02T01:20:00+00:00,PHI @ WAS,PHI +3.5,PHI,3.5,-106.0,Caesars,0.5,,2026-10-25T21:09+00:00,,,,
+2026,7,spread,VALUE,2026_07_DAL_PHI,2026-10-27T00:15:00+00:00,DAL @ PHI,PHI +4.5,PHI,4.5,-105.0,FanDuel,0.5,,2026-10-25T21:16+00:00,,,,
+2026,8,spread,VALUE,2026_08_ARI_DAL,2026-11-01T18:00:00+00:00,ARI @ DAL,ARI +6.5,ARI,6.5,-110.0,Caesars,0.5,,2026-10-25T21:17+00:00,,,,
+2026,8,spread,VALUE,2026_08_ATL_TB,2026-11-01T18:00:00+00:00,ATL @ TB,TB -1.5,TB,-1.5,-110.0,DraftKings,0.5,,2026-10-25T21:17+00:00,,,,
+2026,8,teaser,TEASER AA,"2026_08_KC_DEN,2026_08_MIN_DET",2026-11-01T18:00:00+00:00,,DEN +7.5 / MIN +8.5,DEN/MIN,,-120.0,Caesars,1.0,"[{""game_id"": ""2026_08_KC_DEN"", ""team"": ""DEN"", ""line"": 1.5, ""teased_line"": 7.5, ""book"": ""Caesars""}, {""game_id"": ""2026_08_MIN_DET"", ""team"": ""MIN"", ""line"": 2.5, ""teased_line"": 8.5, ""book"": ""Caesars""}]",2026-10-25T21:17+00:00,,,,
+2026,8,spread,VALUE,2026_08_LAC_LA,2026-11-01T21:05:00+00:00,LAC @ LA,LAC +7,LAC,7.0,-110.0,Caesars,0.5,,2026-10-25T21:17+00:00,,,,
+2026,8,spread,H2H,2026_08_KC_DEN,2026-11-01T21:25:00+00:00,KC @ DEN,KC -1.5,KC,-1.5,-110.0,Caesars,0.5,,2026-10-25T21:17+00:00,,,,
+2026,8,spread,VALUE,2026_08_NE_MIA,2026-11-01T21:25:00+00:00,NE @ MIA,MIA +8.5,MIA,8.5,-113.0,Caesars,0.5,,2026-10-25T21:17+00:00,,,,
