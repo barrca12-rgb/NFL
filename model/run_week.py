@@ -35,7 +35,7 @@ from .data import HERE, REPO, depth_chart_qb1, load_all, load_games
 from .elo import elo_snapshots
 from .features import FEATURES, game_features
 from .injuries import FEATURES as INJ_FEATURES, add_injury_features, live_table
-from .odds import DEFAULT_BOOKS, LINK_COLS, latest_snapshot, load_book_lines, pull_live
+from .odds import DEFAULT_BOOKS, LINK_COLS, latest_snapshot, load_book_lines, pull_all
 from .projection import fit_points_model
 from .ratings import build_ratings, power_table
 from . import ledger
@@ -713,23 +713,19 @@ if __name__ == "__main__":
     books = None if a.books == "all" else a.books.split(",")
     lines_path = a.lines
     if not lines_path and not a.no_live:
-        # SportsGameOdds when its key is set, then The Odds API, then the newest saved snapshot
-        sources = [(p, os.environ.get(k)) for p, k in (("sgo", "SGO_API_KEY"), ("theoddsapi", "ODDS_API_KEY"))
-                   if os.environ.get(k)]
-        log = [f"{pd.Timestamp.now(tz='UTC'):%Y-%m-%d %H:%M} UTC  keys set: "
-               + (", ".join(p for p, _ in sources) or "none")]
-        for provider, key in sources:
+        # every provider with a key, merged (The Odds API for DraftKings/FanDuel/BetMGM, SportsGameOdds for
+        # Caesars and betslip links); if both fail, the newest saved snapshot
+        keys = {"theoddsapi": os.environ.get("ODDS_API_KEY"), "sgo": os.environ.get("SGO_API_KEY")}
+        sources = [p for p, k in keys.items() if k]
+        log = [f"{pd.Timestamp.now(tz='UTC'):%Y-%m-%d %H:%M} UTC  keys set: " + (", ".join(sources) or "none")]
+        if sources:
             try:
-                lines_path = pull_live(key, books, provider=provider)
-                log.append(f"{provider}: ok -> {os.path.basename(lines_path)}")
-                break
-            except Exception as e:  # network, quota or format trouble: try the next source
-                detail = e.read().decode(errors="replace")[:300] if hasattr(e, "read") else ""
-                log.append(f"{provider}: FAILED {e} {detail}".strip())
-                print(f"live odds pull from {provider} failed ({e}) {detail}")
-        if sources and not lines_path:
-            lines_path = latest_snapshot()
-            log.append(f"fell back to {lines_path or 'nflverse lines'}")
+                lines_path, plog = pull_all(keys, books)
+                log += plog + [f"-> {os.path.basename(lines_path)}"]
+            except Exception as e:
+                log.append(f"all providers failed ({e})")
+                lines_path = latest_snapshot()
+                log.append(f"fell back to {lines_path or 'nflverse lines'}")
         if not sources:
             print("no odds key set (SGO_API_KEY or ODDS_API_KEY): using nflverse consensus lines")
         # which source the last run used (and why not the first choice), kept in the repo for troubleshooting

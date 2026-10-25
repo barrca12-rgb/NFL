@@ -220,6 +220,69 @@ def pull_live(api_key: str, books=DEFAULT_BOOKS, out_dir: str | None = None, pro
     return path
 
 
+def merge_sources(oapi: pd.DataFrame | None, sgo: pd.DataFrame | None) -> pd.DataFrame:
+    """One row per (book, game) from both providers. The Odds API's prices win where both have the book (they're
+    kept current for DraftKings, FanDuel and BetMGM); SportsGameOdds fills books and games the other lacks (Caesars)
+    and supplies betslip links, kept only where its number for that bet matches the price being shown."""
+    frames = [f for f in (oapi, sgo) if f is not None and len(f)]
+    if not frames:
+        return pd.DataFrame(columns=COLS)
+    if len(frames) == 1:
+        return frames[0].reset_index(drop=True)
+    key = ["book", "away_team", "home_team"]
+    a, b = oapi.copy(), sgo.copy()
+    a["src_rank"], b["src_rank"] = 0, 1
+    m = pd.concat([a, b], ignore_index=True).sort_values("src_rank", kind="stable").drop_duplicates(key, keep="first")
+    links = b.set_index(key)
+    same = {"home_spread_link": ("home_spread",), "away_spread_link": ("home_spread",), "over_link": ("total",),
+            "under_link": ("total",), "home_ml_link": (), "away_ml_link": ()}
+    for c in LINK_COLS:
+        if c not in links:
+            continue
+        vals = []
+        for r in m.itertuples(index=False):
+            k = (r.book, r.away_team, r.home_team)
+            if r.src_rank == 1 or k not in links.index:
+                vals.append(getattr(r, c, np.nan))
+                continue
+            src = links.loc[k]
+            ok = all(pd.notna(getattr(r, f)) and getattr(r, f) == src[f] for f in same[c])
+            vals.append(src[c] if ok else np.nan)
+        m[c] = vals
+    return m.drop(columns="src_rank").reset_index(drop=True)
+
+
+def pull_all(keys: dict, books=DEFAULT_BOOKS, out_dir: str | None = None) -> tuple[str, list[str]]:
+    """Pull every provider with a key (keys: {"theoddsapi": key, "sgo": key}), merge, save one snapshot.
+    Returns (snapshot path, log lines). Raises if no provider returned lines."""
+    out_dir = out_dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lines")
+    os.makedirs(out_dir, exist_ok=True)
+    got, log = {}, []
+    for provider, key in keys.items():
+        if not key:
+            continue
+        try:
+            t = (fetch_sgo(key, books or DEFAULT_BOOKS, raw_path=os.path.join(out_dir, "sgo_raw_latest.json"))
+                 if provider == "sgo" else fetch_odds_api(key, books or DEFAULT_BOOKS))
+            got[provider] = t
+            per = ", ".join(f"{b} {n}" for b, n in t.groupby("book").size().items()) if len(t) else "no lines"
+            log.append(f"{provider}: ok ({per})")
+        except Exception as e:  # network, quota or format trouble: use whatever else came back
+            detail = e.read().decode(errors="replace")[:300] if hasattr(e, "read") else ""
+            log.append(f"{provider}: FAILED {e} {detail}".strip())
+    t = merge_sources(got.get("theoddsapi"), got.get("sgo"))
+    if not len(t):
+        raise RuntimeError("no lines returned: " + "; ".join(log))
+    stamp = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d_%H%M")
+    path = os.path.join(out_dir, f"odds_live_{stamp}.csv")
+    t.to_csv(path, index=False)
+    c = getattr(fetch_odds_api, "credits", {})
+    if "theoddsapi" in got and c:
+        log.append(f"theoddsapi credits used {c.get('last')}, remaining {c.get('remaining')}")
+    print("live odds: " + " | ".join(log) + f"  -> {path}")
+    return path, log
+
+
 def latest_snapshot(out_dir: str | None = None) -> str | None:
     out_dir = out_dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lines")
     if not os.path.isdir(out_dir):
