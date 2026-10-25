@@ -1,2 +1,2 @@
-2026-10-24 03:27 UTC  keys set: sgo, theoddsapi
-sgo: ok -> odds_live_2026-10-24_0327.csv
+2026-10-25 14:20 UTC  keys set: sgo, theoddsapi
+sgo: ok -> odds_live_2026-10-25_1420.csv
