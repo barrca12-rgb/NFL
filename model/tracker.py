@@ -50,7 +50,7 @@ ANGLES = {
     "PLAY": {"backtest": 0.575, "breakeven": 0.524},
     "SMALL": {"backtest": 0.545, "breakeven": 0.524},
     "VALUE": {"backtest": 0.531, "breakeven": 0.524},
-    "H2H": {"backtest": 0.572, "breakeven": 0.524},
+    "H2H": {"backtest": 0.55, "breakeven": 0.524},   # glide test (RESEARCH.md): neighbouring settings average ~55%, not the headline 57.2%
     "TEASER": {"backtest": 0.590, "breakeven": 0.545},
 }
 PRIOR_BETS = 100
