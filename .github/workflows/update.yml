@@ -18,6 +18,9 @@ on:
     - cron: "37 14 * * 2"   # Tuesday 10:37 ET, after Monday night: fresh lines for the new week
     - cron: "37 20 * * 4"   # Thursday 16:37 ET: practice injury report
     - cron: "37 15 * * 0"   # Sunday 11:37 ET: final injury report before kickoff
+    - cron: "17 6 * * 5"    # Friday ~2 AM ET: grade Thursday night's game
+    - cron: "17 6 * * 1"    # Monday ~2 AM ET: grade Sunday's games
+    - cron: "17 6 * * 2"    # Tuesday ~2 AM ET: grade Monday night's game
 
 permissions:
   contents: write
