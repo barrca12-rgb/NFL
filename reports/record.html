@@ -20,236 +20,167 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Graduate&family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
-/* Off The Glass, same palette as the CBB and NBA cards (barrca12-rgb/CBB, cbb/report_html.py). Names kept from the
-   original NFL card: ink = text, chalk = sunken, blue = accent, turf = positive, pass = faint. */
+/* Same stylesheet as the CBB card (barrca12-rgb/CBB cbb/report_html.py); keep them in step */
 :root {
-  --bg: #fbf6ea; --surface: #ffffff; --chalk: #f7f0e1; --line: #ebe1cd; --line-strong: #d9cbb0;
-  --ink: #0a2c49; --muted: #56627a; --pass: #8a93a3;
-  --blue: #b84a08; --turf: #0f7b4b; --turf-soft: #e6f4ed; --neg: #c2352b; --amber: #8a5a00; --amber-soft: #fbf0d9;
-  --on-accent: #ffffff;
+  --bg: #fbf6ea; --surface: #ffffff; --sunken: #f7f0e1; --line: #ebe1cd; --line-strong: #d9cbb0;
+  --text: #0a2c49; --muted: #56627a; --faint: #8a93a3;
+  --accent: #b84a08; --pos: #0f7b4b; --pos-bg: #e6f4ed; --neg: #c2352b; --warn: #8a5a00; --warn-bg: #fbf0d9;
   --brand: #fd6c0f; --bar: #0a2c49; --bar-text: #fbf6ea; --bar-muted: #b7c3d3;
+  --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --display: "Graduate", "Rockwell", Georgia, serif;
-  --body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #08090b; --surface: #12151a; --chalk: #181c22; --line: #242a33; --line-strong: #333b46;
-    --ink: #f6eedd; --muted: #a8b0bc; --pass: #6f7886;
-    --blue: #ff8a3d; --turf: #3ccf8e; --turf-soft: #12301f; --neg: #ff6b5e; --amber: #f0b44a; --amber-soft: #33270f;
-    --on-accent: #08090b;
+    --bg: #08090b; --surface: #12151a; --sunken: #181c22; --line: #242a33; --line-strong: #333b46;
+    --text: #f6eedd; --muted: #a8b0bc; --faint: #6f7886;
+    --accent: #ff8a3d; --pos: #3ccf8e; --pos-bg: #12301f; --neg: #ff6b5e; --warn: #f0b44a; --warn-bg: #33270f;
     --brand: #fd6c0f; --bar: #000000; --bar-text: #f6eedd; --bar-muted: #9aa2ae;
     color-scheme: dark;
   }
 }
 * { box-sizing: border-box }
 .show-sm { display: none }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 var(--body); font-feature-settings: "tnum" 1, "cv11" 1; -webkit-font-smoothing: antialiased }
-a { color: var(--blue) }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--font); font-feature-settings: "tnum" 1, "cv11" 1; -webkit-font-smoothing: antialiased }
+a { color: var(--accent); text-decoration: none } a:hover { text-decoration: underline }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px }
 
-/* Top bar (same as the CBB and NBA cards) */
+/* Top bar */
 .top { background: var(--bar); border-bottom: 3px solid var(--brand); position: sticky; top: 0; z-index: 5 }
-.topin { max-width: 1320px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 22px; height: 58px }
+.top .wrap { display: flex; align-items: center; gap: 22px; height: 58px }
 .brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; color: var(--bar-text); text-decoration: none }
+.brand:hover { text-decoration: none }
 .brand img { width: 34px; height: 34px; border-radius: 7px; display: block }
 .wordmark { font-family: var(--display); font-size: 19px; letter-spacing: .02em; text-transform: uppercase; color: var(--bar-text); line-height: 1 }
 .tabs { display: flex; gap: 2px; height: 100% }
 .tabs a { display: flex; align-items: center; padding: 0 12px; color: var(--bar-muted); font-weight: 600; font-size: 13px; letter-spacing: .04em;
   text-transform: uppercase; border-bottom: 3px solid transparent; margin-bottom: -3px; text-decoration: none }
-.tabs a:hover { color: var(--bar-text) }
+.tabs a[hidden] { display: none }
+.tabs a:hover { color: var(--bar-text); text-decoration: none }
 .tabs a[aria-current="page"] { color: var(--bar-text); border-bottom-color: var(--brand) }
 .status { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--bar-muted); font-size: 13px; min-width: 0 }
 .status a { color: var(--bar-text) }
-.status #upd-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.status button, .filters button { font: inherit; font-weight: 600; font-size: 13px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong);
-  border-radius: 6px; padding: 6px 12px; cursor: pointer }
-.filters button:hover { background: var(--chalk) }
-.status button { background: transparent; color: var(--bar-text); border-color: rgba(251,246,234,.35) } .status button:hover { background: rgba(251,246,234,.1) }
-.status button:disabled { opacity: .5; cursor: progress }
+#upd-btn { background: transparent; color: var(--bar-text); border-color: rgba(251,246,234,.35) } #upd-btn:hover { background: rgba(251,246,234,.1) }
+.status span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+button { font: inherit; font-weight: 600; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: 6px; padding: 6px 12px; cursor: pointer } button:hover { background: var(--sunken) } button:disabled { opacity: .5; cursor: progress }
 
-/* Page */
-.wrap { max-width: 1320px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 24px }
-h1, h2, h3 { margin: 0 }
-h1 { font-family: var(--display); font-size: 26px; font-weight: 400; letter-spacing: .01em; line-height: 1.15 }
-h2 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; display: flex; align-items: center; gap: 8px }
-.sec-head h2::before { content: ""; width: 4px; height: 14px; background: var(--brand); border-radius: 2px }
-.head { display: grid; gap: 8px }
-.eyebrow { color: var(--muted); font-size: 13px; font-weight: 500 }
-.lede { color: var(--muted); max-width: 80ch; margin: 0 }
-.meta { display: flex; flex-wrap: wrap; gap: 6px }
-.chip { font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--muted) }
-section { display: grid; gap: 10px; min-width: 0 }
-.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line) }
-.note { color: var(--muted); font-size: 12px; max-width: 90ch; margin: 0 }
-
-/* Week switcher */
-.weeks { display: flex; flex-wrap: wrap; gap: 4px }
-.weeks a { padding: 5px 12px; border-radius: 6px; color: var(--ink); font-weight: 600; font-size: 13px; text-decoration: none;
+/* Page head */
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 24px 0 16px }
+h1 { font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: .01em; margin: 0; line-height: 1.15 }
+.sub { color: var(--muted); margin-top: 2px }
+.days { display: flex; gap: 4px; flex-wrap: wrap }
+.days a, .pagebtn { padding: 5px 12px; border-radius: 6px; color: var(--text); font-weight: 600; font-size: 13px; text-decoration: none;
   border: 1px solid var(--line-strong); background: var(--surface); white-space: nowrap }
-.weeks a:hover { background: var(--chalk) }
-.weeks a[aria-current="page"] { color: var(--surface); border-color: var(--ink); background: var(--ink) }
-.weeks a .tag { font-size: 11px; font-weight: 700; margin-left: 6px; color: var(--brand) }
+.days a:hover, .pagebtn:hover { background: var(--sunken); text-decoration: none }
+.days a[aria-current="page"] { color: var(--surface); border-color: var(--text); background: var(--text) }
+.notice { border: 1px solid var(--line); background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; font-size: 13px }
 
-/* Model plays: same panel and table as the CBB card (barrca12-rgb/CBB cbb/report_html.py) */
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(10,44,73,.06) }
+/* KPI strip */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border: 1px solid var(--line); border-top: 3px solid var(--text); border-radius: 10px; background: var(--surface); margin-bottom: 24px; overflow: hidden; box-shadow: 0 1px 2px rgba(10,44,73,.06) }
+.kpi { padding: 12px 16px; border-right: 1px solid var(--line) } .kpi:last-child { border-right: 0 }
+.kpi .k { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em } .kpi .v { font-size: 21px; font-weight: 800; margin-top: 3px; letter-spacing: -.01em }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 4px }
+
+/* Panels and tables */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 1px 2px rgba(10,44,73,.06) }
 .panel-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line) }
-.panel-h h2::before { content: ""; width: 4px; height: 14px; background: var(--brand); border-radius: 2px }
+.panel-h h2 { font-size: 13px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: .07em; display: flex; align-items: center; gap: 8px }
+.panel-h h2::before { content: ""; width: 4px; height: 14px; background: var(--brand); border-radius: 2px } .panel-h .note { color: var(--muted); font-size: 12px }
 .scroll { overflow-x: auto }
-table.ct th, table.ct td { text-align: left; padding: 9px 12px; vertical-align: middle }
-table.ct thead th { position: static; cursor: default; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px }
-table.ct tbody tr:hover { background: none }
-table.ct .r { text-align: right } .m { color: var(--muted) } .f { color: var(--pass) } .b { font-weight: 600 }
-.pos { color: var(--turf) } .neg { color: var(--neg) } td.pos { font-weight: 600 }
-table.ct td.empty { padding: 28px 16px; color: var(--muted); text-align: center; white-space: normal }
-.inj { color: var(--amber); font-size: 11px; font-weight: 500; white-space: normal; max-width: 420px; margin-top: 1px }
-.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap }
+table { width: 100%; border-collapse: collapse; font-size: 13px }
+th { text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--sunken); white-space: nowrap }
+td { padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle }
+tbody tr:last-child td { border-bottom: 0 }
+.r { text-align: right } .c { text-align: center } .m { color: var(--muted) } .f { color: var(--faint) }
+.pos { color: var(--pos) } .neg { color: var(--neg) } .b { font-weight: 600 }
+.empty { padding: 28px 16px; color: var(--muted); text-align: center }
+.betlink { font-weight: 600; font-size: 12px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 4px 10px; color: var(--text); display: inline-block }
+.betlink:hover { background: var(--sunken); text-decoration: none }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted) }
 .tag.bet { color: #fff; border-color: var(--brand); background: var(--brand) }
+
+/* Segmented control */
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden }
+.seg button { border: 0; border-radius: 0; padding: 5px 12px; color: var(--muted); font-weight: 500; background: transparent }
+.seg button + button { border-left: 1px solid var(--line-strong) }
+.seg button[aria-pressed="true"] { background: var(--text); color: var(--surface) }
+.ctrls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+label.chk { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; cursor: pointer }
+
+/* Odds board: two rows per game (away, home) */
+.board td { padding-top: 6px; padding-bottom: 6px }
+.board tbody.g tr:first-child td { padding-top: 10px } .board tbody.g tr:last-child td { padding-bottom: 10px; border-bottom: 1px solid var(--line) }
+.board tbody.g tr:first-child td { border-bottom: 0 }
+.board tbody.g:last-child tr:last-child td { border-bottom: 0 }
+.board .team { font-weight: 500 }
+.inj { color: var(--warn); font-size: 11px; font-weight: 500; white-space: normal; max-width: 340px; margin-top: 1px } .board .tm { width: 72px; color: var(--muted); font-size: 12px }
+.board .pts { color: var(--muted); width: 40px }
+.odd { display: inline-flex; flex-direction: column; align-items: flex-end; min-width: 56px; padding: 3px 6px; border-radius: 6px; line-height: 1.25; color: var(--text); text-decoration: none }
+.odd small { color: var(--faint); font-size: 11px }
+a.odd:hover { background: var(--sunken); text-decoration: none }
+.odd.best { background: var(--pos-bg); color: var(--pos) } .odd.best small { color: var(--pos) }
+.na { color: var(--faint) }
+.board th.bk, .board td.bk { text-align: right; width: 84px; padding-left: 6px; padding-right: 6px }
+.board td.edge { white-space: normal; min-width: 110px; max-width: 170px } .tag { white-space: normal }
+.bestc { display: none; text-align: right } .tm-sm { display: none; color: var(--faint); font-size: 11px }
+@media (max-width: 1100px) { .bk-minor, .hide-md { display: none } .board .bestc { display: table-cell } }
+.bestc small { display: block; color: var(--faint); font-size: 11px }
+.board tbody.g.has-bet { background: linear-gradient(90deg, var(--brand) 0 3px, transparent 3px) }
+
+details.panel > summary { list-style: none; cursor: pointer; padding: 12px 16px; font-weight: 600; font-size: 15px; display: flex; justify-content: space-between }
+details.panel > summary::after { content: "Show"; color: var(--accent); font-size: 13px; font-weight: 500 }
+details.panel[open] > summary::after { content: "Hide" }
+details.panel[open] > summary { border-bottom: 1px solid var(--line) }
+footer { color: var(--muted); font-size: 12px; padding: 8px 0 40px; max-width: 80ch }
+.follow { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 700; color: var(--text) }
+.follow img { width: 22px; height: 22px; border-radius: 5px }
 .tl img { width: auto; vertical-align: -3px; margin-right: 5px; object-fit: contain }
 .pick .tl img { vertical-align: -5px; margin-right: 6px }
-.pagebtn { padding: 5px 12px; border-radius: 6px; color: var(--ink); font-weight: 600; font-size: 13px; text-decoration: none;
-  border: 1px solid var(--line-strong); background: var(--surface); white-space: nowrap }
-.pagebtn:hover { background: var(--chalk) }
-.navrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center }
-@media (max-width: 1100px) { .hide-md { display: none } }
+.hero { display: block; height: 120px; width: auto; max-width: 100%; object-fit: contain; border-radius: 10px; margin-top: 18px; border: 1px solid var(--line) }
+@media (max-width: 720px) { .hero { height: auto; width: 100% } }
+
 @media (max-width: 860px) {
+  .top .wrap { gap: 10px } .status span { display: none }
+  .wordmark { display: none } .tabs a { padding: 0 8px; font-size: 12px }
+  h1 { font-size: 21px }
+  .kpi { border-right: 0; border-bottom: 1px solid var(--line) } .kpi:last-child { border-bottom: 0 }
+  .hide-sm { display: none } .show-sm { display: inline }
+  td, th { padding-left: 10px; padding-right: 10px }
   #t-plays td:first-child { white-space: normal; min-width: 150px }
+  .board .bk, .board .pts { display: none } .bestc { display: table-cell }
+  .board .tm { width: 52px; font-size: 11px } .board td.edge { min-width: 0; max-width: 104px }
+  .board td, .board th { padding-left: 6px; padding-right: 6px } .board .team { white-space: normal; min-width: 0 }
+  .board .tag { font-size: 10px; padding: 1px 4px } .board .tl img { width: 14px; height: 14px; margin-right: 4px }
+  .board .tm { display: none } .tm-sm { display: block } .board td.edge { max-width: 104px }
   table.stack thead { display: none }
   table.stack tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; padding: 12px; border-bottom: 1px solid var(--line) }
   table.stack tbody tr:last-child { border-bottom: 0 }
   table.stack td { display: block; border: 0; padding: 0; white-space: normal; text-align: left; min-width: 0 }
-  table.stack td.r { text-align: left }
   table.stack td:first-child { grid-column: 1 / -1; min-width: 0 }
   table.stack td[data-l]::before { content: attr(data-l); display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .05em; color: var(--pass); margin-bottom: 1px }
+    letter-spacing: .05em; color: var(--faint); margin-bottom: 1px }
   table.stack td:first-child::before { display: none }
   table.stack td.hide-sm, table.stack td:empty { display: none }
   table.stack td.empty { grid-column: 1 / -1; text-align: center }
 }
-.plays { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px }
-.pk { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--brand); border-radius: 10px; box-shadow: 0 1px 2px rgba(10,44,73,.06); padding: 14px 16px; display: grid; gap: 12px; min-width: 0 }
-.pk.small { border-left-color: var(--amber) } .pk.tz { border-left-color: var(--blue) }
-.pk-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px }
-.pk-pick { font-size: 18px; font-weight: 700; letter-spacing: -.01em } .pk-pick .price { color: var(--muted); font-weight: 500 }
-.pk-game { color: var(--muted); font-size: 12px; margin-top: 2px }
-.pk-stake { text-align: right; flex: none }
-.pk-stake b { display: block; font-size: 18px; font-weight: 700 }
-.pk-stake span { font-size: 11px; font-weight: 600; color: var(--muted) }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); border: 1px solid var(--line); border-radius: 6px; overflow: hidden }
-.stat { padding: 8px 10px; min-width: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 -1px -1px 0 }
-.stat span { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted) }
-.stat b { display: block; font-size: 14px; font-weight: 600; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.stat b.pos { color: var(--turf) }
-.pk-why { color: var(--muted); font-size: 12px }
-.cta { display: inline-block; justify-self: start; font-weight: 600; font-size: 13px; padding: 7px 14px; border-radius: 6px; text-decoration: none;
-  background: var(--ink); color: var(--surface) }
-.cta:hover { opacity: .9 }
-span.cta { background: var(--chalk); color: var(--muted) }
-.empty { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 24px 16px; color: var(--muted); text-align: center }
-
-/* Full slate: one card per game, books side by side */
-.slate { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px }
-.game { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 1px 2px rgba(10,44,73,.06); padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
-.game.has-play { border-left: 3px solid var(--brand) }
-.g-top { display: flex; justify-content: space-between; align-items: center; gap: 8px }
-.g-title { font-size: 15px; font-weight: 600 }
-.g-kick { color: var(--muted); font-size: 12px }
-.oddswrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px; scrollbar-width: thin }
-table.odds { font-size: 13px; width: 100%; border-collapse: separate; border-spacing: 3px; table-layout: auto }
-table.odds.few { width: auto } table.odds.few td { min-width: 90px }
-table.odds th, table.odds td { padding: 0; border: 0; white-space: nowrap }
-table.odds thead th { position: static; background: none; cursor: default; font-size: 11px; font-weight: 500; color: var(--muted); text-align: center; padding: 0 2px 2px; text-transform: none; letter-spacing: 0 }
-table.odds .abbr { display: none }
-table.odds tbody th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); padding-right: 6px; position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 46px; text-transform: none; letter-spacing: 0 }
-table.odds tr.cap th { font-size: 11px; font-weight: 600; color: var(--pass); padding-top: 6px }
-table.odds td { background: var(--chalk); border-radius: 6px; text-align: center; font-weight: 600; min-width: 58px; border-bottom: 0 }
-table.odds td .t { display: block; padding: 5px 4px; color: inherit; text-decoration: none; line-height: 1.2 }
-table.odds td small { display: block; color: var(--muted); font-size: 11px; font-weight: 500 }
-table.odds td a.t:hover { outline: 1px solid var(--line-strong); border-radius: 6px }
-table.odds td.best { color: var(--turf); background: var(--turf-soft) }
-table.odds td.best small { color: var(--turf) }
-table.odds td.none { background: transparent; color: var(--pass); font-weight: 400 }
-table.odds tr.mine th { color: var(--ink); font-weight: 600 }
-table.odds tr.mine th::before { content: "\2713 "; color: var(--turf) }
-@media (max-width: 700px) { table.odds .full { display: none } table.odds .abbr { display: inline } table.odds td { min-width: 52px } }
-.swipe { display: none; font-size: 12px; color: var(--pass) }
-@media (max-width: 700px) { .swipe.on { display: block } }
-.best-key { color: var(--turf) }
-.g-model { font-size: 13px; color: var(--muted) } .g-model b { color: var(--ink); font-weight: 600 }
-.g-play { font-size: 13px; font-weight: 600; color: var(--turf) }
-.g-play a, a.bk { color: inherit; text-decoration: none } .g-play a:hover { text-decoration: underline }
-.g-play.none { color: var(--pass); font-weight: 500 }
-
-/* Verdict tags */
-.v { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap }
-.v.BET { color: #fff; border-color: var(--brand); background: var(--brand) }
-.v.SMALL { color: var(--amber); border-color: var(--amber); background: var(--amber-soft) }
-.v.H2H { color: var(--blue); border-color: var(--blue) }
-.v.WATCH { color: var(--amber); border-color: var(--amber) }
-.v.PASS { color: var(--pass) }
-.v.FINAL, .v.LIVE { color: var(--muted) }
-.v.LIVE { color: var(--neg); border-color: var(--neg) }
-.game.done { opacity: .7; align-self: start; align-content: start }
-.g-score { font-size: 15px; font-weight: 600 }
-
-/* Tables */
-.filters { display: flex; flex-wrap: wrap; gap: 6px }
-.filters button { font-weight: 500 }
-.filters button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink) }
-.tbl { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px }
-table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums }
-th, td { padding: 9px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line) }
-th:first-child, td:first-child, th.l, td.l { text-align: left }
-tbody tr:last-child td { border-bottom: 0 }
-thead th { position: sticky; top: 0; background: var(--chalk); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); cursor: pointer; user-select: none }
-thead th:hover, thead th:focus-visible { color: var(--ink); outline: none }
-thead th[aria-sort="ascending"]::after { content: " \25B2"; font-size: 9px }
-thead th[aria-sort="descending"]::after { content: " \25BC"; font-size: 9px }
-tbody tr:hover { background: var(--chalk) }
-td.pos { color: var(--turf); font-weight: 600 } td.neg { color: var(--neg) }
-td.strong { font-weight: 600 }
-details { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
-details > :not(summary) { margin: 12px 16px }
-details > .tbl { border-radius: 6px }
-summary { cursor: pointer; list-style: none; padding: 12px 16px; font-size: 15px; font-weight: 600; display: flex; justify-content: space-between }
-summary::after { content: "Show"; color: var(--blue); font-size: 13px; font-weight: 500 }
-details[open] summary::after { content: "Hide" }
-details[open] summary { border-bottom: 1px solid var(--line) }
-.glossary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px }
-.glossary div { border: 1px solid var(--line); border-radius: 6px; padding: 12px; font-size: 13px; color: var(--muted) }
-.glossary b { font-size: 13px; font-weight: 600; display: block; margin-bottom: 2px; color: var(--ink) }
-.foot { padding: 8px 0 0 }
-.follow { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink); text-decoration: none }
-.follow img { width: 22px; height: 22px; border-radius: 5px }
-@media (max-width: 860px) { .topin { gap: 10px } .status #upd-status { display: none } .wordmark { display: none } .tabs a { padding: 0 8px; font-size: 12px }
-  .hide-sm { display: none } .show-sm { display: inline } h1 { font-size: 21px } }
 </style>
-<style>
-/* Same layout as the CBB record page (barrca12-rgb/CBB cbb/record_page.py) */
-.rhead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px }
-.sub { color: var(--muted); margin-top: 2px }
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border: 1px solid var(--line); border-top: 3px solid var(--ink); border-radius: 10px;
-  background: var(--surface); overflow: hidden; box-shadow: 0 1px 2px rgba(10,44,73,.06) }
-.kpi { padding: 12px 16px; border-right: 1px solid var(--line) } .kpi:last-child { border-right: 0 }
-.kpi .k { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em }
-.kpi .kv { font-size: 21px; font-weight: 800; margin-top: 3px; letter-spacing: -.01em }
-@media (max-width: 860px) { .kpi { border-right: 0; border-bottom: 1px solid var(--line) } .kpi:last-child { border-bottom: 0 } }
-</style>
-<header class="top"><div class="topin">
+<header class="top"><div class="wrap">
   <a class="brand" href="https://barrca12-rgb.github.io/" aria-label="Off The Glass home"><img src="assets/otg-logo-512.png" alt="" width="34" height="34"><span class="wordmark">Off The Glass</span></a>
   <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/NBA/">NBA</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
 </div></header>
-<div class="wrap">
-  <div class="rhead"><div><div class="eyebrow" id="eyebrow"></div><h1>NFL Record</h1>
-    <div class="sub">Every play the model recommended, at the logged number and price, graded against the final score.</div></div>
+<main class="wrap">
+  <div class="head"><div><h1>NFL Record</h1>
+    <div class="sub"><span id="eyebrow"></span> · Every play the model recommended, at the logged number and price, graded against the final score.</div></div>
     <a class="pagebtn" href="./">&larr; Card</a></div>
   <div class="kpis" id="kpis"></div>
   <section class="panel"><div class="panel-h"><h2>Summary</h2><span class="note">Settled plays. CLV = points the line moved our way from the logged number to the close. Break-even at -110 is 52.4%.</span></div>
-    <div class="scroll"><table class="ct" id="t-type"></table></div></section>
-  <section class="panel"><div class="panel-h"><h2>By week</h2></div><div class="scroll"><table class="ct" id="t-week"></table></div></section>
-  <section class="panel"><div class="panel-h"><h2>Bets placed</h2><span class="note">Newest first.</span></div><div class="scroll"><table class="ct" id="t-plays"></table></div></section>
-  <footer class="foot"><a class="follow" href="https://x.com/OffTheGlassHQ" target="_blank" rel="noopener"><img src="assets/otg-logo-512.png" alt="">Follow @OffTheGlassHQ on X for every play</a></footer>
-</div>
-<script id="record-data" type="application/json">{"season": 2026, "overall": {"w": 2, "l": 2, "p": 0, "units": -0.13, "staked": 2.0, "roi": -0.0644, "clv": 0.25, "pending": 16}, "by_type": {"H2H": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 2}, "TEASER": {"w": 1, "l": 0, "p": 0, "units": 0.42, "staked": 0.5, "roi": 0.8333, "clv": 0.5, "pending": 4}, "VALUE": {"w": 1, "l": 2, "p": 0, "units": -0.55, "staked": 1.5, "roi": -0.3636, "clv": 0.17, "pending": 10}}, "by_week": {"2026-7": {"w": 2, "l": 2, "p": 0, "units": -0.13, "staked": 2.0, "roi": -0.0644, "clv": 0.25, "pending": 0}, "2026-8": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 9}, "2026-9": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 7}}, "plays": [{"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_NYG_HOU", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": "NYG @ HOU", "selection": "NYG +10.5", "team": "NYG", "line": 10.5, "odds": -110.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T14:21+00:00", "result": "W", "profit": 0.4545454545454545, "close_line": 10.0, "clv_pts": 0.5}, {"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_SF_ATL", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": "SF @ ATL", "selection": "SF -2.5", "team": "SF", "line": -2.5, "odds": -115.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T14:21+00:00", "result": "L", "profit": -0.5, "close_line": -2.5, "clv_pts": 0.0}, {"season": 2026, "week": 7, "kind": "teaser", "angle": "TEASER AB", "game_id": "2026_07_CLE_TEN,2026_07_SF_ATL", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": null, "selection": "TEN +8.5 / ATL +8.5", "team": "TEN/ATL", "line": null, "odds": -120.0, "book": "BetMGM/DraftKings", "stake": 0.5, "legs": "[{\"game_id\": \"2026_07_CLE_TEN\", \"team\": \"TEN\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"DraftKings\"}, {\"game_id\": \"2026_07_SF_ATL\", \"team\": \"ATL\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"BetMGM\"}]", "recorded_at": "2026-10-25T14:21+00:00", "result": "W", "profit": 0.4166666666666667, "close_line": null, "clv_pts": 0.5}, {"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_DAL_PHI", "kickoff": "2026-10-27T00:15:00+00:00", "matchup": "DAL @ PHI", "selection": "PHI +4.5", "team": "PHI", "line": 4.5, "odds": -105.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T22:55+00:00", "result": "L", "profit": -0.5, "close_line": 4.5, "clv_pts": 0.0}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_ARI_DAL", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": "ARI @ DAL", "selection": "ARI +6.5", "team": "ARI", "line": 6.5, "odds": -105.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_MIN_DET", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": "MIN @ DET", "selection": "MIN +3.5", "team": "MIN", "line": 3.5, "odds": -118.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_LV_NYJ", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": "LV @ NYJ", "selection": "NYJ -1.5", "team": "NYJ", "line": -1.5, "odds": -105.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_ATL_TB", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": "ATL @ TB", "selection": "TB -2.5", "team": "TB", "line": -2.5, "odds": -102.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "teaser", "angle": "TEASER AB", "game_id": "2026_08_ATL_TB,2026_08_IND_JAX", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": null, "selection": "ATL +8.5 / JAX -2", "team": "ATL/JAX", "line": null, "odds": -120.0, "book": "BetMGM/DraftKings", "stake": 0.5, "legs": "[{\"game_id\": \"2026_08_ATL_TB\", \"team\": \"ATL\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"DraftKings\"}, {\"game_id\": \"2026_08_IND_JAX\", \"team\": \"JAX\", \"line\": -8.0, \"teased_line\": -2.0, \"book\": \"BetMGM\"}]", "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_08_KC_DEN,2026_08_LV_NYJ", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": null, "selection": "DEN +7.5 / LV +7.5", "team": "DEN/LV", "line": null, "odds": -120.0, "book": "BetMGM", "stake": 1.0, "legs": "[{\"game_id\": \"2026_08_KC_DEN\", \"team\": \"DEN\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"BetMGM\"}, {\"game_id\": \"2026_08_LV_NYJ\", \"team\": \"LV\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"BetMGM\"}]", "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_LAC_LA", "kickoff": "2026-11-01T21:05:00+00:00", "matchup": "LAC @ LA", "selection": "LAC +6.5", "team": "LAC", "line": 6.5, "odds": -102.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "H2H", "game_id": "2026_08_KC_DEN", "kickoff": "2026-11-01T21:25:00+00:00", "matchup": "KC @ DEN", "selection": "KC -1.5", "team": "KC", "line": -1.5, "odds": -108.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_PHI_WAS", "kickoff": "2026-11-02T01:20:00+00:00", "matchup": "PHI @ WAS", "selection": "PHI +5.5", "team": "PHI", "line": 5.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_DET_MIA", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": "DET @ MIA", "selection": "MIA +8.5", "team": "MIA", "line": 8.5, "odds": -120.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_NYJ_KC", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": "NYJ @ KC", "selection": "NYJ +8.5", "team": "NYJ", "line": 8.5, "odds": -105.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_09_GB_NE,2026_09_DEN_CAR", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": null, "selection": "GB +8.5 / CAR +8.5", "team": "GB/CAR", "line": null, "odds": -120.0, "book": "FanDuel", "stake": 1.0, "legs": "[{\"game_id\": \"2026_09_GB_NE\", \"team\": \"GB\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}, {\"game_id\": \"2026_09_DEN_CAR\", \"team\": \"CAR\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}]", "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_09_NYG_PHI,2026_09_CLE_NO", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": null, "selection": "NYG +7.5 / CLE +8.5", "team": "NYG/CLE", "line": null, "odds": -120.0, "book": "FanDuel", "stake": 1.0, "legs": "[{\"game_id\": \"2026_09_NYG_PHI\", \"team\": \"NYG\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"FanDuel\"}, {\"game_id\": \"2026_09_CLE_NO\", \"team\": \"CLE\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}]", "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "H2H", "game_id": "2026_09_ARI_SEA", "kickoff": "2026-11-08T21:25:00+00:00", "matchup": "ARI @ SEA", "selection": "ARI +12.5", "team": "ARI", "line": 12.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_GB_NE", "kickoff": "2026-11-08T21:25:00+00:00", "matchup": "GB @ NE", "selection": "NE -2.5", "team": "NE", "line": -2.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_TB_CHI", "kickoff": "2026-11-09T01:20:00+00:00", "matchup": "TB @ CHI", "selection": "TB +6.5", "team": "TB", "line": 6.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:19+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}]}</script>
+    <div class="scroll"><table id="t-type"></table></div></section>
+  <section class="panel"><div class="panel-h"><h2>By week</h2></div><div class="scroll"><table id="t-week"></table></div></section>
+  <section class="panel"><div class="panel-h"><h2>Bets placed</h2><span class="note">Newest first.</span></div><div class="scroll"><table id="t-plays"></table></div></section>
+  <footer><div><a class="follow" href="https://x.com/OffTheGlassHQ" target="_blank" rel="noopener"><img src="assets/otg-logo-512.png" alt="">Follow @OffTheGlassHQ on X for every play</a></div></footer>
+</main>
+<script id="record-data" type="application/json">{"season": 2026, "overall": {"w": 2, "l": 2, "p": 0, "units": -0.13, "staked": 2.0, "roi": -0.0644, "clv": 0.25, "pending": 13}, "by_type": {"H2H": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 2}, "TEASER": {"w": 1, "l": 0, "p": 0, "units": 0.42, "staked": 0.5, "roi": 0.8333, "clv": 0.5, "pending": 4}, "VALUE": {"w": 1, "l": 2, "p": 0, "units": -0.55, "staked": 1.5, "roi": -0.3636, "clv": 0.17, "pending": 7}}, "by_week": {"2026-7": {"w": 2, "l": 2, "p": 0, "units": -0.13, "staked": 2.0, "roi": -0.0644, "clv": 0.25, "pending": 0}, "2026-8": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 6}, "2026-9": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 7}}, "plays": [{"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_NYG_HOU", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": "NYG @ HOU", "selection": "NYG +10.5", "team": "NYG", "line": 10.5, "odds": -110.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T14:21+00:00", "result": "W", "profit": 0.4545454545454545, "close_line": 10.0, "clv_pts": 0.5}, {"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_SF_ATL", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": "SF @ ATL", "selection": "SF -2.5", "team": "SF", "line": -2.5, "odds": -115.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T14:21+00:00", "result": "L", "profit": -0.5, "close_line": -2.5, "clv_pts": 0.0}, {"season": 2026, "week": 7, "kind": "teaser", "angle": "TEASER AB", "game_id": "2026_07_CLE_TEN,2026_07_SF_ATL", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": null, "selection": "TEN +8.5 / ATL +8.5", "team": "TEN/ATL", "line": null, "odds": -120.0, "book": "BetMGM/DraftKings", "stake": 0.5, "legs": "[{\"game_id\": \"2026_07_CLE_TEN\", \"team\": \"TEN\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"DraftKings\"}, {\"game_id\": \"2026_07_SF_ATL\", \"team\": \"ATL\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"BetMGM\"}]", "recorded_at": "2026-10-25T14:21+00:00", "result": "W", "profit": 0.4166666666666667, "close_line": null, "clv_pts": 0.5}, {"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_DAL_PHI", "kickoff": "2026-10-27T00:15:00+00:00", "matchup": "DAL @ PHI", "selection": "PHI +4.5", "team": "PHI", "line": 4.5, "odds": -105.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T22:55+00:00", "result": "L", "profit": -0.5, "close_line": 4.5, "clv_pts": 0.0}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_LV_NYJ", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": "LV @ NYJ", "selection": "NYJ -1.5", "team": "NYJ", "line": -1.5, "odds": -105.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:30+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_ATL_TB", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": "ATL @ TB", "selection": "TB -2.5", "team": "TB", "line": -2.5, "odds": -102.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:30+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_08_KC_DEN,2026_08_ATL_TB", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": null, "selection": "DEN +7.5 / ATL +8.5", "team": "DEN/ATL", "line": null, "odds": -120.0, "book": "BetMGM/DraftKings", "stake": 1.0, "legs": "[{\"game_id\": \"2026_08_KC_DEN\", \"team\": \"DEN\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"BetMGM\"}, {\"game_id\": \"2026_08_ATL_TB\", \"team\": \"ATL\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"DraftKings\"}]", "recorded_at": "2026-10-27T19:30+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "teaser", "angle": "TEASER AB", "game_id": "2026_08_LV_NYJ,2026_08_IND_JAX", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": null, "selection": "LV +7.5 / JAX -2", "team": "LV/JAX", "line": null, "odds": -120.0, "book": "BetMGM", "stake": 0.5, "legs": "[{\"game_id\": \"2026_08_LV_NYJ\", \"team\": \"LV\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"BetMGM\"}, {\"game_id\": \"2026_08_IND_JAX\", \"team\": \"JAX\", \"line\": -8.0, \"teased_line\": -2.0, \"book\": \"BetMGM\"}]", "recorded_at": "2026-10-27T19:30+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_LAC_LA", "kickoff": "2026-11-01T21:05:00+00:00", "matchup": "LAC @ LA", "selection": "LAC +6.5", "team": "LAC", "line": 6.5, "odds": -102.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:30+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "H2H", "game_id": "2026_08_KC_DEN", "kickoff": "2026-11-01T21:25:00+00:00", "matchup": "KC @ DEN", "selection": "KC -1.5", "team": "KC", "line": -1.5, "odds": -108.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:30+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_DET_MIA", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": "DET @ MIA", "selection": "MIA +8.5", "team": "MIA", "line": 8.5, "odds": -120.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:31+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_NYJ_KC", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": "NYJ @ KC", "selection": "NYJ +8.5", "team": "NYJ", "line": 8.5, "odds": -105.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:31+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_09_GB_NE,2026_09_CLE_NO", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": null, "selection": "GB +8.5 / CLE +8.5", "team": "GB/CLE", "line": null, "odds": -120.0, "book": "FanDuel", "stake": 1.0, "legs": "[{\"game_id\": \"2026_09_GB_NE\", \"team\": \"GB\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}, {\"game_id\": \"2026_09_CLE_NO\", \"team\": \"CLE\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}]", "recorded_at": "2026-10-27T19:31+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_09_NYG_PHI,2026_09_DEN_CAR", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": null, "selection": "NYG +7.5 / CAR +8.5", "team": "NYG/CAR", "line": null, "odds": -120.0, "book": "FanDuel", "stake": 1.0, "legs": "[{\"game_id\": \"2026_09_NYG_PHI\", \"team\": \"NYG\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"FanDuel\"}, {\"game_id\": \"2026_09_DEN_CAR\", \"team\": \"CAR\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}]", "recorded_at": "2026-10-27T19:31+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "H2H", "game_id": "2026_09_ARI_SEA", "kickoff": "2026-11-08T21:25:00+00:00", "matchup": "ARI @ SEA", "selection": "ARI +12.5", "team": "ARI", "line": 12.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:31+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_GB_NE", "kickoff": "2026-11-08T21:25:00+00:00", "matchup": "GB @ NE", "selection": "NE -2.5", "team": "NE", "line": -2.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:31+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_TB_CHI", "kickoff": "2026-11-09T01:20:00+00:00", "matchup": "TB @ CHI", "selection": "TB +6.5", "team": "TB", "line": 6.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:31+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}]}</script>
 <script>
 (function () {
   const R = JSON.parse(document.getElementById("record-data").textContent);
@@ -270,7 +201,7 @@ details[open] summary { border-bottom: 1px solid var(--line) }
   const o = R.overall;
   $("kpis").innerHTML = [["Record", rec(o)], ["Win %", wp(o)], ["Units", "<span class='" + cls(o.units) + "'>" + u(o.units) + "</span>"], ["ROI", pc(o.roi)],
     ["Avg CLV", o.clv == null ? "–" : (o.clv > 0 ? "+" : "") + o.clv.toFixed(2) + " pts"], ["Open plays", String(o.pending)]]
-    .map(([k, v]) => "<div class='kpi'><div class='k'>" + k + "</div><div class='kv'>" + v + "</div></div>").join("");
+    .map(([k, v]) => "<div class='kpi'><div class='k'>" + k + "</div><div class='v'>" + v + "</div></div>").join("");
   const head = (first) => "<thead><tr><th>" + first + "</th><th class='r'>Record</th><th class='r'>Win %</th><th class='r'>Units</th><th class='r'>ROI</th><th class='r'>Avg CLV</th><th class='r'>Open</th></tr></thead>";
   const row = (label, a) => "<tr><td class='b'>" + esc(label) + "</td><td class='r'>" + rec(a) + "</td><td class='r'>" + wp(a) + "</td><td class='r " + cls(a.units) + "'>" + u(a.units) +
     "</td><td class='r'>" + pc(a.roi) + "</td><td class='r'>" + (a.clv == null ? "–" : (a.clv > 0 ? "+" : "") + a.clv.toFixed(2)) + "</td><td class='r m'>" + a.pending + "</td></tr>";
@@ -291,7 +222,7 @@ details[open] summary { border-bottom: 1px solid var(--line) }
         (p.profit == null ? "–" : u(p.profit)) + "</td><td class='m hide-sm'>" + esc(TYPE[p.angle] || (String(p.angle).startsWith("TEASER") ? "Teaser " + String(p.angle).slice(7) : p.angle || p.kind)) + " · " + p.stake + "u</td></tr>";
     }).join("") + "</tbody>" : "<tbody><tr><td class='empty'>No plays yet.</td></tr></tbody>";
   // phones: each row becomes a small card, each cell labeled with its column header
-  document.querySelectorAll("table.ct").forEach((t) => { const hs = [...t.querySelectorAll("thead th")].map((h) => h.textContent.trim());
+  document.querySelectorAll("main table").forEach((t) => { const hs = [...t.querySelectorAll("thead th")].map((h) => h.textContent.trim());
     t.classList.add("stack"); t.querySelectorAll("tbody tr").forEach((r) => [...r.children].forEach((c, k) => { if (hs[k]) c.dataset.l = hs[k]; })); });
 })();
 </script>
