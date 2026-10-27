@@ -13,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "model/**.py"
+      - "site/**"
       - ".github/workflows/update.yml"
   schedule:
     - cron: "37 14 * * 2"   # Tuesday 10:37 ET, after Monday night: fresh lines for the new week
@@ -73,6 +74,7 @@ jobs:
           cp reports/*.html reports/weeks.json _site/
           CUR=$(python -c "import json; w=json.load(open('reports/weeks.json')); print(f\"{w['season']}_week{w['current']:02d}.html\")")
           cp "reports/$CUR" _site/index.html
+          mkdir -p _site/assets && cp site/assets/* _site/assets/   # Off The Glass logo, icons, link-preview image
           touch _site/.nojekyll
 
       - name: Save report and odds snapshot to the repo

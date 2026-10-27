@@ -16,6 +16,29 @@ import pandas as pd
 
 # Two-letter state for sportsbook links that are state-specific (BetMGM, Caesars). Override with BET_STATE.
 BET_STATE = os.environ.get("BET_STATE", "pa").lower()
+SITE_URL = "https://barrca12-rgb.github.io/NFL/"
+X_HANDLE = "OffTheGlassHQ"
+# Off The Glass brand, same as the CBB and NBA cards (barrca12-rgb/CBB cbb/report_html.py HEAD and BRAND);
+# site/assets is copied into the published site by the workflow
+HEAD = f"""<meta name="description" content="Off The Glass: an NFL betting model. Every play logged at the posted number, graded in public.">
+<meta name="theme-color" content="#0A2C49">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta property="og:site_name" content="Off The Glass">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{SITE_URL}assets/otg-social.jpg">
+<meta property="og:description" content="NFL model: every play logged at the posted number, graded in public.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@{X_HANDLE}">
+<meta name="twitter:image" content="{SITE_URL}assets/otg-social.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Graduate&family=Inter:wght@400;500;600;700;800&display=swap">"""
+BRAND = ('<a class="brand" href="https://barrca12-rgb.github.io/" aria-label="Off The Glass home"><img src="assets/otg-logo-512.png" alt="" width="34" height="34">'
+         '<span class="wordmark">Off The Glass</span></a>')
+FOLLOW = ('<footer class="foot"><a class="follow" href="https://x.com/' + X_HANDLE + '" target="_blank" rel="noopener">'
+          '<img src="assets/otg-logo-512.png" alt="">Follow @' + X_HANDLE + ' on X for every play</a></footer>')
 
 
 def _clean(v):
@@ -76,8 +99,9 @@ def build_html(out: pd.DataFrame, pt: pd.DataFrame, season: int, week: int, n_si
         if tpairs is not None and len(tpairs) else [],
     }
     payload = json.dumps(data).replace("</", "<\\/")
-    title = f"Week {week} Bet Card"
-    return TEMPLATE.replace("__TITLE__", html.escape(title)).replace("__DATA__", payload)
+    title = f"Off The Glass · NFL · Week {week}"
+    return (TEMPLATE.replace("__HEAD__", HEAD).replace("__BRAND__", BRAND).replace("__FOLLOW__", FOLLOW)
+            .replace("__TITLE__", html.escape(title)).replace("__DATA__", payload))
 
 
 TEMPLATE = r"""<!doctype html>
@@ -85,28 +109,29 @@ TEMPLATE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
+<meta property="og:title" content="__TITLE__">
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+__HEAD__
 <style>
-/* Same look as the college basketball card (barrca12-rgb/CBB, cbb/report_html.py): Inter with tabular figures,
-   neutral light/dark surfaces, color only for best numbers, edges and results. */
+/* Off The Glass, same palette as the CBB and NBA cards (barrca12-rgb/CBB, cbb/report_html.py). Names kept from the
+   original NFL card: ink = text, chalk = sunken, blue = accent, turf = positive, pass = faint. */
 :root {
-  --bg: #f6f7f9; --surface: #ffffff; --chalk: #f1f3f6; --line: #e3e6eb; --line-strong: #cfd4db;
-  --ink: #101418; --muted: #5d6673; --pass: #8b93a0;
-  --blue: #1f5eff; --turf: #0f7b4b; --turf-soft: #e6f4ed; --neg: #c2352b; --amber: #8a5a00; --amber-soft: #fbf1dc;
+  --bg: #fbf6ea; --surface: #ffffff; --chalk: #f7f0e1; --line: #ebe1cd; --line-strong: #d9cbb0;
+  --ink: #0a2c49; --muted: #56627a; --pass: #8a93a3;
+  --blue: #b84a08; --turf: #0f7b4b; --turf-soft: #e6f4ed; --neg: #c2352b; --amber: #8a5a00; --amber-soft: #fbf0d9;
   --on-accent: #ffffff;
-  --display: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --body: var(--display);
+  --brand: #fd6c0f; --bar: #0a2c49; --bar-text: #fbf6ea; --bar-muted: #b7c3d3;
+  --display: "Graduate", "Rockwell", Georgia, serif;
+  --body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0d0f12; --surface: #15181d; --chalk: #1b1f25; --line: #262b33; --line-strong: #353b45;
-    --ink: #e8eaed; --muted: #9aa2ae; --pass: #6c7481;
-    --blue: #6b9bff; --turf: #3ccf8e; --turf-soft: #12301f; --neg: #ff6b5e; --amber: #f0b44a; --amber-soft: #33270f;
-    --on-accent: #0d0f12;
+    --bg: #08090b; --surface: #12151a; --chalk: #181c22; --line: #242a33; --line-strong: #333b46;
+    --ink: #f6eedd; --muted: #a8b0bc; --pass: #6f7886;
+    --blue: #ff8a3d; --turf: #3ccf8e; --turf-soft: #12301f; --neg: #ff6b5e; --amber: #f0b44a; --amber-soft: #33270f;
+    --on-accent: #08090b;
+    --brand: #fd6c0f; --bar: #000000; --bar-text: #f6eedd; --bar-muted: #9aa2ae;
     color-scheme: dark;
   }
 }
@@ -115,26 +140,32 @@ TEMPLATE = r"""<!doctype html>
 body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 var(--body); font-feature-settings: "tnum" 1, "cv11" 1; -webkit-font-smoothing: antialiased }
 a { color: var(--blue) }
 
-/* Top bar (shared with the CBB card) */
-.top { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5 }
-.topin { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 20px; height: 52px }
-.brand { font-weight: 700; letter-spacing: -.01em; font-size: 15px; white-space: nowrap; color: inherit; text-decoration: none }
+/* Top bar (same as the CBB and NBA cards) */
+.top { background: var(--bar); border-bottom: 3px solid var(--brand); position: sticky; top: 0; z-index: 5 }
+.topin { max-width: 1320px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 22px; height: 58px }
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; color: var(--bar-text); text-decoration: none }
+.brand img { width: 34px; height: 34px; border-radius: 7px; display: block }
+.wordmark { font-family: var(--display); font-size: 19px; letter-spacing: .02em; text-transform: uppercase; color: var(--bar-text); line-height: 1 }
 .tabs { display: flex; gap: 2px; height: 100% }
-.tabs a { display: flex; align-items: center; padding: 0 12px; color: var(--muted); font-weight: 500; border-bottom: 2px solid transparent; text-decoration: none }
-.tabs a:hover { color: var(--ink) }
-.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink) }
-.status { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; min-width: 0 }
+.tabs a { display: flex; align-items: center; padding: 0 12px; color: var(--bar-muted); font-weight: 600; font-size: 13px; letter-spacing: .04em;
+  text-transform: uppercase; border-bottom: 3px solid transparent; margin-bottom: -3px; text-decoration: none }
+.tabs a:hover { color: var(--bar-text) }
+.tabs a[aria-current="page"] { color: var(--bar-text); border-bottom-color: var(--brand) }
+.status { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--bar-muted); font-size: 13px; min-width: 0 }
+.status a { color: var(--bar-text) }
 .status #upd-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .status button, .filters button { font: inherit; font-weight: 600; font-size: 13px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong);
   border-radius: 6px; padding: 6px 12px; cursor: pointer }
-.status button:hover, .filters button:hover { background: var(--chalk) }
+.filters button:hover { background: var(--chalk) }
+.status button { background: transparent; color: var(--bar-text); border-color: rgba(251,246,234,.35) } .status button:hover { background: rgba(251,246,234,.1) }
 .status button:disabled { opacity: .5; cursor: progress }
 
 /* Page */
-.wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 24px }
-h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: -.02em }
-h1 { font-size: 22px; font-weight: 700; line-height: 1.2 }
-h2 { font-size: 15px; font-weight: 600; letter-spacing: -.01em }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 24px }
+h1, h2, h3 { margin: 0 }
+h1 { font-family: var(--display); font-size: 26px; font-weight: 400; letter-spacing: .01em; line-height: 1.15 }
+h2 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; display: flex; align-items: center; gap: 8px }
+.sec-head h2::before { content: ""; width: 4px; height: 14px; background: var(--brand); border-radius: 2px }
 .head { display: grid; gap: 8px }
 .eyebrow { color: var(--muted); font-size: 13px; font-weight: 500 }
 .lede { color: var(--muted); max-width: 80ch; margin: 0 }
@@ -146,14 +177,15 @@ section { display: grid; gap: 10px; min-width: 0 }
 
 /* Week switcher */
 .weeks { display: flex; flex-wrap: wrap; gap: 4px }
-.weeks a { padding: 5px 10px; border-radius: 6px; color: var(--muted); font-weight: 500; font-size: 13px; text-decoration: none; border: 1px solid transparent }
+.weeks a { padding: 5px 12px; border-radius: 6px; color: var(--ink); font-weight: 600; font-size: 13px; text-decoration: none;
+  border: 1px solid var(--line-strong); background: var(--surface); white-space: nowrap }
 .weeks a:hover { background: var(--chalk) }
-.weeks a[aria-current="page"] { color: var(--ink); border-color: var(--line-strong); background: var(--surface) }
-.weeks a .tag { font-size: 11px; font-weight: 600; margin-left: 6px; color: var(--turf) }
+.weeks a[aria-current="page"] { color: var(--surface); border-color: var(--ink); background: var(--ink) }
+.weeks a .tag { font-size: 11px; font-weight: 700; margin-left: 6px; color: var(--brand) }
 
 /* Model plays */
 .plays { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px }
-.pk { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--turf); border-radius: 8px; padding: 14px 16px; display: grid; gap: 12px; min-width: 0 }
+.pk { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--brand); border-radius: 10px; box-shadow: 0 1px 2px rgba(10,44,73,.06); padding: 14px 16px; display: grid; gap: 12px; min-width: 0 }
 .pk.small { border-left-color: var(--amber) } .pk.tz { border-left-color: var(--blue) }
 .pk-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px }
 .pk-pick { font-size: 18px; font-weight: 700; letter-spacing: -.01em } .pk-pick .price { color: var(--muted); font-weight: 500 }
@@ -163,7 +195,7 @@ section { display: grid; gap: 10px; min-width: 0 }
 .pk-stake span { font-size: 11px; font-weight: 600; color: var(--muted) }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); border: 1px solid var(--line); border-radius: 6px; overflow: hidden }
 .stat { padding: 8px 10px; min-width: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 -1px -1px 0 }
-.stat span { display: block; font-size: 11px; font-weight: 500; color: var(--muted) }
+.stat span { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted) }
 .stat b { display: block; font-size: 14px; font-weight: 600; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .stat b.pos { color: var(--turf) }
 .pk-why { color: var(--muted); font-size: 12px }
@@ -175,8 +207,8 @@ span.cta { background: var(--chalk); color: var(--muted) }
 
 /* Full slate: one card per game, books side by side */
 .slate { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px }
-.game { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
-.game.has-play { border-left: 3px solid var(--turf) }
+.game { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 1px 2px rgba(10,44,73,.06); padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
+.game.has-play { border-left: 3px solid var(--brand) }
 .g-top { display: flex; justify-content: space-between; align-items: center; gap: 8px }
 .g-title { font-size: 15px; font-weight: 600 }
 .g-kick { color: var(--muted); font-size: 12px }
@@ -208,7 +240,7 @@ table.odds tr.mine th::before { content: "\2713 "; color: var(--turf) }
 
 /* Verdict tags */
 .v { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap }
-.v.BET { color: var(--turf); border-color: var(--turf); background: var(--turf-soft) }
+.v.BET { color: #fff; border-color: var(--brand); background: var(--brand) }
 .v.SMALL { color: var(--amber); border-color: var(--amber); background: var(--amber-soft) }
 .v.H2H { color: var(--blue); border-color: var(--blue) }
 .v.WATCH { color: var(--amber); border-color: var(--amber) }
@@ -227,7 +259,7 @@ table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-nu
 th, td { padding: 9px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line) }
 th:first-child, td:first-child, th.l, td.l { text-align: left }
 tbody tr:last-child td { border-bottom: 0 }
-thead th { position: sticky; top: 0; background: var(--chalk); font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; user-select: none }
+thead th { position: sticky; top: 0; background: var(--chalk); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); cursor: pointer; user-select: none }
 thead th:hover, thead th:focus-visible { color: var(--ink); outline: none }
 thead th[aria-sort="ascending"]::after { content: " \25B2"; font-size: 9px }
 thead th[aria-sort="descending"]::after { content: " \25BC"; font-size: 9px }
@@ -244,11 +276,15 @@ details[open] summary { border-bottom: 1px solid var(--line) }
 .glossary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px }
 .glossary div { border: 1px solid var(--line); border-radius: 6px; padding: 12px; font-size: 13px; color: var(--muted) }
 .glossary b { font-size: 13px; font-weight: 600; display: block; margin-bottom: 2px; color: var(--ink) }
-@media (max-width: 720px) { .topin { gap: 12px } .status #upd-status { display: none } .hide-sm { display: none } .show-sm { display: inline } h1 { font-size: 19px } }
+.foot { padding: 8px 0 0 }
+.follow { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink); text-decoration: none }
+.follow img { width: 22px; height: 22px; border-radius: 5px }
+@media (max-width: 860px) { .topin { gap: 10px } .status #upd-status { display: none } .wordmark { display: none } .tabs a { padding: 0 8px; font-size: 12px }
+  .hide-sm { display: none } .show-sm { display: inline } h1 { font-size: 21px } }
 </style>
 
 <header class="top"><div class="topin">
-  <a class="brand" href="https://barrca12-rgb.github.io/">Model Card</a>
+  __BRAND__
   <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/NBA/">NBA</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
   <div class="status"><span id="upd-status"></span><button id="upd-btn" type="button">Update</button></div>
 </div></header>
@@ -311,6 +347,7 @@ details[open] summary { border-bottom: 1px solid var(--line) }
   <details><summary>Power ratings</summary>
     <p class="note">Points better or worse than an average team on a neutral field. Market = what past closing lines imply.</p>
     <div class="tbl"><table id="t-rat"></table></div></details>
+  __FOLLOW__
 </div>
 
 <script id="report-data" type="application/json">__DATA__</script>
@@ -710,17 +747,17 @@ def build_record_html(summary: dict, season: int) -> str:
     """The Record page: the model's graded plays (spreads and teasers) in the same theme as the bet card."""
     style = TEMPLATE[TEMPLATE.index("<style>"):TEMPLATE.index("</style>") + len("</style>")]
     payload = json.dumps({"season": season, **summary}, default=str).replace("</", "<\\/")
-    return RECORD_TEMPLATE.replace("__STYLE__", style).replace("__DATA__", payload)
+    return (RECORD_TEMPLATE.replace("__STYLE__", style).replace("__HEAD__", HEAD).replace("__BRAND__", BRAND)
+            .replace("__FOLLOW__", FOLLOW).replace("__DATA__", payload))
 
 
 RECORD_TEMPLATE = r"""<!doctype html>
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Model Record</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<title>Off The Glass · NFL Record</title>
+<meta property="og:title" content="Off The Glass · NFL Record">
+__HEAD__
 __STYLE__
 <style>
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden }
@@ -733,7 +770,7 @@ __STYLE__
 .res.P { background: var(--chalk); color: var(--muted) } .res.pend { background: var(--chalk); color: var(--amber) }
 </style>
 <header class="top"><div class="topin">
-  <a class="brand" href="https://barrca12-rgb.github.io/">Model Card</a>
+  __BRAND__
   <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/NBA/">NBA</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
   
 </div></header>
@@ -749,6 +786,7 @@ __STYLE__
   <section aria-labelledby="wk-h"><div class="sec-head"><h2 id="wk-h">By week</h2></div><div class="tbl"><table id="t-week"></table></div></section>
   <section aria-labelledby="pl-h"><div class="sec-head"><h2 id="pl-h">Every play</h2><span class="note">CLV = points better than the closing line (positive is good).</span></div>
     <div class="tbl"><table id="t-plays"></table></div></section>
+  __FOLLOW__
 </div>
 <script id="record-data" type="application/json">__DATA__</script>
 <script>
