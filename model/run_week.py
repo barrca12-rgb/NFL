@@ -516,8 +516,14 @@ def run(season: int | None, week: int | None, n_sims: int, lines_path: str | Non
         tpairs.to_json(os.path.join(OUT, f"teaser_pairs_{tag}.json"), orient="records", indent=1)
     report = render(out, pt, season, week, n_sims, adj, inj_mode, inj_players, tz, tpairs)
     qb_change = {t: n for t, n in qb_notes.items() if "QB change" in n}
+    try:   # record for the card's KPI strip and Record panel; read only, never stops the card
+        led = ledger.load()
+        rec = ledger.summary(led[led["season"] == season]) if len(led) else None
+    except Exception as e:
+        print(f"Record for the card failed ({e}); continuing.")
+        rec = None
     page = build_html(out, pt, season, week, n_sims, phase, FLAG_TEXT[phase], inj_mode, inj_players, qb_change,
-                      tz, tpairs)
+                      tz, tpairs, rec)
     os.makedirs(REPORTS, exist_ok=True)
     for folder, name in ((OUT, f"week_{tag}"), (REPORTS, f"{season}_week{week:02d}")):
         with open(os.path.join(folder, f"{name}.md"), "w") as fh:
