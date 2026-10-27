@@ -576,6 +576,21 @@ footer { color: var(--muted); font-size: 12px; padding: 8px 0 40px; max-width: 8
 """
 
 
+def rewrap_html(page: str, record: dict | None) -> str | None:
+    """Re-render a saved week page in the current design from the data it carries (report-data), with the current
+    record. The week's numbers stay exactly as logged; only the page around them changes. None if no data."""
+    a = page.find('<script id="report-data" type="application/json">')
+    if a < 0:
+        return None
+    a = page.index(">", a) + 1
+    data = json.loads(page[a:page.index("</script>", a)])
+    data["record"] = json.loads(json.dumps(record, default=str)) if record else None
+    payload = json.dumps(data).replace("</", "<\\/")
+    title = f"Off The Glass · NFL · Week {data['week']}"
+    return (TEMPLATE.replace("__HEAD__", HEAD).replace("__BRAND__", BRAND).replace("__X__", X_HANDLE)
+            .replace("__TITLE__", html.escape(title)).replace("__DATA__", payload))
+
+
 def build_record_html(summary: dict, season: int) -> str:
     """The Record page: the model's graded plays (spreads and teasers) in the same theme as the bet card."""
     style = TEMPLATE[TEMPLATE.index("<style>"):TEMPLATE.index("</style>") + len("</style>")]

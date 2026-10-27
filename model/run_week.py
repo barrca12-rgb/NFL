@@ -39,7 +39,7 @@ from .odds import DEFAULT_BOOKS, LINK_COLS, latest_snapshot, load_book_lines, pu
 from .projection import fit_points_model
 from .ratings import build_ratings, power_table
 from . import ledger
-from .report_html import build_html, build_record_html
+from .report_html import build_html, build_record_html, rewrap_html
 from .simulate import SimConfig, american, simulate_game, summarize
 
 OUT = os.path.join(HERE, "output")
@@ -310,6 +310,16 @@ def write_record(season: int) -> None:
     ledger.save(d)
     with open(os.path.join(REPORTS, "record.html"), "w") as fh:
         fh.write(build_record_html(ledger.summary(d[d["season"] == season]), season))
+    # every week page of the season in the current design, with the current record (past weeks keep their numbers)
+    rec = ledger.summary(d[d["season"] == season])
+    for f in sorted(os.listdir(REPORTS)):
+        if f.startswith(f"{season}_week") and f.endswith(".html"):
+            path = os.path.join(REPORTS, f)
+            with open(path) as fh:
+                page = rewrap_html(fh.read(), rec)
+            if page:
+                with open(path, "w") as fh:
+                    fh.write(page)
 
 
 def write_week_index(season: int, current: int) -> None:
