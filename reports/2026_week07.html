@@ -2,285 +2,430 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Week 7 Bet Card</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<title>Off The Glass · NFL · Week 7</title>
+<meta property="og:title" content="Off The Glass · NFL · Week 7">
+<meta name="description" content="Off The Glass: an NFL betting model. Every play logged at the posted number, graded in public.">
+<meta name="theme-color" content="#0A2C49">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta property="og:site_name" content="Off The Glass">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://barrca12-rgb.github.io/NFL/assets/otg-social.jpg">
+<meta property="og:description" content="NFL model: every play logged at the posted number, graded in public.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@OffTheGlassHQ">
+<meta name="twitter:image" content="https://barrca12-rgb.github.io/NFL/assets/otg-social.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Graduate&family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
-/* Same look as the college basketball card (barrca12-rgb/CBB, cbb/report_html.py): Inter with tabular figures,
-   neutral light/dark surfaces, color only for best numbers, edges and results. */
+/* Same stylesheet as the CBB card (barrca12-rgb/CBB cbb/report_html.py); keep them in step */
 :root {
-  --bg: #f6f7f9; --surface: #ffffff; --chalk: #f1f3f6; --line: #e3e6eb; --line-strong: #cfd4db;
-  --ink: #101418; --muted: #5d6673; --pass: #8b93a0;
-  --blue: #1f5eff; --turf: #0f7b4b; --turf-soft: #e6f4ed; --neg: #c2352b; --amber: #8a5a00; --amber-soft: #fbf1dc;
-  --on-accent: #ffffff;
-  --display: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --body: var(--display);
+  --bg: #fbf6ea; --surface: #ffffff; --sunken: #f7f0e1; --line: #ebe1cd; --line-strong: #d9cbb0;
+  --text: #0a2c49; --muted: #56627a; --faint: #8a93a3;
+  --accent: #b84a08; --pos: #0f7b4b; --pos-bg: #e6f4ed; --neg: #c2352b; --warn: #8a5a00; --warn-bg: #fbf0d9;
+  --brand: #fd6c0f; --bar: #0a2c49; --bar-text: #fbf6ea; --bar-muted: #b7c3d3;
+  --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --display: "Graduate", "Rockwell", Georgia, serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0d0f12; --surface: #15181d; --chalk: #1b1f25; --line: #262b33; --line-strong: #353b45;
-    --ink: #e8eaed; --muted: #9aa2ae; --pass: #6c7481;
-    --blue: #6b9bff; --turf: #3ccf8e; --turf-soft: #12301f; --neg: #ff6b5e; --amber: #f0b44a; --amber-soft: #33270f;
-    --on-accent: #0d0f12;
+    --bg: #08090b; --surface: #12151a; --sunken: #181c22; --line: #242a33; --line-strong: #333b46;
+    --text: #f6eedd; --muted: #a8b0bc; --faint: #6f7886;
+    --accent: #ff8a3d; --pos: #3ccf8e; --pos-bg: #12301f; --neg: #ff6b5e; --warn: #f0b44a; --warn-bg: #33270f;
+    --brand: #fd6c0f; --bar: #000000; --bar-text: #f6eedd; --bar-muted: #9aa2ae;
     color-scheme: dark;
   }
 }
 * { box-sizing: border-box }
 .show-sm { display: none }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 var(--body); font-feature-settings: "tnum" 1, "cv11" 1; -webkit-font-smoothing: antialiased }
-a { color: var(--blue) }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--font); font-feature-settings: "tnum" 1, "cv11" 1; -webkit-font-smoothing: antialiased }
+a { color: var(--accent); text-decoration: none } a:hover { text-decoration: underline }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px }
 
-/* Top bar (shared with the CBB card) */
-.top { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5 }
-.topin { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 20px; height: 52px }
-.brand { font-weight: 700; letter-spacing: -.01em; font-size: 15px; white-space: nowrap; color: inherit; text-decoration: none }
+/* Top bar */
+.top { background: var(--bar); border-bottom: 3px solid var(--brand); position: sticky; top: 0; z-index: 5 }
+.top .wrap { display: flex; align-items: center; gap: 22px; height: 58px }
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; color: var(--bar-text); text-decoration: none }
+.brand:hover { text-decoration: none }
+.brand img { width: 34px; height: 34px; border-radius: 7px; display: block }
+.wordmark { font-family: var(--display); font-size: 19px; letter-spacing: .02em; text-transform: uppercase; color: var(--bar-text); line-height: 1 }
 .tabs { display: flex; gap: 2px; height: 100% }
-.tabs a { display: flex; align-items: center; padding: 0 12px; color: var(--muted); font-weight: 500; border-bottom: 2px solid transparent; text-decoration: none }
-.tabs a:hover { color: var(--ink) }
-.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink) }
-.status { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; min-width: 0 }
-.status #upd-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.status button, .filters button { font: inherit; font-weight: 600; font-size: 13px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong);
-  border-radius: 6px; padding: 6px 12px; cursor: pointer }
-.status button:hover, .filters button:hover { background: var(--chalk) }
-.status button:disabled { opacity: .5; cursor: progress }
+.tabs a { display: flex; align-items: center; padding: 0 12px; color: var(--bar-muted); font-weight: 600; font-size: 13px; letter-spacing: .04em;
+  text-transform: uppercase; border-bottom: 3px solid transparent; margin-bottom: -3px; text-decoration: none }
+.tabs a[hidden] { display: none }
+.tabs a:hover { color: var(--bar-text); text-decoration: none }
+.tabs a[aria-current="page"] { color: var(--bar-text); border-bottom-color: var(--brand) }
+.status { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--bar-muted); font-size: 13px; min-width: 0 }
+.status a { color: var(--bar-text) }
+#upd-btn { background: transparent; color: var(--bar-text); border-color: rgba(251,246,234,.35) } #upd-btn:hover { background: rgba(251,246,234,.1) }
+.status span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+button { font: inherit; font-weight: 600; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: 6px; padding: 6px 12px; cursor: pointer } button:hover { background: var(--sunken) } button:disabled { opacity: .5; cursor: progress }
 
-/* Page */
-.wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 24px }
-h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: -.02em }
-h1 { font-size: 22px; font-weight: 700; line-height: 1.2 }
-h2 { font-size: 15px; font-weight: 600; letter-spacing: -.01em }
-.head { display: grid; gap: 8px }
-.eyebrow { color: var(--muted); font-size: 13px; font-weight: 500 }
-.lede { color: var(--muted); max-width: 80ch; margin: 0 }
-.meta { display: flex; flex-wrap: wrap; gap: 6px }
-.chip { font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--muted) }
-section { display: grid; gap: 10px; min-width: 0 }
-.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line) }
-.note { color: var(--muted); font-size: 12px; max-width: 90ch; margin: 0 }
+/* Page head */
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 24px 0 16px }
+h1 { font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: .01em; margin: 0; line-height: 1.15 }
+.sub { color: var(--muted); margin-top: 2px }
+.days { display: flex; gap: 4px; flex-wrap: wrap }
+.days a, .pagebtn { padding: 5px 12px; border-radius: 6px; color: var(--text); font-weight: 600; font-size: 13px; text-decoration: none;
+  border: 1px solid var(--line-strong); background: var(--surface); white-space: nowrap }
+.days a:hover, .pagebtn:hover { background: var(--sunken); text-decoration: none }
+.days a[aria-current="page"] { color: var(--surface); border-color: var(--text); background: var(--text) }
+.notice { border: 1px solid var(--line); background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; font-size: 13px }
 
-/* Week switcher */
-.weeks { display: flex; flex-wrap: wrap; gap: 4px }
-.weeks a { padding: 5px 10px; border-radius: 6px; color: var(--muted); font-weight: 500; font-size: 13px; text-decoration: none; border: 1px solid transparent }
-.weeks a:hover { background: var(--chalk) }
-.weeks a[aria-current="page"] { color: var(--ink); border-color: var(--line-strong); background: var(--surface) }
-.weeks a .tag { font-size: 11px; font-weight: 600; margin-left: 6px; color: var(--turf) }
+/* KPI strip */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border: 1px solid var(--line); border-top: 3px solid var(--text); border-radius: 10px; background: var(--surface); margin-bottom: 24px; overflow: hidden; box-shadow: 0 1px 2px rgba(10,44,73,.06) }
+.kpi { padding: 12px 16px; border-right: 1px solid var(--line) } .kpi:last-child { border-right: 0 }
+.kpi .k { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em } .kpi .v { font-size: 21px; font-weight: 800; margin-top: 3px; letter-spacing: -.01em }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 4px }
 
-/* Model plays */
-.plays { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px }
-.pk { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--turf); border-radius: 8px; padding: 14px 16px; display: grid; gap: 12px; min-width: 0 }
-.pk.small { border-left-color: var(--amber) } .pk.tz { border-left-color: var(--blue) }
-.pk-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px }
-.pk-pick { font-size: 18px; font-weight: 700; letter-spacing: -.01em } .pk-pick .price { color: var(--muted); font-weight: 500 }
-.pk-game { color: var(--muted); font-size: 12px; margin-top: 2px }
-.pk-stake { text-align: right; flex: none }
-.pk-stake b { display: block; font-size: 18px; font-weight: 700 }
-.pk-stake span { font-size: 11px; font-weight: 600; color: var(--muted) }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); border: 1px solid var(--line); border-radius: 6px; overflow: hidden }
-.stat { padding: 8px 10px; min-width: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 -1px -1px 0 }
-.stat span { display: block; font-size: 11px; font-weight: 500; color: var(--muted) }
-.stat b { display: block; font-size: 14px; font-weight: 600; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.stat b.pos { color: var(--turf) }
-.pk-why { color: var(--muted); font-size: 12px }
-.cta { display: inline-block; justify-self: start; font-weight: 600; font-size: 13px; padding: 7px 14px; border-radius: 6px; text-decoration: none;
-  background: var(--ink); color: var(--surface) }
-.cta:hover { opacity: .9 }
-span.cta { background: var(--chalk); color: var(--muted) }
-.empty { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 24px 16px; color: var(--muted); text-align: center }
-
-/* Full slate: one card per game, books side by side */
-.slate { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px }
-.game { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0 }
-.game.has-play { border-left: 3px solid var(--turf) }
-.g-top { display: flex; justify-content: space-between; align-items: center; gap: 8px }
-.g-title { font-size: 15px; font-weight: 600 }
-.g-kick { color: var(--muted); font-size: 12px }
-.oddswrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px; scrollbar-width: thin }
-table.odds { font-size: 13px; width: 100%; border-collapse: separate; border-spacing: 3px; table-layout: auto }
-table.odds.few { width: auto } table.odds.few td { min-width: 90px }
-table.odds th, table.odds td { padding: 0; border: 0; white-space: nowrap }
-table.odds thead th { position: static; background: none; cursor: default; font-size: 11px; font-weight: 500; color: var(--muted); text-align: center; padding: 0 2px 2px; text-transform: none; letter-spacing: 0 }
-table.odds .abbr { display: none }
-table.odds tbody th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); padding-right: 6px; position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 46px; text-transform: none; letter-spacing: 0 }
-table.odds tr.cap th { font-size: 11px; font-weight: 600; color: var(--pass); padding-top: 6px }
-table.odds td { background: var(--chalk); border-radius: 6px; text-align: center; font-weight: 600; min-width: 58px; border-bottom: 0 }
-table.odds td .t { display: block; padding: 5px 4px; color: inherit; text-decoration: none; line-height: 1.2 }
-table.odds td small { display: block; color: var(--muted); font-size: 11px; font-weight: 500 }
-table.odds td a.t:hover { outline: 1px solid var(--line-strong); border-radius: 6px }
-table.odds td.best { color: var(--turf); background: var(--turf-soft) }
-table.odds td.best small { color: var(--turf) }
-table.odds td.none { background: transparent; color: var(--pass); font-weight: 400 }
-table.odds tr.mine th { color: var(--ink); font-weight: 600 }
-table.odds tr.mine th::before { content: "\2713 "; color: var(--turf) }
-@media (max-width: 700px) { table.odds .full { display: none } table.odds .abbr { display: inline } table.odds td { min-width: 52px } }
-.swipe { display: none; font-size: 12px; color: var(--pass) }
-@media (max-width: 700px) { .swipe.on { display: block } }
-.best-key { color: var(--turf) }
-.g-model { font-size: 13px; color: var(--muted) } .g-model b { color: var(--ink); font-weight: 600 }
-.g-play { font-size: 13px; font-weight: 600; color: var(--turf) }
-.g-play a, a.bk { color: inherit; text-decoration: none } .g-play a:hover { text-decoration: underline }
-.g-play.none { color: var(--pass); font-weight: 500 }
-
-/* Verdict tags */
-.v { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap }
-.v.BET { color: var(--turf); border-color: var(--turf); background: var(--turf-soft) }
-.v.SMALL { color: var(--amber); border-color: var(--amber); background: var(--amber-soft) }
-.v.H2H { color: var(--blue); border-color: var(--blue) }
-.v.WATCH { color: var(--amber); border-color: var(--amber) }
-.v.PASS { color: var(--pass) }
-.v.FINAL, .v.LIVE { color: var(--muted) }
-.v.LIVE { color: var(--neg); border-color: var(--neg) }
-.game.done { opacity: .7; align-self: start; align-content: start }
-.g-score { font-size: 15px; font-weight: 600 }
-
-/* Tables */
-.filters { display: flex; flex-wrap: wrap; gap: 6px }
-.filters button { font-weight: 500 }
-.filters button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink) }
-.tbl { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px }
-table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums }
-th, td { padding: 9px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line) }
-th:first-child, td:first-child, th.l, td.l { text-align: left }
+/* Panels and tables */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 1px 2px rgba(10,44,73,.06) }
+.panel-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line) }
+.panel-h h2 { font-size: 13px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: .07em; display: flex; align-items: center; gap: 8px }
+.panel-h h2::before { content: ""; width: 4px; height: 14px; background: var(--brand); border-radius: 2px } .panel-h .note { color: var(--muted); font-size: 12px }
+.scroll { overflow-x: auto }
+table { width: 100%; border-collapse: collapse; font-size: 13px }
+th { text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--sunken); white-space: nowrap }
+td { padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle }
 tbody tr:last-child td { border-bottom: 0 }
-thead th { position: sticky; top: 0; background: var(--chalk); font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; user-select: none }
-thead th:hover, thead th:focus-visible { color: var(--ink); outline: none }
-thead th[aria-sort="ascending"]::after { content: " \25B2"; font-size: 9px }
-thead th[aria-sort="descending"]::after { content: " \25BC"; font-size: 9px }
-tbody tr:hover { background: var(--chalk) }
-td.pos { color: var(--turf); font-weight: 600 } td.neg { color: var(--neg) }
-td.strong { font-weight: 600 }
-details { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
-details > :not(summary) { margin: 12px 16px }
-details > .tbl { border-radius: 6px }
-summary { cursor: pointer; list-style: none; padding: 12px 16px; font-size: 15px; font-weight: 600; display: flex; justify-content: space-between }
-summary::after { content: "Show"; color: var(--blue); font-size: 13px; font-weight: 500 }
-details[open] summary::after { content: "Hide" }
-details[open] summary { border-bottom: 1px solid var(--line) }
-.glossary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px }
-.glossary div { border: 1px solid var(--line); border-radius: 6px; padding: 12px; font-size: 13px; color: var(--muted) }
-.glossary b { font-size: 13px; font-weight: 600; display: block; margin-bottom: 2px; color: var(--ink) }
-@media (max-width: 720px) { .topin { gap: 12px } .status #upd-status { display: none } .hide-sm { display: none } .show-sm { display: inline } h1 { font-size: 19px } }
+.r { text-align: right } .c { text-align: center } .m { color: var(--muted) } .f { color: var(--faint) }
+.pos { color: var(--pos) } .neg { color: var(--neg) } .b { font-weight: 600 }
+.empty { padding: 28px 16px; color: var(--muted); text-align: center }
+.betlink { font-weight: 600; font-size: 12px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 4px 10px; color: var(--text); display: inline-block }
+.betlink:hover { background: var(--sunken); text-decoration: none }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted) }
+.tag.bet { color: #fff; border-color: var(--brand); background: var(--brand) }
+
+/* Segmented control */
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden }
+.seg button { border: 0; border-radius: 0; padding: 5px 12px; color: var(--muted); font-weight: 500; background: transparent }
+.seg button + button { border-left: 1px solid var(--line-strong) }
+.seg button[aria-pressed="true"] { background: var(--text); color: var(--surface) }
+.ctrls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+label.chk { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; cursor: pointer }
+
+/* Odds board: two rows per game (away, home) */
+.board td { padding-top: 6px; padding-bottom: 6px }
+.board tbody.g tr:first-child td { padding-top: 10px } .board tbody.g tr:last-child td { padding-bottom: 10px; border-bottom: 1px solid var(--line) }
+.board tbody.g tr:first-child td { border-bottom: 0 }
+.board tbody.g:last-child tr:last-child td { border-bottom: 0 }
+.board .team { font-weight: 500 }
+.inj { color: var(--warn); font-size: 11px; font-weight: 500; white-space: normal; max-width: 340px; margin-top: 1px } .board .tm { width: 72px; color: var(--muted); font-size: 12px }
+.board .pts { color: var(--muted); width: 40px }
+.odd { display: inline-flex; flex-direction: column; align-items: flex-end; min-width: 56px; padding: 3px 6px; border-radius: 6px; line-height: 1.25; color: var(--text); text-decoration: none }
+.odd small { color: var(--faint); font-size: 11px }
+a.odd:hover { background: var(--sunken); text-decoration: none }
+.odd.best { background: var(--pos-bg); color: var(--pos) } .odd.best small { color: var(--pos) }
+.na { color: var(--faint) }
+.board th.bk, .board td.bk { text-align: right; width: 84px; padding-left: 6px; padding-right: 6px }
+.board td.edge { white-space: normal; min-width: 110px; max-width: 170px } .tag { white-space: normal }
+.bestc { display: none; text-align: right } .tm-sm { display: none; color: var(--faint); font-size: 11px }
+@media (max-width: 1100px) { .bk-minor, .hide-md { display: none } .board .bestc { display: table-cell } }
+.bestc small { display: block; color: var(--faint); font-size: 11px }
+.board tbody.g.has-bet { background: linear-gradient(90deg, var(--brand) 0 3px, transparent 3px) }
+
+details.panel > summary { list-style: none; cursor: pointer; padding: 12px 16px; font-weight: 600; font-size: 15px; display: flex; justify-content: space-between }
+details.panel > summary::after { content: "Show"; color: var(--accent); font-size: 13px; font-weight: 500 }
+details.panel[open] > summary::after { content: "Hide" }
+details.panel[open] > summary { border-bottom: 1px solid var(--line) }
+footer { color: var(--muted); font-size: 12px; padding: 8px 0 40px; max-width: 80ch }
+.follow { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 700; color: var(--text) }
+.follow img { width: 22px; height: 22px; border-radius: 5px }
+.tl img { width: auto; vertical-align: -3px; margin-right: 5px; object-fit: contain }
+.pick .tl img { vertical-align: -5px; margin-right: 6px }
+.hero { display: block; height: 120px; width: auto; max-width: 100%; object-fit: contain; border-radius: 10px; margin-top: 18px; border: 1px solid var(--line) }
+@media (max-width: 720px) { .hero { height: auto; width: 100% } }
+
+@media (max-width: 860px) {
+  .top .wrap { gap: 10px } .status span { display: none }
+  .wordmark { display: none } .tabs a { padding: 0 8px; font-size: 12px }
+  h1 { font-size: 21px }
+  .kpi { border-right: 0; border-bottom: 1px solid var(--line) } .kpi:last-child { border-bottom: 0 }
+  .hide-sm { display: none } .show-sm { display: inline }
+  td, th { padding-left: 10px; padding-right: 10px }
+  #t-plays td:first-child { white-space: normal; min-width: 150px }
+  .board .bk, .board .pts { display: none } .bestc { display: table-cell }
+  .board .tm { width: 52px; font-size: 11px } .board td.edge { min-width: 0; max-width: 104px }
+  .board td, .board th { padding-left: 6px; padding-right: 6px } .board .team { white-space: normal; min-width: 0 }
+  .board .tag { font-size: 10px; padding: 1px 4px } .board .tl img { width: 14px; height: 14px; margin-right: 4px }
+  .board .tm { display: none } .tm-sm { display: block } .board td.edge { max-width: 104px }
+  table.stack thead { display: none }
+  table.stack tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; padding: 12px; border-bottom: 1px solid var(--line) }
+  table.stack tbody tr:last-child { border-bottom: 0 }
+  table.stack td { display: block; border: 0; padding: 0; white-space: normal; text-align: left; min-width: 0 }
+  table.stack td:first-child { grid-column: 1 / -1; min-width: 0 }
+  table.stack td[data-l]::before { content: attr(data-l); display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--faint); margin-bottom: 1px }
+  table.stack td:first-child::before { display: none }
+  table.stack td.hide-sm, table.stack td:empty { display: none }
+  table.stack td.empty { grid-column: 1 / -1; text-align: center }
+}
 </style>
 
-<header class="top"><div class="topin">
-  <a class="brand" href="https://barrca12-rgb.github.io/">Model Card</a>
-  <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
+<header class="top"><div class="wrap">
+  <a class="brand" href="https://barrca12-rgb.github.io/" aria-label="Off The Glass home"><img src="assets/otg-logo-512.png" alt="" width="34" height="34"><span class="wordmark">Off The Glass</span></a>
+  <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/NBA/">NBA</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
   <div class="status"><span id="upd-status"></span><button id="upd-btn" type="button">Update</button></div>
 </div></header>
-<div class="wrap">
-  <header class="head">
-    <div class="eyebrow" id="eyebrow"></div>
-    <h1 id="h1"></h1>
-    <p class="lede" id="lede"></p>
-    <nav class="weeks" id="weeks" aria-label="Weeks"></nav>
-    <div class="meta" id="meta"></div>
-  </header>
 
-  <section aria-labelledby="plays-h">
-    <div class="sec-head"><h2 id="plays-h">Model plays</h2><span class="note" id="plays-sum"></span></div>
-    <p class="note">Bet each play only at the number shown or better. Realistic cover % already accounts for how often the model has been right; EV above 0 means the price is worth it.</p>
-    <div class="plays" id="plays"></div>
-    <p class="note" id="flagtext"></p>
+<main class="wrap">
+  <div class="head">
+    <div><h1 id="h1"></h1><div class="sub" id="sub"></div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><nav class="days" id="days" aria-label="Weeks"></nav><a class="pagebtn" href="record.html">Record</a></div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="panel" aria-labelledby="plays-h">
+    <div class="panel-h"><h2 id="plays-h">Plays</h2><span class="note" id="plays-note"></span></div>
+    <div class="scroll"><table id="t-plays"></table></div>
   </section>
 
-  <section aria-labelledby="slate-h">
-    <div class="sec-head"><h2 id="slate-h">Full slate</h2>
-      <span class="note">Every game at every book. <b class="best-key">Green</b> is the best number for that bet; &#10003; marks a model play. Tap any price to open that bet at the book.</span></div>
-    <div class="slate" id="slate"></div>
+  <section class="panel" aria-labelledby="board-h">
+    <div class="panel-h"><h2 id="board-h">Odds board</h2>
+      <div class="ctrls">
+        <div class="seg" role="group" aria-label="Market"><button data-m="spread" aria-pressed="true">Spread</button><button data-m="total">Total</button><button data-m="ml">Moneyline</button></div>
+        <label class="chk"><input type="checkbox" id="only-plays"> Plays only</label>
+      </div>
+    </div>
+    <div class="scroll"><table class="board" id="t-board"></table></div>
   </section>
 
-  <details id="watch-sec"><summary>Watch list</summary>
-    <p class="note">Not bets at today's number. Bet them only if the line reaches the number shown.</p>
-    <div class="tbl"><table id="t-watch"></table></div></details>
+  <section class="panel" aria-labelledby="watch-h" id="watch-sec">
+    <div class="panel-h"><h2 id="watch-h">Watch list</h2><span class="note">Becomes a play if the line reaches the number shown.</span></div>
+    <div class="scroll"><table id="t-watch"></table></div>
+  </section>
 
-  <details><summary>All games: model numbers</summary>
-    <div class="filters" role="group" aria-label="Filter by verdict" id="vfilter"></div>
-    <div class="tbl"><table id="t-games"></table></div>
-    <p class="note">Click any column to sort. Spreads use sportsbook convention: -3 means that team is favored by 3. Edge is the model's margin minus the line, from the home team's side.</p></details>
+  <section class="panel" aria-labelledby="rec-h" id="rec-sec" hidden>
+    <div class="panel-h"><h2 id="rec-h">Record</h2><span class="note">Every play graded at the number it was logged. CLV = points better than the closing line.</span></div>
+    <div class="scroll"><table id="t-rec"></table></div>
+  </section>
 
-  <details><summary>Winner picks</summary>
-    <div class="tbl"><table id="t-win"></table></div>
-    <p class="note">Win % blends the model (35%) with the line (65%). In the 2016-2025 backtest this picked 66.8% of winners; the closing-line favorite won 66.4%.</p></details>
+  <details class="panel" id="recent-sec" hidden><summary>Recent results</summary><div class="scroll"><table id="t-recent"></table></div></details>
+  <details class="panel" id="tz-sec"><summary>Teaser legs</summary><div class="scroll"><table id="t-tz"></table></div></details>
+  <details class="panel"><summary>Injuries and quarterbacks</summary><div class="scroll"><table id="t-inj"></table></div></details>
+  <details class="panel"><summary>Power ratings</summary><div class="scroll"><table id="t-rat"></table></div></details>
 
-  <details><summary>Totals (leans only)</summary>
-    <p class="note">The model showed no reliable edge on totals in the backtest. Not bets.</p>
-    <div class="tbl"><table id="t-tot"></table></div></details>
+  <footer>
+    <div><a class="follow" href="https://x.com/OffTheGlassHQ" target="_blank" rel="noopener"><img src="assets/otg-logo-512.png" alt="">Follow @OffTheGlassHQ on X for every play</a></div>
+  </footer>
+</main>
 
-  <details id="tz-sec"><summary>Teaser legs</summary>
-    <p class="note" id="tz-note">Every leg that qualifies this week. Only the pairings listed under Model plays are bets; this list is for building your own if a book has a better teaser price. 6-point teasers through 3 and 7: grade A legs have won about 78% since 2006; break-even is 73.9% per leg at -120.</p>
-    <div class="tbl"><table id="t-tz"></table></div></details>
-
-  <details><summary>How to read this</summary>
-    <div class="glossary">
-      <div><b>Model cover %</b>How often the pick covers in 20,000 simulations if the model's projection is exactly right. Used to pick and rank plays; it runs high (a 70% here has historically won about 56%).</div>
-      <div><b>Realistic cover %</b>The same simulation centered between the market consensus and the model (45% toward the model in Weeks 1-4, 20% after), which matches the model's real track record, then priced at each book's own number. Use this for whether a bet is worth it.</div>
-      <div><b>EV / unit</b>Expected profit per unit staked at the posted odds, from the realistic cover %. Above 0 means the price is worth taking.</div>
-      <div><b>Good down to</b>The worst number you can still take the bet at. If the line moves past it, pass.</div>
-      <div><b>H2H</b>Coach head-to-head angle: fade the head coach whose teams have covered more in 4+ past meetings with this coach. Won 57% since 1999.</div>
-      <div><b>Teaser</b>Two legs moved 6 points each, both must win. Break-even at -120 is 54.5% for the pair (73.9% per leg).</div>
-    </div></details>
-
-  <details id="inj-sec"><summary>Injuries and quarterbacks</summary><p class="note" id="inj-note"></p>
-    <div class="tbl"><table id="t-inj"></table></div></details>
-
-  <details><summary>Power ratings</summary>
-    <p class="note">Points better or worse than an average team on a neutral field. Market = what past closing lines imply.</p>
-    <div class="tbl"><table id="t-rat"></table></div></details>
-</div>
-
-<script id="report-data" type="application/json">{"season": 2026, "week": 7, "n_sims": 20000, "phase": "late", "flag_text": "Week 5 on: VALUE = the realistic cover % beats the break-even of the best price across books. Mid-season edges come from price, not the model alone: backtest 53% ATS with line shopping, 51% without. 0.5u each.", "bet_state": "pa", "generated_at": "2026-10-25T22:55:26+00:00", "inj_mode": "final", "line_source": "BetMGM, Caesars, DraftKings, FanDuel", "games": [{"game_id": "2026_07_NE_CHI", "gameday": "2026-10-22", "matchup": "NE @ CHI", "away_team": "NE", "home_team": "CHI", "proj_away": 24.2531, "proj_home": 25.5925, "model_home_spread": -1.3394, "home_spread": -3.0, "spread_edge": -1.6606, "spread_pick": "NE", "pick_line": 3.0, "p_cover_raw": 0.5591, "p_cover_blend": 0.5185, "spread_ev": -0.0169, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at NE +3.5", "bet_down_to": null, "bet_at": 3.5, "flag": "", "model_total": 49.8457, "total": 50.5, "total_pick": "under", "p_total_raw": 0.5275, "winner": "CHI", "win_pct": 0.567, "away_inj_pts": 0.7134, "home_inj_pts": 0.3406, "qb_note": "", "best_book": "nflverse", "pick_odds": -112.0, "offers": [{"book": "nflverse", "line": 3.0, "odds": -112.0, "p_raw": 0.5591, "p_blend": 0.5185, "ev": -0.0169, "flag": ""}], "n_books": 1, "bet_side": "NE", "bet_line": 3.0, "bet_odds": -112.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": 3.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5124, "home_coach": "Ben Johnson", "away_coach": "Mike Vrabel", "kickoff": "Thursday 20:15", "book_lines": [{"book": "Consensus", "home_spread": -3.0, "home_spread_odds": -108.0, "away_spread_odds": -112.0, "total": 50.5, "over_odds": -120.0, "under_odds": 100.0, "home_ml": -155.0, "away_ml": 130.0}], "total_edge": -0.6543, "state": "final", "away_score": 24.0, "home_score": 30.0}, {"game_id": "2026_07_PIT_NO", "gameday": "2026-10-25", "matchup": "PIT @ NO", "away_team": "PIT", "home_team": "NO", "proj_away": 23.3021, "proj_home": 21.1434, "model_home_spread": 2.1586, "home_spread": 3.0, "spread_edge": 0.8414, "spread_pick": "NO", "pick_line": 3.0, "p_cover_raw": 0.5329, "p_cover_blend": 0.5098, "spread_ev": -0.0043, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at NO +3.5", "bet_down_to": null, "bet_at": 3.5, "flag": "", "model_total": 44.4455, "total": 43.5, "total_pick": "over", "p_total_raw": 0.509, "winner": "PIT", "win_pct": 0.5862, "away_inj_pts": -0.8991, "home_inj_pts": 0.083, "qb_note": "", "best_book": "nflverse", "pick_odds": -105.0, "offers": [{"book": "nflverse", "line": 3.0, "odds": -105.0, "p_raw": 0.5329, "p_blend": 0.5098, "ev": -0.0043, "flag": ""}], "n_books": 1, "bet_side": "NO", "bet_line": 3.0, "bet_odds": -105.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": -3.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4915, "home_coach": "Kellen Moore", "away_coach": "Mike McCarthy", "kickoff": "Sunday 09:30", "book_lines": [{"book": "Consensus", "home_spread": 3.0, "home_spread_odds": -105.0, "away_spread_odds": -115.0, "total": 43.5, "over_odds": -102.0, "under_odds": -118.0, "home_ml": 136.0, "away_ml": -162.0}], "total_edge": 0.9455, "state": "final", "away_score": 16.0, "home_score": 10.0}, {"game_id": "2026_07_SF_ATL", "gameday": "2026-10-25", "matchup": "SF @ ATL", "away_team": "SF", "home_team": "ATL", "proj_away": 29.7665, "proj_home": 22.5665, "model_home_spread": 7.2, "home_spread": 2.5, "spread_edge": -4.7, "spread_pick": "SF", "pick_line": -2.5, "p_cover_raw": 0.6643, "p_cover_blend": 0.5571, "spread_ev": 0.0291, "verdict": "FINAL", "stake_units": 0.0, "reason": "VALUE at nflverse: model covers 66%, realistic 56%, EV +0.029", "bet_down_to": -2.5, "bet_at": null, "flag": "VALUE", "model_total": 52.333, "total": 49.5, "total_pick": "over", "p_total_raw": 0.5721, "winner": "SF", "win_pct": 0.6188, "away_inj_pts": 1.042, "home_inj_pts": 0.6224, "qb_note": "", "best_book": "nflverse", "pick_odds": -118.0, "offers": [{"book": "nflverse", "line": -2.5, "odds": -118.0, "p_raw": 0.6643, "p_blend": 0.5571, "ev": 0.0291, "flag": "VALUE"}], "n_books": 1, "bet_side": "SF", "bet_line": -2.5, "bet_odds": -118.0, "bet_book": "nflverse", "h2h_meetings": 2, "h2h_total": 3.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5516, "home_coach": "Raheem Morris", "away_coach": "Kyle Shanahan", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": 2.5, "home_spread_odds": -102.0, "away_spread_odds": -118.0, "total": 49.5, "over_odds": -115.0, "under_odds": -105.0, "home_ml": 130.0, "away_ml": -155.0}], "total_edge": 2.833, "state": "final", "away_score": 20.0, "home_score": 29.0}, {"game_id": "2026_07_CIN_BAL", "gameday": "2026-10-25", "matchup": "CIN @ BAL", "away_team": "CIN", "home_team": "BAL", "proj_away": 26.3843, "proj_home": 26.3224, "model_home_spread": 0.0619, "home_spread": 3.0, "spread_edge": 2.9381, "spread_pick": "BAL", "pick_line": 3.0, "p_cover_raw": 0.6066, "p_cover_blend": 0.5231, "spread_ev": -0.009, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at BAL +3.5", "bet_down_to": null, "bet_at": 3.5, "flag": "", "model_total": 52.7067, "total": 46.5, "total_pick": "over", "p_total_raw": 0.6681, "winner": "CIN", "win_pct": 0.5561, "away_inj_pts": 0.9711, "home_inj_pts": 0.0353, "qb_note": "BAL: L.Jackson (QB change; last start: T.Huntley)", "best_book": "nflverse", "pick_odds": -112.0, "offers": [{"book": "nflverse", "line": 3.0, "odds": -112.0, "p_raw": 0.6066, "p_blend": 0.5231, "ev": -0.009, "flag": ""}], "n_books": 1, "bet_side": "BAL", "bet_line": 3.0, "bet_odds": -112.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": -19.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4766, "home_coach": "Jesse Minter", "away_coach": "Zac Taylor", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": 3.0, "home_spread_odds": -112.0, "away_spread_odds": -108.0, "total": 46.5, "over_odds": -108.0, "under_odds": -112.0, "home_ml": 136.0, "away_ml": -162.0}], "total_edge": 6.2067, "state": "final", "away_score": 35.0, "home_score": 13.0}, {"game_id": "2026_07_TB_CAR", "gameday": "2026-10-25", "matchup": "TB @ CAR", "away_team": "TB", "home_team": "CAR", "proj_away": 20.6079, "proj_home": 24.141, "model_home_spread": -3.5331, "home_spread": -3.0, "spread_edge": 0.5331, "spread_pick": "CAR", "pick_line": -3.0, "p_cover_raw": 0.5129, "p_cover_blend": 0.5013, "spread_ev": -0.0396, "verdict": "FINAL", "stake_units": 0.0, "reason": "Coach head-to-head: Todd Bowles's teams have covered by 47 pts total in 5 meetings; fading that has won 57% since 1999; model agrees", "bet_down_to": null, "bet_at": -2.5, "flag": "", "model_total": 44.7488, "total": 44.5, "total_pick": "over", "p_total_raw": 0.4886, "winner": "CAR", "win_pct": 0.5966, "away_inj_pts": 0.1824, "home_inj_pts": -0.037, "qb_note": "TB: B.Mayfield (QB change; last start: J.Daniels)", "best_book": "nflverse", "pick_odds": -110.0, "offers": [{"book": "nflverse", "line": -3.0, "odds": -110.0, "p_raw": 0.5129, "p_blend": 0.5013, "ev": -0.0396, "flag": ""}], "n_books": 1, "bet_side": "CAR", "bet_line": -3.0, "bet_odds": -110.0, "bet_book": "nflverse", "h2h_meetings": 5, "h2h_total": -47.0, "h2h_strict": "CAR", "h2h_loose": "CAR", "h2h_p_blend": 0.4888, "home_coach": "Dave Canales", "away_coach": "Todd Bowles", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": -3.0, "home_spread_odds": -110.0, "away_spread_odds": -110.0, "total": 44.5, "over_odds": -110.0, "under_odds": -110.0, "home_ml": -166.0, "away_ml": 140.0}], "total_edge": 0.2488, "state": "final", "away_score": 43.0, "home_score": 13.0}, {"game_id": "2026_07_NYG_HOU", "gameday": "2026-10-25", "matchup": "NYG @ HOU", "away_team": "NYG", "home_team": "HOU", "proj_away": 16.088, "proj_home": 26.3169, "model_home_spread": -10.2289, "home_spread": -10.0, "spread_edge": 0.2289, "spread_pick": "NYG", "pick_line": 10.0, "p_cover_raw": 0.5309, "p_cover_blend": 0.5394, "spread_ev": 0.0376, "verdict": "FINAL", "stake_units": 0.0, "reason": "Coach head-to-head: John Harbaugh's teams have covered by 28 pts total in 5 meetings; fading that has won 57% since 1999", "bet_down_to": 9.5, "bet_at": null, "flag": "VALUE", "model_total": 42.4049, "total": 42.5, "total_pick": "under", "p_total_raw": 0.5143, "winner": "HOU", "win_pct": 0.7882, "away_inj_pts": 0.7057, "home_inj_pts": 1.3456, "qb_note": "NYG: J.McCarthy (QB change; last start: J.Winston)", "best_book": "nflverse", "pick_odds": -108.0, "offers": [{"book": "nflverse", "line": 10.0, "odds": -108.0, "p_raw": 0.5309, "p_blend": 0.5394, "ev": 0.0376, "flag": "VALUE"}], "n_books": 1, "bet_side": "HOU", "bet_line": -10.0, "bet_odds": -112.0, "bet_book": "nflverse", "h2h_meetings": 5, "h2h_total": -28.5, "h2h_strict": "HOU", "h2h_loose": "HOU", "h2h_p_blend": 0.4635, "home_coach": "DeMeco Ryans", "away_coach": "John Harbaugh", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": -10.0, "home_spread_odds": -112.0, "away_spread_odds": -108.0, "total": 42.5, "over_odds": -115.0, "under_odds": -105.0, "home_ml": -520.0, "away_ml": 390.0}], "total_edge": -0.0951, "state": "final", "away_score": 27.0, "home_score": 21.0}, {"game_id": "2026_07_IND_MIN", "gameday": "2026-10-25", "matchup": "IND @ MIN", "away_team": "IND", "home_team": "MIN", "proj_away": 19.0625, "proj_home": 27.738, "model_home_spread": -8.6755, "home_spread": -6.5, "spread_edge": 2.1755, "spread_pick": "MIN", "pick_line": -6.5, "p_cover_raw": 0.5294, "p_cover_blend": 0.4867, "spread_ev": -0.1077, "verdict": "FINAL", "stake_units": 0.0, "reason": "No edge at any book's number", "bet_down_to": null, "bet_at": null, "flag": "", "model_total": 46.8005, "total": 41.5, "total_pick": "over", "p_total_raw": 0.6354, "winner": "MIN", "win_pct": 0.698, "away_inj_pts": 0.1446, "home_inj_pts": 0.82, "qb_note": "", "best_book": "nflverse", "pick_odds": -120.0, "offers": [{"book": "nflverse", "line": -6.5, "odds": -120.0, "p_raw": 0.5294, "p_blend": 0.4867, "ev": -0.1077, "flag": ""}], "n_books": 1, "bet_side": "MIN", "bet_line": -6.5, "bet_odds": -120.0, "bet_book": "nflverse", "h2h_meetings": 2, "h2h_total": 1.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5195, "home_coach": "Kevin O'Connell", "away_coach": "Shane Steichen", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": -6.5, "home_spread_odds": -120.0, "away_spread_odds": 100.0, "total": 41.5, "over_odds": -108.0, "under_odds": -112.0, "home_ml": -325.0, "away_ml": 260.0}], "total_edge": 5.3005, "state": "final", "away_score": 10.0, "home_score": 16.0}, {"game_id": "2026_07_MIA_NYJ", "gameday": "2026-10-25", "matchup": "MIA @ NYJ", "away_team": "MIA", "home_team": "NYJ", "proj_away": 18.0029, "proj_home": 23.3424, "model_home_spread": -5.3394, "home_spread": -3.5, "spread_edge": 1.8394, "spread_pick": "NYJ", "pick_line": -3.5, "p_cover_raw": 0.526, "p_cover_blend": 0.4812, "spread_ev": -0.1178, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at NYJ -2.5", "bet_down_to": null, "bet_at": -2.5, "flag": "", "model_total": 41.3453, "total": 39.5, "total_pick": "over", "p_total_raw": 0.5439, "winner": "NYJ", "win_pct": 0.6407, "away_inj_pts": 0.1437, "home_inj_pts": 0.4248, "qb_note": "", "best_book": "nflverse", "pick_odds": -120.0, "offers": [{"book": "nflverse", "line": -3.5, "odds": -120.0, "p_raw": 0.526, "p_blend": 0.4812, "ev": -0.1178, "flag": ""}], "n_books": 1, "bet_side": "NYJ", "bet_line": -3.5, "bet_odds": -120.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": -6.5, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5125, "home_coach": "Aaron Glenn", "away_coach": "Jeff Hafley", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": -3.5, "home_spread_odds": -120.0, "away_spread_odds": 100.0, "total": 39.5, "over_odds": -102.0, "under_odds": -118.0, "home_ml": -218.0, "away_ml": 180.0}], "total_edge": 1.8453, "state": "final", "away_score": 28.0, "home_score": 25.0}, {"game_id": "2026_07_CLE_TEN", "gameday": "2026-10-25", "matchup": "CLE @ TEN", "away_team": "CLE", "home_team": "TEN", "proj_away": 19.1694, "proj_home": 18.481, "model_home_spread": 0.6884, "home_spread": 1.5, "spread_edge": 0.8116, "spread_pick": "TEN", "pick_line": 1.5, "p_cover_raw": 0.5079, "p_cover_blend": 0.4836, "spread_ev": -0.0767, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at TEN +3.0", "bet_down_to": null, "bet_at": 3.0, "flag": "", "model_total": 37.6504, "total": 36.5, "total_pick": "over", "p_total_raw": 0.5172, "winner": "CLE", "win_pct": 0.554, "away_inj_pts": 0.0012, "home_inj_pts": 0.4211, "qb_note": "", "best_book": "nflverse", "pick_odds": -110.0, "offers": [{"book": "nflverse", "line": 1.5, "odds": -110.0, "p_raw": 0.5079, "p_blend": 0.4836, "ev": -0.0767, "flag": ""}], "n_books": 1, "bet_side": "TEN", "bet_line": 1.5, "bet_odds": -110.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": -1.5, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5178, "home_coach": "Robert Saleh", "away_coach": "Todd Monken", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": 1.5, "home_spread_odds": -110.0, "away_spread_odds": -110.0, "total": 36.5, "over_odds": -118.0, "under_odds": -102.0, "home_ml": 110.0, "away_ml": -130.0}], "total_edge": 1.1504, "state": "final", "away_score": 27.0, "home_score": 24.0}, {"game_id": "2026_07_DEN_ARI", "gameday": "2026-10-25", "matchup": "DEN @ ARI", "away_team": "DEN", "home_team": "ARI", "proj_away": 25.6066, "proj_home": 19.3611, "model_home_spread": 6.2455, "home_spread": 16.5, "spread_edge": 10.2545, "spread_pick": "ARI", "pick_line": 16.5, "p_cover_raw": 0.7838, "p_cover_blend": 0.5591, "spread_ev": 0.2189, "verdict": "LIVE", "stake_units": 0.0, "reason": "VALUE at FanDuel: model covers 78%, realistic 56%, EV +0.219", "bet_down_to": 13.5, "bet_at": null, "flag": "VALUE", "model_total": 44.9677, "total": 49.5, "total_pick": "under", "p_total_raw": 0.6379, "winner": "DEN", "win_pct": 0.8375, "away_inj_pts": 0.904, "home_inj_pts": 0.356, "qb_note": "", "best_book": "FanDuel", "pick_odds": 118.0, "offers": [{"book": "FanDuel", "line": 16.5, "odds": 118.0, "p_raw": 0.7838, "p_blend": 0.5591, "ev": 0.2189, "flag": "VALUE"}, {"book": "BetMGM", "line": 16.5, "odds": 115.0, "p_raw": 0.7838, "p_blend": 0.5591, "ev": 0.2021, "flag": "VALUE"}, {"book": "DraftKings", "line": 16.5, "odds": 104.0, "p_raw": 0.7838, "p_blend": 0.5591, "ev": 0.1406, "flag": "VALUE"}], "n_books": 3, "bet_side": "ARI", "bet_line": 16.5, "bet_odds": 118.0, "bet_book": "FanDuel", "h2h_meetings": 0, "h2h_total": 0.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4347, "home_coach": "Jonathan Gannon", "away_coach": "Sean Payton", "kickoff": "Sunday 16:05", "book_lines": [{"book": "BetMGM", "home_spread": 16.5, "home_spread_odds": 115.0, "away_spread_odds": -155.0, "total": 49.5, "over_odds": -145.0, "under_odds": 110.0, "home_ml": null, "away_ml": null}, {"book": "DraftKings", "home_spread": 16.5, "home_spread_odds": 104.0, "away_spread_odds": -138.0, "total": 49.5, "over_odds": -143.0, "under_odds": 108.0, "home_ml": null, "away_ml": null}, {"book": "FanDuel", "home_spread": 16.5, "home_spread_odds": 118.0, "away_spread_odds": -158.0, "total": 49.5, "over_odds": -148.0, "under_odds": 112.0, "home_ml": null, "away_ml": null}], "total_edge": -4.5323, "state": "live", "away_score": null, "home_score": null}, {"game_id": "2026_07_GB_DET", "gameday": "2026-10-25", "matchup": "GB @ DET", "away_team": "GB", "home_team": "DET", "proj_away": 24.0149, "proj_home": 30.3119, "model_home_spread": -6.297, "home_spread": -3.5, "spread_edge": 2.797, "spread_pick": "DET", "pick_line": -3.5, "p_cover_raw": 0.5538, "p_cover_blend": 0.4812, "spread_ev": 0.1548, "verdict": "LIVE", "stake_units": 0.0, "reason": "VALUE at BetMGM: model covers 55%, realistic 48%, EV +0.155", "bet_down_to": -5.5, "bet_at": null, "flag": "VALUE", "model_total": 54.3269, "total": 44.5, "total_pick": "over", "p_total_raw": 0.749, "winner": "DET", "win_pct": 0.6273, "away_inj_pts": 0.0304, "home_inj_pts": 1.0848, "qb_note": "", "best_book": "BetMGM", "pick_odds": 140.0, "offers": [{"book": "BetMGM", "line": -3.5, "odds": 140.0, "p_raw": 0.5538, "p_blend": 0.4812, "ev": 0.1548, "flag": "VALUE"}, {"book": "FanDuel", "line": -3.5, "odds": 140.0, "p_raw": 0.5538, "p_blend": 0.4812, "ev": 0.1548, "flag": "VALUE"}, {"book": "DraftKings", "line": -2.5, "odds": -196.0, "p_raw": 0.6352, "p_blend": 0.5646, "ev": -0.1473, "flag": ""}], "n_books": 3, "bet_side": "DET", "bet_line": -3.5, "bet_odds": 140.0, "bet_book": "BetMGM", "h2h_meetings": 10, "h2h_total": 5.5, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5168, "home_coach": "Dan Campbell", "away_coach": "Matt LaFleur", "kickoff": "Sunday 16:25", "book_lines": [{"book": "BetMGM", "home_spread": -3.5, "home_spread_odds": 140.0, "away_spread_odds": -175.0, "total": 44.5, "over_odds": -118.0, "under_odds": -110.0, "home_ml": -275.0, "away_ml": 200.0}, {"book": "DraftKings", "home_spread": -2.5, "home_spread_odds": -196.0, "away_spread_odds": 147.0, "total": 44.5, "over_odds": -140.0, "under_odds": 106.0, "home_ml": -266.0, "away_ml": 194.0}, {"book": "FanDuel", "home_spread": -3.5, "home_spread_odds": 140.0, "away_spread_odds": -180.0, "total": 44.5, "over_odds": -118.0, "under_odds": -112.0, "home_ml": -280.0, "away_ml": 210.0}], "total_edge": 9.8269, "state": "live", "away_score": null, "home_score": null}, {"game_id": "2026_07_LA_LV", "gameday": "2026-10-25", "matchup": "LA @ LV", "away_team": "LA", "home_team": "LV", "proj_away": 28.6445, "proj_home": 23.4875, "model_home_spread": 5.157, "home_spread": 16.5, "spread_edge": 11.343, "spread_pick": "LV", "pick_line": 16.5, "p_cover_raw": 0.8078, "p_cover_blend": 0.5734, "spread_ev": 0.0045, "verdict": "LIVE", "stake_units": 0.0, "reason": "VALUE at DraftKings: model covers 81%, realistic 57%, EV +0.005", "bet_down_to": 16.5, "bet_at": null, "flag": "VALUE", "model_total": 52.1319, "total": 51.5, "total_pick": "over", "p_total_raw": 0.4999, "winner": "LA", "win_pct": 0.8238, "away_inj_pts": 0.1921, "home_inj_pts": 0.526, "qb_note": "", "best_book": "DraftKings", "pick_odds": -133.0, "offers": [{"book": "DraftKings", "line": 16.5, "odds": -133.0, "p_raw": 0.8078, "p_blend": 0.5734, "ev": 0.0045, "flag": "VALUE"}, {"book": "FanDuel", "line": 16.5, "odds": -144.0, "p_raw": 0.8078, "p_blend": 0.5734, "ev": -0.0284, "flag": ""}, {"book": "BetMGM", "line": 16.5, "odds": -150.0, "p_raw": 0.8078, "p_blend": 0.5734, "ev": -0.0443, "flag": ""}], "n_books": 3, "bet_side": "LV", "bet_line": 16.5, "bet_odds": -133.0, "bet_book": "DraftKings", "h2h_meetings": 0, "h2h_total": 0.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4296, "home_coach": "Klint Kubliak", "away_coach": "Sean McVay", "kickoff": "Sunday 16:25", "book_lines": [{"book": "BetMGM", "home_spread": 16.5, "home_spread_odds": -150.0, "away_spread_odds": 115.0, "total": 51.5, "over_odds": -110.0, "under_odds": -118.0, "home_ml": 4000.0, "away_ml": -100000.0}, {"book": "DraftKings", "home_spread": 16.5, "home_spread_odds": -133.0, "away_spread_odds": 101.0, "total": 51.5, "over_odds": -114.0, "under_odds": -115.0, "home_ml": null, "away_ml": null}, {"book": "FanDuel", "home_spread": 16.5, "home_spread_odds": -144.0, "away_spread_odds": 108.0, "total": 52.5, "over_odds": -106.0, "under_odds": -125.0, "home_ml": null, "away_ml": null}], "total_edge": 0.6319, "state": "live", "away_score": null, "home_score": null}, {"game_id": "2026_07_KC_SEA", "gameday": "2026-10-25", "matchup": "KC @ SEA", "away_team": "KC", "home_team": "SEA", "proj_away": 20.5494, "proj_home": 24.5303, "model_home_spread": -3.9809, "home_spread": -3.0, "spread_edge": 0.9809, "spread_pick": "SEA", "pick_line": -3.0, "p_cover_raw": 0.5283, "p_cover_blend": 0.5022, "spread_ev": -0.0049, "verdict": "WATCH", "stake_units": 0.0, "reason": "Becomes a bet at SEA -2.5", "bet_down_to": null, "bet_at": -2.5, "flag": "", "model_total": 45.0797, "total": 43.0, "total_pick": "over", "p_total_raw": 0.5523, "winner": "SEA", "win_pct": 0.6062, "away_inj_pts": 0.9219, "home_inj_pts": 0.2987, "qb_note": "", "best_book": "BetMGM", "pick_odds": -102.0, "offers": [{"book": "BetMGM", "line": -3.0, "odds": -102.0, "p_raw": 0.5283, "p_blend": 0.5022, "ev": -0.0049, "flag": ""}, {"book": "DraftKings", "line": -3.0, "odds": -102.0, "p_raw": 0.5283, "p_blend": 0.5022, "ev": -0.0049, "flag": ""}, {"book": "Caesars", "line": -3.0, "odds": -103.0, "p_raw": 0.5283, "p_blend": 0.5022, "ev": -0.0093, "flag": ""}, {"book": "FanDuel", "line": -3.0, "odds": -110.0, "p_raw": 0.5283, "p_blend": 0.5022, "ev": -0.0375, "flag": ""}], "n_books": 4, "bet_side": "SEA", "bet_line": -3.0, "bet_odds": -102.0, "bet_book": "BetMGM", "h2h_meetings": 0, "h2h_total": 0.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5037, "home_coach": "Mike Macdonald", "away_coach": "Andy Reid", "kickoff": "Sunday 20:20", "book_lines": [{"book": "BetMGM", "home_spread": -3.0, "home_spread_odds": -102.0, "away_spread_odds": -118.0, "total": 43.0, "over_odds": -110.0, "under_odds": -108.0, "home_ml": -160.0, "away_ml": 135.0, "home_spread_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4089935-6586623", "away_spread_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4089935-6586622", "over_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4085881-6574164", "under_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4085881-6574165", "home_ml_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4085716-6573878", "away_ml_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4085716-6573877"}, {"book": "Caesars", "home_spread": -3.0, "home_spread_odds": -103.0, "away_spread_odds": -117.0, "total": 43.0, "over_odds": -107.0, "under_odds": -113.0, "home_ml": -154.0, "away_ml": 130.0, "home_spread_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=556b39e1-8d55-38b3-8507-fb6950bf0bea", "away_spread_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=500e273c-ccf9-3f9e-8219-86aee195d66f", "over_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=4c44c98b-d764-3405-bf3c-5cb7defebd53", "under_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=10dfd2d2-5aa5-363d-aa41-0297b017343c", "home_ml_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=387e7a46-8189-34cf-8f09-908b1c61f823", "away_ml_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=fd545453-70c9-36e0-9567-a8ca34ed9994"}, {"book": "DraftKings", "home_spread": -3.0, "home_spread_odds": -102.0, "away_spread_odds": -118.0, "total": 43.5, "over_odds": -102.0, "under_odds": -118.0, "home_ml": -155.0, "away_ml": 130.0, "home_spread_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0HC84695468N300_1", "away_spread_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0HC84695468P300_3", "over_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0OU84695468O4350_1", "under_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0OU84695468U4350_3", "home_ml_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0ML84695468_1", "away_ml_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0ML84695468_3"}, {"book": "FanDuel", "home_spread": -3.0, "home_spread_odds": -110.0, "away_spread_odds": -110.0, "total": 42.5, "over_odds": -115.0, "under_odds": -105.0, "home_ml": -158.0, "away_ml": 134.0, "home_spread_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641527&selectionId=50213", "away_spread_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641527&selectionId=50214", "over_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641529&selectionId=7017916", "under_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641529&selectionId=7017917", "home_ml_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641526&selectionId=50213", "away_ml_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641526&selectionId=50214"}], "total_edge": 2.0797, "state": "upcoming", "away_score": null, "home_score": null}, {"game_id": "2026_07_DAL_PHI", "gameday": "2026-10-26", "matchup": "DAL @ PHI", "away_team": "DAL", "home_team": "PHI", "proj_away": 23.2557, "proj_home": 20.2436, "model_home_spread": 3.012, "home_spread": 4.5, "spread_edge": 1.488, "spread_pick": "PHI", "pick_line": 4.5, "p_cover_raw": 0.575, "p_cover_blend": 0.5419, "spread_ev": 0.0579, "verdict": "BET", "stake_units": 0.5, "reason": "VALUE at FanDuel: model covers 57%, realistic 54%, EV +0.058", "bet_down_to": 3.5, "bet_at": null, "flag": "VALUE", "model_total": 43.4993, "total": 44.0, "total_pick": "under", "p_total_raw": 0.5336, "winner": "DAL", "win_pct": 0.6327, "away_inj_pts": 0.1353, "home_inj_pts": -0.2823, "qb_note": "", "best_book": "FanDuel", "pick_odds": -105.0, "offers": [{"book": "FanDuel", "line": 4.5, "odds": -105.0, "p_raw": 0.575, "p_blend": 0.5419, "ev": 0.0579, "flag": "VALUE"}, {"book": "Caesars", "line": 4.5, "odds": -109.0, "p_raw": 0.575, "p_blend": 0.5419, "ev": 0.039, "flag": "VALUE"}, {"book": "BetMGM", "line": 4.5, "odds": -110.0, "p_raw": 0.575, "p_blend": 0.5419, "ev": 0.0345, "flag": "VALUE"}, {"book": "DraftKings", "line": 4.5, "odds": -112.0, "p_raw": 0.575, "p_blend": 0.5419, "ev": 0.0257, "flag": "VALUE"}], "n_books": 4, "bet_side": "PHI", "bet_line": 4.5, "bet_odds": -105.0, "bet_book": "FanDuel", "h2h_meetings": 2, "h2h_total": -10.5, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4605, "home_coach": "Nick Sirianni", "away_coach": "Brian Schottenheimer", "kickoff": "Monday 20:15", "book_lines": [{"book": "BetMGM", "home_spread": 4.5, "home_spread_odds": -110.0, "away_spread_odds": -108.0, "total": 44.0, "over_odds": -108.0, "under_odds": -110.0, "home_ml": 185.0, "away_ml": -225.0, "home_spread_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4087771-6577761", "away_spread_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4087771-6577760", "over_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4090058-6586896", "under_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4090058-6586897", "home_ml_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4085722-6573890", "away_ml_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4085722-6573889"}, {"book": "Caesars", "home_spread": 4.5, "home_spread_odds": -109.0, "away_spread_odds": -109.0, "total": 44.0, "over_odds": -110.0, "under_odds": -110.0, "home_ml": 182.0, "away_ml": -218.0, "home_spread_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=4f3c31c0-91bb-3bfc-b69f-d54d7a4a206a", "away_spread_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=92cd8998-011e-3d88-ae20-c06dc2a3597f", "over_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=6fa14d75-57b4-34cb-a67e-626ee6b39f92", "under_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=a47421b1-49c9-3e89-9585-cd10b7d4b7d1", "home_ml_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=98f7e0c2-c1eb-3390-94a3-d94d24ae4bbd", "away_ml_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=6e1f971c-61fd-33ce-a4eb-5e6b71f5da53"}, {"book": "DraftKings", "home_spread": 4.5, "home_spread_odds": -112.0, "away_spread_odds": -108.0, "total": 43.5, "over_odds": -118.0, "under_odds": -102.0, "home_ml": 180.0, "away_ml": -218.0, "home_spread_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0HC84695504P450_1", "away_spread_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0HC84695504N450_3", "over_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0OU84695504O4350_1", "under_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0OU84695504U4350_3", "home_ml_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0ML84695504_1", "away_ml_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0ML84695504_3"}, {"book": "FanDuel", "home_spread": 4.5, "home_spread_odds": -105.0, "away_spread_odds": -115.0, "total": 44.5, "over_odds": -102.0, "under_odds": -120.0, "home_ml": 190.0, "away_ml": -230.0, "home_spread_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641577&selectionId=50186", "away_spread_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641577&selectionId=50189", "over_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641590&selectionId=7017916", "under_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641590&selectionId=7017917", "home_ml_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641579&selectionId=50186", "away_ml_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641579&selectionId=50189"}], "total_edge": -0.5007, "state": "upcoming", "away_score": null, "home_score": null}], "ratings": [{"rank": 1, "team": "JAX", "net_pts": 6.5658, "off_pts": 3.7157, "def_pts": 2.8502, "off_epa": 0.1127, "def_epa": 0.0407, "st": 0.1034, "elo": null, "market": 3.5795}, {"rank": 2, "team": "SEA", "net_pts": 6.5158, "off_pts": 3.1505, "def_pts": 3.3653, "off_epa": -0.0239, "def_epa": 0.1559, "st": 2.5628, "elo": 1647.0119, "market": 5.058}, {"rank": 3, "team": "NE", "net_pts": 5.107, "off_pts": 1.1128, "def_pts": 3.9942, "off_epa": 0.0716, "def_epa": 0.0395, "st": 0.2971, "elo": 1613.4379, "market": 1.5799}, {"rank": 4, "team": "BUF", "net_pts": 4.448, "off_pts": 6.5735, "def_pts": -2.1255, "off_epa": 0.1507, "def_epa": -0.0334, "st": 0.0606, "elo": null, "market": 4.8224}, {"rank": 5, "team": "SF", "net_pts": 4.4305, "off_pts": 3.164, "def_pts": 1.2665, "off_epa": 0.1359, "def_epa": 0.0026, "st": -0.5389, "elo": 1654.5645, "market": 2.931}, {"rank": 6, "team": "MIN", "net_pts": 3.7483, "off_pts": -2.0222, "def_pts": 5.7705, "off_epa": -0.0896, "def_epa": 0.1317, "st": 1.0389, "elo": 1624.9253, "market": 0.479}, {"rank": 7, "team": "KC", "net_pts": 3.072, "off_pts": 0.14, "def_pts": 2.9319, "off_epa": 0.0576, "def_epa": 0.0277, "st": 0.107, "elo": 1579.3265, "market": 3.9139}, {"rank": 8, "team": "LA", "net_pts": 2.7833, "off_pts": 2.3136, "def_pts": 0.4696, "off_epa": 0.0848, "def_epa": 0.0264, "st": -1.8496, "elo": 1553.9776, "market": 5.3239}, {"rank": 9, "team": "HOU", "net_pts": 2.6933, "off_pts": 0.6772, "def_pts": 2.0161, "off_epa": -0.0063, "def_epa": 0.081, "st": -1.0781, "elo": 1541.6162, "market": 2.1532}, {"rank": 10, "team": "CHI", "net_pts": 2.4699, "off_pts": 1.6886, "def_pts": 0.7813, "off_epa": 0.0558, "def_epa": 0.0127, "st": 2.0713, "elo": 1554.6256, "market": 0.6838}, {"rank": 11, "team": "DEN", "net_pts": 2.3586, "off_pts": -0.941, "def_pts": 3.2996, "off_epa": -0.0046, "def_epa": 0.0693, "st": -0.3026, "elo": 1608.8033, "market": 3.1414}, {"rank": 12, "team": "DET", "net_pts": 2.1909, "off_pts": 5.2245, "def_pts": -3.0336, "off_epa": 0.086, "def_epa": -0.0584, "st": 1.8676, "elo": 1546.8849, "market": 3.1569}, {"rank": 13, "team": "BAL", "net_pts": 1.8033, "off_pts": 1.3499, "def_pts": 0.4534, "off_epa": 0.081, "def_epa": 0.0028, "st": -0.413, "elo": 1551.1638, "market": 1.7615}, {"rank": 14, "team": "CIN", "net_pts": 1.3421, "off_pts": 2.3868, "def_pts": -1.0447, "off_epa": 0.0526, "def_epa": -0.0009, "st": -0.0086, "elo": 1520.0052, "market": 2.1316}, {"rank": 15, "team": "GB", "net_pts": 0.8207, "off_pts": -0.7411, "def_pts": 1.5618, "off_epa": 0.0573, "def_epa": 0.0025, "st": -0.1133, "elo": 1533.1565, "market": 0.1274}, {"rank": 16, "team": "CAR", "net_pts": 0.7972, "off_pts": 1.1815, "def_pts": -0.3843, "off_epa": 0.0479, "def_epa": -0.0289, "st": -0.0553, "elo": 1493.3773, "market": -0.008}, {"rank": 17, "team": "PIT", "net_pts": 0.3461, "off_pts": -0.2865, "def_pts": 0.6326, "off_epa": -0.0243, "def_epa": -0.0021, "st": 0.3715, "elo": 1540.5546, "market": 0.0347}, {"rank": 18, "team": "PHI", "net_pts": -1.1742, "off_pts": -3.1256, "def_pts": 1.9514, "off_epa": -0.0706, "def_epa": 0.0292, "st": 1.0915, "elo": 1481.3655, "market": -0.1387}, {"rank": 19, "team": "ATL", "net_pts": -1.2555, "off_pts": 0.1507, "def_pts": -1.4061, "off_epa": -0.0471, "def_epa": 0.0194, "st": -2.3616, "elo": 1449.0638, "market": -1.5715}, {"rank": 20, "team": "IND", "net_pts": -1.9259, "off_pts": 1.3888, "def_pts": -3.3148, "off_epa": -0.0112, "def_epa": -0.0479, "st": -0.0518, "elo": 1420.6438, "market": -0.7728}, {"rank": 21, "team": "TB", "net_pts": -2.0153, "off_pts": -1.869, "def_pts": -0.1463, "off_epa": -0.0628, "def_epa": 0.0277, "st": -0.4476, "elo": 1422.5478, "market": -2.5855}, {"rank": 22, "team": "CLE", "net_pts": -2.3457, "off_pts": -4.4618, "def_pts": 2.116, "off_epa": -0.105, "def_epa": 0.0441, "st": -0.4921, "elo": 1453.1059, "market": -4.3319}, {"rank": 23, "team": "DAL", "net_pts": -2.5908, "off_pts": 1.5301, "def_pts": -4.1209, "off_epa": 0.0432, "def_epa": -0.1552, "st": 0.4933, "elo": 1426.806, "market": 1.5444}, {"rank": 24, "team": "NYG", "net_pts": -2.7119, "off_pts": -1.2959, "def_pts": -1.416, "off_epa": -0.0665, "def_epa": -0.0407, "st": 0.5947, "elo": 1430.3117, "market": -4.4127}, {"rank": 25, "team": "NO", "net_pts": -3.0776, "off_pts": -0.2894, "def_pts": -2.7882, "off_epa": -0.0481, "def_epa": -0.0307, "st": 0.3476, "elo": 1420.8637, "market": -2.4219}, {"rank": 26, "team": "LV", "net_pts": -3.7502, "off_pts": -0.3836, "def_pts": -3.3665, "off_epa": -0.052, "def_epa": -0.0395, "st": -1.0384, "elo": 1415.8058, "market": -2.9492}, {"rank": 27, "team": "LAC", "net_pts": -3.79, "off_pts": -4.5212, "def_pts": 0.7312, "off_epa": -0.1341, "def_epa": 0.0549, "st": -0.9082, "elo": null, "market": -0.4064}, {"rank": 28, "team": "NYJ", "net_pts": -4.4716, "off_pts": -3.5734, "def_pts": -0.8981, "off_epa": -0.0841, "def_epa": -0.0276, "st": 0.3917, "elo": 1375.7076, "market": -3.7308}, {"rank": 29, "team": "WAS", "net_pts": -4.5323, "off_pts": -1.1312, "def_pts": -3.4011, "off_epa": -0.0245, "def_epa": -0.081, "st": 0.1304, "elo": null, "market": -3.3221}, {"rank": 30, "team": "MIA", "net_pts": -5.6667, "off_pts": -4.0899, "def_pts": -1.5768, "off_epa": -0.0383, "def_epa": -0.0761, "st": -0.8806, "elo": 1367.9473, "market": -6.377}, {"rank": 31, "team": "ARI", "net_pts": -5.7515, "off_pts": -1.4704, "def_pts": -4.281, "off_epa": -0.0149, "def_epa": -0.0539, "st": -0.7996, "elo": 1387.3288, "market": -3.3776}, {"rank": 32, "team": "TEN", "net_pts": -6.4337, "off_pts": -5.5457, "def_pts": -0.888, "off_epa": -0.129, "def_epa": -0.0917, "st": -0.1899, "elo": 1320.8004, "market": -6.0163}], "injuries": [{"team": "ARI", "player": "Paris Johnson", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.995}, {"team": "ARI", "player": "Jon Gaines", "position": "OL", "status": "out", "p_miss": 0.9999, "usual": 0.895}, {"team": "ARI", "player": "Will Johnson", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.895}, {"team": "ARI", "player": "Isaiah Adams", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.8067}, {"team": "ARI", "player": "Andrew Wingard", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.76}, {"team": "ARI", "player": "Marvin Harrison Jr.", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7375}, {"team": "ARI", "player": "Walter Nolen", "position": "DL", "status": "out", "p_miss": 0.9999, "usual": 0.6167}, {"team": "ARI", "player": "Jeremiyah Love", "position": "RB", "status": "out", "p_miss": 0.9999, "usual": 0.482}, {"team": "ATL", "player": "Divine Deablo", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.825}, {"team": "ATL", "player": "Billy Bowman", "position": "CB", "status": "out", "p_miss": 0.9999, "usual": 0.47}, {"team": "BAL", "player": "Jovaughn Gwyn", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.9067}, {"team": "BAL", "player": "Jaylinn Hawkins", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.8133}, {"team": "BAL", "player": "Tavius Robinson", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.7217}, {"team": "BAL", "player": "Durham Smythe", "position": "TE", "status": "none_missed", "p_miss": 0.8202, "usual": 0.495}, {"team": "CAR", "player": "Jaycee Horn", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.8733}, {"team": "CAR", "player": "Michael Jackson", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.69}, {"team": "CAR", "player": "Jaelan Phillips", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.642}, {"team": "CAR", "player": "Tyrel Dodson", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.54}, {"team": "CAR", "player": "Cam Jackson", "position": "DT", "status": "none_missed", "p_miss": 0.8202, "usual": 0.54}, {"team": "CAR", "player": "Xavier Legette", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.515}, {"team": "CHI", "player": "T.J. Edwards", "position": "LB", "status": "doubtful", "p_miss": 0.9917, "usual": 0.876}, {"team": "CHI", "player": "Montez Sweat", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.694}, {"team": "CHI", "player": "Braxton Jones", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.65}, {"team": "CHI", "player": "Xavier Woods", "position": "DB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.635}, {"team": "CHI", "player": "Dayo Odeyingbo", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.564}, {"team": "CHI", "player": "Kyle Monangai", "position": "RB", "status": "out", "p_miss": 0.9999, "usual": 0.405}, {"team": "CIN", "player": "PJ Jules", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.66}, {"team": "CIN", "player": "Jalen Davis", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6133}, {"team": "CIN", "player": "Andrei Iosivas", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.57}, {"team": "CLE", "player": "Luke Wypler", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "CLE", "player": "Michael Hall", "position": "DT", "status": "out", "p_miss": 0.9999, "usual": 0.455}, {"team": "DAL", "player": "T.J. Bass", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "DAL", "player": "Jalen Thompson", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.8067}, {"team": "DAL", "player": "Dee Winters", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.6117}, {"team": "DAL", "player": "Reddy Steward", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.46}, {"team": "DEN", "player": "Talanoa Hufanga", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.926}, {"team": "DEN", "player": "Jonah Elliss", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.5833}, {"team": "DEN", "player": "Pat Bryant", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5775}, {"team": "DET", "player": "Ben Bartch", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.93}, {"team": "DET", "player": "Christian Izien", "position": "DB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7633}, {"team": "DET", "player": "Avonte Maddox", "position": "DB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.65}, {"team": "DET", "player": "Thomas Harper", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.525}, {"team": "GB", "player": "Zaire Franklin", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.9883}, {"team": "GB", "player": "Jacob Monk", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 0.9633}, {"team": "GB", "player": "Edgerrin Cooper", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.825}, {"team": "GB", "player": "Jager Burton", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 0.695}, {"team": "GB", "player": "Zach Bako-Bewele", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.525}, {"team": "GB", "player": "Javon Hargrave", "position": "DT", "status": "none_missed", "p_miss": 0.8202, "usual": 0.4575}, {"team": "GB", "player": "Donovan Jennings", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.45}, {"team": "HOU", "player": "Jalen Pitre", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.92}, {"team": "HOU", "player": "Reed Blankenship", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.855}, {"team": "HOU", "player": "Wyatt Teller", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7033}, {"team": "HOU", "player": "David Montgomery", "position": "RB", "status": "out", "p_miss": 0.9999, "usual": 0.468}, {"team": "HOU", "player": "Kenneth Murray", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.435}, {"team": "HOU", "player": "Jared Wayne", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.408}, {"team": "IND", "player": "Tyler Warren", "position": "TE", "status": "out", "p_miss": 0.9999, "usual": 0.91}, {"team": "IND", "player": "Sauce Gardner", "position": "CB", "status": "out", "p_miss": 0.9999, "usual": 0.8867}, {"team": "IND", "player": "Arden Key", "position": "DE", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6475}, {"team": "IND", "player": "Alec Pierce", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.425}, {"team": "KC", "player": "Jaylon Moore", "position": "OL", "status": "out", "p_miss": 0.9999, "usual": 0.894}, {"team": "KC", "player": "Rashee Rice", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.6225}, {"team": "KC", "player": "Tyquan Thornton", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.59}, {"team": "LA", "player": "Nathan Landman", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.9183}, {"team": "LA", "player": "Myles Garrett", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.62}, {"team": "LA", "player": "Terrance Ferguson", "position": "TE", "status": "none_missed", "p_miss": 0.8202, "usual": 0.45}, {"team": "LV", "player": "Jackson Powers-Johnson", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.9825}, {"team": "LV", "player": "Isaiah Pola-Mao", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.78}, {"team": "MIA", "player": "De'Von Achane", "position": "RB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5567}, {"team": "MIN", "player": "Donovan Jackson", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7725}, {"team": "MIN", "player": "Josh Oliver", "position": "TE", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5533}, {"team": "NE", "player": "Carlton Davis", "position": "CB", "status": "out", "p_miss": 0.9999, "usual": 0.95}, {"team": "NE", "player": "Alijah Vera-Tucker", "position": "G", "status": "out", "p_miss": 0.9999, "usual": 0.8867}, {"team": "NE", "player": "Ben Brown", "position": "C", "status": "out", "p_miss": 0.9999, "usual": 0.745}, {"team": "NE", "player": "Mack Hollins", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.645}, {"team": "NE", "player": "Michael Onwenu", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.635}, {"team": "NE", "player": "Dell Pettus", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.4}, {"team": "NO", "player": "Kelvin Banks", "position": "T", "status": "none_missed", "p_miss": 0.8202, "usual": 0.795}, {"team": "NO", "player": "Travis Etienne", "position": "RB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5033}, {"team": "NYG", "player": "Tremaine Edmunds", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 1.0}, {"team": "NYG", "player": "Jevon Holland", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 1.0}, {"team": "NYG", "player": "John Michael Schmitz", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "NYG", "player": "Greg Newsome II", "position": "CB", "status": "out", "p_miss": 0.9999, "usual": 0.9067}, {"team": "NYG", "player": "Brian Burns", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6467}, {"team": "NYG", "player": "Chauncey Golston", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5175}, {"team": "NYG", "player": "Josh Tupou", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.42}, {"team": "NYJ", "player": "Sterling Shepard", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.49}, {"team": "NYJ", "player": "David Onyemata", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.46}, {"team": "NYJ", "player": "Joseph Ossai", "position": "DE", "status": "out", "p_miss": 0.9999, "usual": 0.4533}, {"team": "PHI", "player": "Lane Johnson", "position": "T", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "PHI", "player": "Cam Jurgens", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "PHI", "player": "DeVonta Smith", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.8725}, {"team": "PHI", "player": "Dontayvion Wicks", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.7983}, {"team": "PHI", "player": "Nolan Smith", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.6333}, {"team": "PHI", "player": "Marcus Epps", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6267}, {"team": "PIT", "player": "Spencer Anderson", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.98}, {"team": "PIT", "player": "Dylan Cook", "position": "T", "status": "none_missed", "p_miss": 0.8202, "usual": 0.98}, {"team": "PIT", "player": "Michael Pittman Jr.", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7767}, {"team": "PIT", "player": "Rayshawn Jenkins", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.545}, {"team": "PIT", "player": "Roman Wilson", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.474}, {"team": "SEA", "player": "Drake Thomas", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.866}, {"team": "SEA", "player": "Rodney Thomas II", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.802}, {"team": "SEA", "player": "AJ Finley", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.52}, {"team": "SF", "player": "Marques Sigle", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.8775}, {"team": "SF", "player": "Dre Greenlaw", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.664}, {"team": "SF", "player": "Nick Bosa", "position": "DL", "status": "out", "p_miss": 0.9999, "usual": 0.635}, {"team": "SF", "player": "Deebo Samuel", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.576}, {"team": "SF", "player": "Mike Evans", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.54}, {"team": "SF", "player": "Demarcus Robinson", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.47}, {"team": "SF", "player": "CJ West", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.41}, {"team": "TB", "player": "Luke Goedeke", "position": "T", "status": "out", "p_miss": 0.9999, "usual": 1.0}, {"team": "TB", "player": "Antoine Winfield Jr.", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.9725}, {"team": "TB", "player": "Emeka Egbuka", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.8583}, {"team": "TEN", "player": "Alontae Taylor", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.996}, {"team": "TEN", "player": "Jackson Slater", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.98}, {"team": "TEN", "player": "Fernando Carmona", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6733}, {"team": "TEN", "player": "James Williams", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.42}], "teasers": [], "teaser_pairs": []}</script>
+<script id="report-data" type="application/json">{"season": 2026, "week": 7, "n_sims": 20000, "phase": "late", "flag_text": "Week 5 on: VALUE = the realistic cover % beats the break-even of the best price across books. Mid-season edges come from price, not the model alone: backtest 53% ATS with line shopping, 51% without. 0.5u each.", "bet_state": "pa", "generated_at": "2026-10-25T22:55:26+00:00", "inj_mode": "final", "line_source": "BetMGM, Caesars, DraftKings, FanDuel", "games": [{"game_id": "2026_07_NE_CHI", "gameday": "2026-10-22", "matchup": "NE @ CHI", "away_team": "NE", "home_team": "CHI", "proj_away": 24.2531, "proj_home": 25.5925, "model_home_spread": -1.3394, "home_spread": -3.0, "spread_edge": -1.6606, "spread_pick": "NE", "pick_line": 3.0, "p_cover_raw": 0.5591, "p_cover_blend": 0.5185, "spread_ev": -0.0169, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at NE +3.5", "bet_down_to": null, "bet_at": 3.5, "flag": "", "model_total": 49.8457, "total": 50.5, "total_pick": "under", "p_total_raw": 0.5275, "winner": "CHI", "win_pct": 0.567, "away_inj_pts": 0.7134, "home_inj_pts": 0.3406, "qb_note": "", "best_book": "nflverse", "pick_odds": -112.0, "offers": [{"book": "nflverse", "line": 3.0, "odds": -112.0, "p_raw": 0.5591, "p_blend": 0.5185, "ev": -0.0169, "flag": ""}], "n_books": 1, "bet_side": "NE", "bet_line": 3.0, "bet_odds": -112.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": 3.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5124, "home_coach": "Ben Johnson", "away_coach": "Mike Vrabel", "kickoff": "Thursday 20:15", "book_lines": [{"book": "Consensus", "home_spread": -3.0, "home_spread_odds": -108.0, "away_spread_odds": -112.0, "total": 50.5, "over_odds": -120.0, "under_odds": 100.0, "home_ml": -155.0, "away_ml": 130.0}], "total_edge": -0.6543, "state": "final", "away_score": 24.0, "home_score": 30.0}, {"game_id": "2026_07_PIT_NO", "gameday": "2026-10-25", "matchup": "PIT @ NO", "away_team": "PIT", "home_team": "NO", "proj_away": 23.3021, "proj_home": 21.1434, "model_home_spread": 2.1586, "home_spread": 3.0, "spread_edge": 0.8414, "spread_pick": "NO", "pick_line": 3.0, "p_cover_raw": 0.5329, "p_cover_blend": 0.5098, "spread_ev": -0.0043, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at NO +3.5", "bet_down_to": null, "bet_at": 3.5, "flag": "", "model_total": 44.4455, "total": 43.5, "total_pick": "over", "p_total_raw": 0.509, "winner": "PIT", "win_pct": 0.5862, "away_inj_pts": -0.8991, "home_inj_pts": 0.083, "qb_note": "", "best_book": "nflverse", "pick_odds": -105.0, "offers": [{"book": "nflverse", "line": 3.0, "odds": -105.0, "p_raw": 0.5329, "p_blend": 0.5098, "ev": -0.0043, "flag": ""}], "n_books": 1, "bet_side": "NO", "bet_line": 3.0, "bet_odds": -105.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": -3.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4915, "home_coach": "Kellen Moore", "away_coach": "Mike McCarthy", "kickoff": "Sunday 09:30", "book_lines": [{"book": "Consensus", "home_spread": 3.0, "home_spread_odds": -105.0, "away_spread_odds": -115.0, "total": 43.5, "over_odds": -102.0, "under_odds": -118.0, "home_ml": 136.0, "away_ml": -162.0}], "total_edge": 0.9455, "state": "final", "away_score": 16.0, "home_score": 10.0}, {"game_id": "2026_07_SF_ATL", "gameday": "2026-10-25", "matchup": "SF @ ATL", "away_team": "SF", "home_team": "ATL", "proj_away": 29.7665, "proj_home": 22.5665, "model_home_spread": 7.2, "home_spread": 2.5, "spread_edge": -4.7, "spread_pick": "SF", "pick_line": -2.5, "p_cover_raw": 0.6643, "p_cover_blend": 0.5571, "spread_ev": 0.0291, "verdict": "FINAL", "stake_units": 0.0, "reason": "VALUE at nflverse: model covers 66%, realistic 56%, EV +0.029", "bet_down_to": -2.5, "bet_at": null, "flag": "VALUE", "model_total": 52.333, "total": 49.5, "total_pick": "over", "p_total_raw": 0.5721, "winner": "SF", "win_pct": 0.6188, "away_inj_pts": 1.042, "home_inj_pts": 0.6224, "qb_note": "", "best_book": "nflverse", "pick_odds": -118.0, "offers": [{"book": "nflverse", "line": -2.5, "odds": -118.0, "p_raw": 0.6643, "p_blend": 0.5571, "ev": 0.0291, "flag": "VALUE"}], "n_books": 1, "bet_side": "SF", "bet_line": -2.5, "bet_odds": -118.0, "bet_book": "nflverse", "h2h_meetings": 2, "h2h_total": 3.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5516, "home_coach": "Raheem Morris", "away_coach": "Kyle Shanahan", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": 2.5, "home_spread_odds": -102.0, "away_spread_odds": -118.0, "total": 49.5, "over_odds": -115.0, "under_odds": -105.0, "home_ml": 130.0, "away_ml": -155.0}], "total_edge": 2.833, "state": "final", "away_score": 20.0, "home_score": 29.0}, {"game_id": "2026_07_CIN_BAL", "gameday": "2026-10-25", "matchup": "CIN @ BAL", "away_team": "CIN", "home_team": "BAL", "proj_away": 26.3843, "proj_home": 26.3224, "model_home_spread": 0.0619, "home_spread": 3.0, "spread_edge": 2.9381, "spread_pick": "BAL", "pick_line": 3.0, "p_cover_raw": 0.6066, "p_cover_blend": 0.5231, "spread_ev": -0.009, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at BAL +3.5", "bet_down_to": null, "bet_at": 3.5, "flag": "", "model_total": 52.7067, "total": 46.5, "total_pick": "over", "p_total_raw": 0.6681, "winner": "CIN", "win_pct": 0.5561, "away_inj_pts": 0.9711, "home_inj_pts": 0.0353, "qb_note": "BAL: L.Jackson (QB change; last start: T.Huntley)", "best_book": "nflverse", "pick_odds": -112.0, "offers": [{"book": "nflverse", "line": 3.0, "odds": -112.0, "p_raw": 0.6066, "p_blend": 0.5231, "ev": -0.009, "flag": ""}], "n_books": 1, "bet_side": "BAL", "bet_line": 3.0, "bet_odds": -112.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": -19.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4766, "home_coach": "Jesse Minter", "away_coach": "Zac Taylor", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": 3.0, "home_spread_odds": -112.0, "away_spread_odds": -108.0, "total": 46.5, "over_odds": -108.0, "under_odds": -112.0, "home_ml": 136.0, "away_ml": -162.0}], "total_edge": 6.2067, "state": "final", "away_score": 35.0, "home_score": 13.0}, {"game_id": "2026_07_TB_CAR", "gameday": "2026-10-25", "matchup": "TB @ CAR", "away_team": "TB", "home_team": "CAR", "proj_away": 20.6079, "proj_home": 24.141, "model_home_spread": -3.5331, "home_spread": -3.0, "spread_edge": 0.5331, "spread_pick": "CAR", "pick_line": -3.0, "p_cover_raw": 0.5129, "p_cover_blend": 0.5013, "spread_ev": -0.0396, "verdict": "FINAL", "stake_units": 0.0, "reason": "Coach head-to-head: Todd Bowles's teams have covered by 47 pts total in 5 meetings; fading that has won 57% since 1999; model agrees", "bet_down_to": null, "bet_at": -2.5, "flag": "", "model_total": 44.7488, "total": 44.5, "total_pick": "over", "p_total_raw": 0.4886, "winner": "CAR", "win_pct": 0.5966, "away_inj_pts": 0.1824, "home_inj_pts": -0.037, "qb_note": "TB: B.Mayfield (QB change; last start: J.Daniels)", "best_book": "nflverse", "pick_odds": -110.0, "offers": [{"book": "nflverse", "line": -3.0, "odds": -110.0, "p_raw": 0.5129, "p_blend": 0.5013, "ev": -0.0396, "flag": ""}], "n_books": 1, "bet_side": "CAR", "bet_line": -3.0, "bet_odds": -110.0, "bet_book": "nflverse", "h2h_meetings": 5, "h2h_total": -47.0, "h2h_strict": "CAR", "h2h_loose": "CAR", "h2h_p_blend": 0.4888, "home_coach": "Dave Canales", "away_coach": "Todd Bowles", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": -3.0, "home_spread_odds": -110.0, "away_spread_odds": -110.0, "total": 44.5, "over_odds": -110.0, "under_odds": -110.0, "home_ml": -166.0, "away_ml": 140.0}], "total_edge": 0.2488, "state": "final", "away_score": 43.0, "home_score": 13.0}, {"game_id": "2026_07_NYG_HOU", "gameday": "2026-10-25", "matchup": "NYG @ HOU", "away_team": "NYG", "home_team": "HOU", "proj_away": 16.088, "proj_home": 26.3169, "model_home_spread": -10.2289, "home_spread": -10.0, "spread_edge": 0.2289, "spread_pick": "NYG", "pick_line": 10.0, "p_cover_raw": 0.5309, "p_cover_blend": 0.5394, "spread_ev": 0.0376, "verdict": "FINAL", "stake_units": 0.0, "reason": "Coach head-to-head: John Harbaugh's teams have covered by 28 pts total in 5 meetings; fading that has won 57% since 1999", "bet_down_to": 9.5, "bet_at": null, "flag": "VALUE", "model_total": 42.4049, "total": 42.5, "total_pick": "under", "p_total_raw": 0.5143, "winner": "HOU", "win_pct": 0.7882, "away_inj_pts": 0.7057, "home_inj_pts": 1.3456, "qb_note": "NYG: J.McCarthy (QB change; last start: J.Winston)", "best_book": "nflverse", "pick_odds": -108.0, "offers": [{"book": "nflverse", "line": 10.0, "odds": -108.0, "p_raw": 0.5309, "p_blend": 0.5394, "ev": 0.0376, "flag": "VALUE"}], "n_books": 1, "bet_side": "HOU", "bet_line": -10.0, "bet_odds": -112.0, "bet_book": "nflverse", "h2h_meetings": 5, "h2h_total": -28.5, "h2h_strict": "HOU", "h2h_loose": "HOU", "h2h_p_blend": 0.4635, "home_coach": "DeMeco Ryans", "away_coach": "John Harbaugh", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": -10.0, "home_spread_odds": -112.0, "away_spread_odds": -108.0, "total": 42.5, "over_odds": -115.0, "under_odds": -105.0, "home_ml": -520.0, "away_ml": 390.0}], "total_edge": -0.0951, "state": "final", "away_score": 27.0, "home_score": 21.0}, {"game_id": "2026_07_IND_MIN", "gameday": "2026-10-25", "matchup": "IND @ MIN", "away_team": "IND", "home_team": "MIN", "proj_away": 19.0625, "proj_home": 27.738, "model_home_spread": -8.6755, "home_spread": -6.5, "spread_edge": 2.1755, "spread_pick": "MIN", "pick_line": -6.5, "p_cover_raw": 0.5294, "p_cover_blend": 0.4867, "spread_ev": -0.1077, "verdict": "FINAL", "stake_units": 0.0, "reason": "No edge at any book's number", "bet_down_to": null, "bet_at": null, "flag": "", "model_total": 46.8005, "total": 41.5, "total_pick": "over", "p_total_raw": 0.6354, "winner": "MIN", "win_pct": 0.698, "away_inj_pts": 0.1446, "home_inj_pts": 0.82, "qb_note": "", "best_book": "nflverse", "pick_odds": -120.0, "offers": [{"book": "nflverse", "line": -6.5, "odds": -120.0, "p_raw": 0.5294, "p_blend": 0.4867, "ev": -0.1077, "flag": ""}], "n_books": 1, "bet_side": "MIN", "bet_line": -6.5, "bet_odds": -120.0, "bet_book": "nflverse", "h2h_meetings": 2, "h2h_total": 1.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5195, "home_coach": "Kevin O'Connell", "away_coach": "Shane Steichen", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": -6.5, "home_spread_odds": -120.0, "away_spread_odds": 100.0, "total": 41.5, "over_odds": -108.0, "under_odds": -112.0, "home_ml": -325.0, "away_ml": 260.0}], "total_edge": 5.3005, "state": "final", "away_score": 10.0, "home_score": 16.0}, {"game_id": "2026_07_MIA_NYJ", "gameday": "2026-10-25", "matchup": "MIA @ NYJ", "away_team": "MIA", "home_team": "NYJ", "proj_away": 18.0029, "proj_home": 23.3424, "model_home_spread": -5.3394, "home_spread": -3.5, "spread_edge": 1.8394, "spread_pick": "NYJ", "pick_line": -3.5, "p_cover_raw": 0.526, "p_cover_blend": 0.4812, "spread_ev": -0.1178, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at NYJ -2.5", "bet_down_to": null, "bet_at": -2.5, "flag": "", "model_total": 41.3453, "total": 39.5, "total_pick": "over", "p_total_raw": 0.5439, "winner": "NYJ", "win_pct": 0.6407, "away_inj_pts": 0.1437, "home_inj_pts": 0.4248, "qb_note": "", "best_book": "nflverse", "pick_odds": -120.0, "offers": [{"book": "nflverse", "line": -3.5, "odds": -120.0, "p_raw": 0.526, "p_blend": 0.4812, "ev": -0.1178, "flag": ""}], "n_books": 1, "bet_side": "NYJ", "bet_line": -3.5, "bet_odds": -120.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": -6.5, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5125, "home_coach": "Aaron Glenn", "away_coach": "Jeff Hafley", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": -3.5, "home_spread_odds": -120.0, "away_spread_odds": 100.0, "total": 39.5, "over_odds": -102.0, "under_odds": -118.0, "home_ml": -218.0, "away_ml": 180.0}], "total_edge": 1.8453, "state": "final", "away_score": 28.0, "home_score": 25.0}, {"game_id": "2026_07_CLE_TEN", "gameday": "2026-10-25", "matchup": "CLE @ TEN", "away_team": "CLE", "home_team": "TEN", "proj_away": 19.1694, "proj_home": 18.481, "model_home_spread": 0.6884, "home_spread": 1.5, "spread_edge": 0.8116, "spread_pick": "TEN", "pick_line": 1.5, "p_cover_raw": 0.5079, "p_cover_blend": 0.4836, "spread_ev": -0.0767, "verdict": "FINAL", "stake_units": 0.0, "reason": "Becomes a bet at TEN +3.0", "bet_down_to": null, "bet_at": 3.0, "flag": "", "model_total": 37.6504, "total": 36.5, "total_pick": "over", "p_total_raw": 0.5172, "winner": "CLE", "win_pct": 0.554, "away_inj_pts": 0.0012, "home_inj_pts": 0.4211, "qb_note": "", "best_book": "nflverse", "pick_odds": -110.0, "offers": [{"book": "nflverse", "line": 1.5, "odds": -110.0, "p_raw": 0.5079, "p_blend": 0.4836, "ev": -0.0767, "flag": ""}], "n_books": 1, "bet_side": "TEN", "bet_line": 1.5, "bet_odds": -110.0, "bet_book": "nflverse", "h2h_meetings": 1, "h2h_total": -1.5, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5178, "home_coach": "Robert Saleh", "away_coach": "Todd Monken", "kickoff": "Sunday 13:00", "book_lines": [{"book": "Consensus", "home_spread": 1.5, "home_spread_odds": -110.0, "away_spread_odds": -110.0, "total": 36.5, "over_odds": -118.0, "under_odds": -102.0, "home_ml": 110.0, "away_ml": -130.0}], "total_edge": 1.1504, "state": "final", "away_score": 27.0, "home_score": 24.0}, {"game_id": "2026_07_DEN_ARI", "gameday": "2026-10-25", "matchup": "DEN @ ARI", "away_team": "DEN", "home_team": "ARI", "proj_away": 25.6066, "proj_home": 19.3611, "model_home_spread": 6.2455, "home_spread": 16.5, "spread_edge": 10.2545, "spread_pick": "ARI", "pick_line": 16.5, "p_cover_raw": 0.7838, "p_cover_blend": 0.5591, "spread_ev": 0.2189, "verdict": "LIVE", "stake_units": 0.0, "reason": "VALUE at FanDuel: model covers 78%, realistic 56%, EV +0.219", "bet_down_to": 13.5, "bet_at": null, "flag": "VALUE", "model_total": 44.9677, "total": 49.5, "total_pick": "under", "p_total_raw": 0.6379, "winner": "DEN", "win_pct": 0.8375, "away_inj_pts": 0.904, "home_inj_pts": 0.356, "qb_note": "", "best_book": "FanDuel", "pick_odds": 118.0, "offers": [{"book": "FanDuel", "line": 16.5, "odds": 118.0, "p_raw": 0.7838, "p_blend": 0.5591, "ev": 0.2189, "flag": "VALUE"}, {"book": "BetMGM", "line": 16.5, "odds": 115.0, "p_raw": 0.7838, "p_blend": 0.5591, "ev": 0.2021, "flag": "VALUE"}, {"book": "DraftKings", "line": 16.5, "odds": 104.0, "p_raw": 0.7838, "p_blend": 0.5591, "ev": 0.1406, "flag": "VALUE"}], "n_books": 3, "bet_side": "ARI", "bet_line": 16.5, "bet_odds": 118.0, "bet_book": "FanDuel", "h2h_meetings": 0, "h2h_total": 0.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4347, "home_coach": "Jonathan Gannon", "away_coach": "Sean Payton", "kickoff": "Sunday 16:05", "book_lines": [{"book": "BetMGM", "home_spread": 16.5, "home_spread_odds": 115.0, "away_spread_odds": -155.0, "total": 49.5, "over_odds": -145.0, "under_odds": 110.0, "home_ml": null, "away_ml": null}, {"book": "DraftKings", "home_spread": 16.5, "home_spread_odds": 104.0, "away_spread_odds": -138.0, "total": 49.5, "over_odds": -143.0, "under_odds": 108.0, "home_ml": null, "away_ml": null}, {"book": "FanDuel", "home_spread": 16.5, "home_spread_odds": 118.0, "away_spread_odds": -158.0, "total": 49.5, "over_odds": -148.0, "under_odds": 112.0, "home_ml": null, "away_ml": null}], "total_edge": -4.5323, "state": "live", "away_score": null, "home_score": null}, {"game_id": "2026_07_GB_DET", "gameday": "2026-10-25", "matchup": "GB @ DET", "away_team": "GB", "home_team": "DET", "proj_away": 24.0149, "proj_home": 30.3119, "model_home_spread": -6.297, "home_spread": -3.5, "spread_edge": 2.797, "spread_pick": "DET", "pick_line": -3.5, "p_cover_raw": 0.5538, "p_cover_blend": 0.4812, "spread_ev": 0.1548, "verdict": "LIVE", "stake_units": 0.0, "reason": "VALUE at BetMGM: model covers 55%, realistic 48%, EV +0.155", "bet_down_to": -5.5, "bet_at": null, "flag": "VALUE", "model_total": 54.3269, "total": 44.5, "total_pick": "over", "p_total_raw": 0.749, "winner": "DET", "win_pct": 0.6273, "away_inj_pts": 0.0304, "home_inj_pts": 1.0848, "qb_note": "", "best_book": "BetMGM", "pick_odds": 140.0, "offers": [{"book": "BetMGM", "line": -3.5, "odds": 140.0, "p_raw": 0.5538, "p_blend": 0.4812, "ev": 0.1548, "flag": "VALUE"}, {"book": "FanDuel", "line": -3.5, "odds": 140.0, "p_raw": 0.5538, "p_blend": 0.4812, "ev": 0.1548, "flag": "VALUE"}, {"book": "DraftKings", "line": -2.5, "odds": -196.0, "p_raw": 0.6352, "p_blend": 0.5646, "ev": -0.1473, "flag": ""}], "n_books": 3, "bet_side": "DET", "bet_line": -3.5, "bet_odds": 140.0, "bet_book": "BetMGM", "h2h_meetings": 10, "h2h_total": 5.5, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5168, "home_coach": "Dan Campbell", "away_coach": "Matt LaFleur", "kickoff": "Sunday 16:25", "book_lines": [{"book": "BetMGM", "home_spread": -3.5, "home_spread_odds": 140.0, "away_spread_odds": -175.0, "total": 44.5, "over_odds": -118.0, "under_odds": -110.0, "home_ml": -275.0, "away_ml": 200.0}, {"book": "DraftKings", "home_spread": -2.5, "home_spread_odds": -196.0, "away_spread_odds": 147.0, "total": 44.5, "over_odds": -140.0, "under_odds": 106.0, "home_ml": -266.0, "away_ml": 194.0}, {"book": "FanDuel", "home_spread": -3.5, "home_spread_odds": 140.0, "away_spread_odds": -180.0, "total": 44.5, "over_odds": -118.0, "under_odds": -112.0, "home_ml": -280.0, "away_ml": 210.0}], "total_edge": 9.8269, "state": "live", "away_score": null, "home_score": null}, {"game_id": "2026_07_LA_LV", "gameday": "2026-10-25", "matchup": "LA @ LV", "away_team": "LA", "home_team": "LV", "proj_away": 28.6445, "proj_home": 23.4875, "model_home_spread": 5.157, "home_spread": 16.5, "spread_edge": 11.343, "spread_pick": "LV", "pick_line": 16.5, "p_cover_raw": 0.8078, "p_cover_blend": 0.5734, "spread_ev": 0.0045, "verdict": "LIVE", "stake_units": 0.0, "reason": "VALUE at DraftKings: model covers 81%, realistic 57%, EV +0.005", "bet_down_to": 16.5, "bet_at": null, "flag": "VALUE", "model_total": 52.1319, "total": 51.5, "total_pick": "over", "p_total_raw": 0.4999, "winner": "LA", "win_pct": 0.8238, "away_inj_pts": 0.1921, "home_inj_pts": 0.526, "qb_note": "", "best_book": "DraftKings", "pick_odds": -133.0, "offers": [{"book": "DraftKings", "line": 16.5, "odds": -133.0, "p_raw": 0.8078, "p_blend": 0.5734, "ev": 0.0045, "flag": "VALUE"}, {"book": "FanDuel", "line": 16.5, "odds": -144.0, "p_raw": 0.8078, "p_blend": 0.5734, "ev": -0.0284, "flag": ""}, {"book": "BetMGM", "line": 16.5, "odds": -150.0, "p_raw": 0.8078, "p_blend": 0.5734, "ev": -0.0443, "flag": ""}], "n_books": 3, "bet_side": "LV", "bet_line": 16.5, "bet_odds": -133.0, "bet_book": "DraftKings", "h2h_meetings": 0, "h2h_total": 0.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4296, "home_coach": "Klint Kubliak", "away_coach": "Sean McVay", "kickoff": "Sunday 16:25", "book_lines": [{"book": "BetMGM", "home_spread": 16.5, "home_spread_odds": -150.0, "away_spread_odds": 115.0, "total": 51.5, "over_odds": -110.0, "under_odds": -118.0, "home_ml": 4000.0, "away_ml": -100000.0}, {"book": "DraftKings", "home_spread": 16.5, "home_spread_odds": -133.0, "away_spread_odds": 101.0, "total": 51.5, "over_odds": -114.0, "under_odds": -115.0, "home_ml": null, "away_ml": null}, {"book": "FanDuel", "home_spread": 16.5, "home_spread_odds": -144.0, "away_spread_odds": 108.0, "total": 52.5, "over_odds": -106.0, "under_odds": -125.0, "home_ml": null, "away_ml": null}], "total_edge": 0.6319, "state": "live", "away_score": null, "home_score": null}, {"game_id": "2026_07_KC_SEA", "gameday": "2026-10-25", "matchup": "KC @ SEA", "away_team": "KC", "home_team": "SEA", "proj_away": 20.5494, "proj_home": 24.5303, "model_home_spread": -3.9809, "home_spread": -3.0, "spread_edge": 0.9809, "spread_pick": "SEA", "pick_line": -3.0, "p_cover_raw": 0.5283, "p_cover_blend": 0.5022, "spread_ev": -0.0049, "verdict": "WATCH", "stake_units": 0.0, "reason": "Becomes a bet at SEA -2.5", "bet_down_to": null, "bet_at": -2.5, "flag": "", "model_total": 45.0797, "total": 43.0, "total_pick": "over", "p_total_raw": 0.5523, "winner": "SEA", "win_pct": 0.6062, "away_inj_pts": 0.9219, "home_inj_pts": 0.2987, "qb_note": "", "best_book": "BetMGM", "pick_odds": -102.0, "offers": [{"book": "BetMGM", "line": -3.0, "odds": -102.0, "p_raw": 0.5283, "p_blend": 0.5022, "ev": -0.0049, "flag": ""}, {"book": "DraftKings", "line": -3.0, "odds": -102.0, "p_raw": 0.5283, "p_blend": 0.5022, "ev": -0.0049, "flag": ""}, {"book": "Caesars", "line": -3.0, "odds": -103.0, "p_raw": 0.5283, "p_blend": 0.5022, "ev": -0.0093, "flag": ""}, {"book": "FanDuel", "line": -3.0, "odds": -110.0, "p_raw": 0.5283, "p_blend": 0.5022, "ev": -0.0375, "flag": ""}], "n_books": 4, "bet_side": "SEA", "bet_line": -3.0, "bet_odds": -102.0, "bet_book": "BetMGM", "h2h_meetings": 0, "h2h_total": 0.0, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.5037, "home_coach": "Mike Macdonald", "away_coach": "Andy Reid", "kickoff": "Sunday 20:20", "book_lines": [{"book": "BetMGM", "home_spread": -3.0, "home_spread_odds": -102.0, "away_spread_odds": -118.0, "total": 43.0, "over_odds": -110.0, "under_odds": -108.0, "home_ml": -160.0, "away_ml": 135.0, "home_spread_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4089935-6586623", "away_spread_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4089935-6586622", "over_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4085881-6574164", "under_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4085881-6574165", "home_ml_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4085716-6573878", "away_ml_link": "https://sports.nj.betmgm.com/en/sports/events/6:43680?options=6:43680-4085716-6573877"}, {"book": "Caesars", "home_spread": -3.0, "home_spread_odds": -103.0, "away_spread_odds": -117.0, "total": 43.0, "over_odds": -107.0, "under_odds": -113.0, "home_ml": -154.0, "away_ml": 130.0, "home_spread_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=556b39e1-8d55-38b3-8507-fb6950bf0bea", "away_spread_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=500e273c-ccf9-3f9e-8219-86aee195d66f", "over_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=4c44c98b-d764-3405-bf3c-5cb7defebd53", "under_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=10dfd2d2-5aa5-363d-aa41-0297b017343c", "home_ml_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=387e7a46-8189-34cf-8f09-908b1c61f823", "away_ml_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=fd545453-70c9-36e0-9567-a8ca34ed9994"}, {"book": "DraftKings", "home_spread": -3.0, "home_spread_odds": -102.0, "away_spread_odds": -118.0, "total": 43.5, "over_odds": -102.0, "under_odds": -118.0, "home_ml": -155.0, "away_ml": 130.0, "home_spread_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0HC84695468N300_1", "away_spread_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0HC84695468P300_3", "over_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0OU84695468O4350_1", "under_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0OU84695468U4350_3", "home_ml_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0ML84695468_1", "away_ml_link": "https://sportsbook.draftkings.com/event/34118035?outcomes=0ML84695468_3"}, {"book": "FanDuel", "home_spread": -3.0, "home_spread_odds": -110.0, "away_spread_odds": -110.0, "total": 42.5, "over_odds": -115.0, "under_odds": -105.0, "home_ml": -158.0, "away_ml": 134.0, "home_spread_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641527&selectionId=50213", "away_spread_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641527&selectionId=50214", "over_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641529&selectionId=7017916", "under_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641529&selectionId=7017917", "home_ml_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641526&selectionId=50213", "away_ml_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641526&selectionId=50214"}], "total_edge": 2.0797, "state": "upcoming", "away_score": null, "home_score": null}, {"game_id": "2026_07_DAL_PHI", "gameday": "2026-10-26", "matchup": "DAL @ PHI", "away_team": "DAL", "home_team": "PHI", "proj_away": 23.2557, "proj_home": 20.2436, "model_home_spread": 3.012, "home_spread": 4.5, "spread_edge": 1.488, "spread_pick": "PHI", "pick_line": 4.5, "p_cover_raw": 0.575, "p_cover_blend": 0.5419, "spread_ev": 0.0579, "verdict": "BET", "stake_units": 0.5, "reason": "VALUE at FanDuel: model covers 57%, realistic 54%, EV +0.058", "bet_down_to": 3.5, "bet_at": null, "flag": "VALUE", "model_total": 43.4993, "total": 44.0, "total_pick": "under", "p_total_raw": 0.5336, "winner": "DAL", "win_pct": 0.6327, "away_inj_pts": 0.1353, "home_inj_pts": -0.2823, "qb_note": "", "best_book": "FanDuel", "pick_odds": -105.0, "offers": [{"book": "FanDuel", "line": 4.5, "odds": -105.0, "p_raw": 0.575, "p_blend": 0.5419, "ev": 0.0579, "flag": "VALUE"}, {"book": "Caesars", "line": 4.5, "odds": -109.0, "p_raw": 0.575, "p_blend": 0.5419, "ev": 0.039, "flag": "VALUE"}, {"book": "BetMGM", "line": 4.5, "odds": -110.0, "p_raw": 0.575, "p_blend": 0.5419, "ev": 0.0345, "flag": "VALUE"}, {"book": "DraftKings", "line": 4.5, "odds": -112.0, "p_raw": 0.575, "p_blend": 0.5419, "ev": 0.0257, "flag": "VALUE"}], "n_books": 4, "bet_side": "PHI", "bet_line": 4.5, "bet_odds": -105.0, "bet_book": "FanDuel", "h2h_meetings": 2, "h2h_total": -10.5, "h2h_strict": null, "h2h_loose": null, "h2h_p_blend": 0.4605, "home_coach": "Nick Sirianni", "away_coach": "Brian Schottenheimer", "kickoff": "Monday 20:15", "book_lines": [{"book": "BetMGM", "home_spread": 4.5, "home_spread_odds": -110.0, "away_spread_odds": -108.0, "total": 44.0, "over_odds": -108.0, "under_odds": -110.0, "home_ml": 185.0, "away_ml": -225.0, "home_spread_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4087771-6577761", "away_spread_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4087771-6577760", "over_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4090058-6586896", "under_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4090058-6586897", "home_ml_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4085722-6573890", "away_ml_link": "https://sports.nj.betmgm.com/en/sports/events/6:43685?options=6:43685-4085722-6573889"}, {"book": "Caesars", "home_spread": 4.5, "home_spread_odds": -109.0, "away_spread_odds": -109.0, "total": 44.0, "over_odds": -110.0, "under_odds": -110.0, "home_ml": 182.0, "away_ml": -218.0, "home_spread_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=4f3c31c0-91bb-3bfc-b69f-d54d7a4a206a", "away_spread_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=92cd8998-011e-3d88-ae20-c06dc2a3597f", "over_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=6fa14d75-57b4-34cb-a67e-626ee6b39f92", "under_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=a47421b1-49c9-3e89-9585-cd10b7d4b7d1", "home_ml_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=98f7e0c2-c1eb-3390-94a3-d94d24ae4bbd", "away_ml_link": "https://sportsbook.caesars.com/us/nj/bet/betslip?selectionIds=6e1f971c-61fd-33ce-a4eb-5e6b71f5da53"}, {"book": "DraftKings", "home_spread": 4.5, "home_spread_odds": -112.0, "away_spread_odds": -108.0, "total": 43.5, "over_odds": -118.0, "under_odds": -102.0, "home_ml": 180.0, "away_ml": -218.0, "home_spread_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0HC84695504P450_1", "away_spread_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0HC84695504N450_3", "over_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0OU84695504O4350_1", "under_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0OU84695504U4350_3", "home_ml_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0ML84695504_1", "away_ml_link": "https://sportsbook.draftkings.com/event/34118071?outcomes=0ML84695504_3"}, {"book": "FanDuel", "home_spread": 4.5, "home_spread_odds": -105.0, "away_spread_odds": -115.0, "total": 44.5, "over_odds": -102.0, "under_odds": -120.0, "home_ml": 190.0, "away_ml": -230.0, "home_spread_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641577&selectionId=50186", "away_spread_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641577&selectionId=50189", "over_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641590&selectionId=7017916", "under_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641590&selectionId=7017917", "home_ml_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641579&selectionId=50186", "away_ml_link": "https://sportsbook.fanduel.com/addToBetslip?marketId=717.191641579&selectionId=50189"}], "total_edge": -0.5007, "state": "upcoming", "away_score": null, "home_score": null}], "ratings": [{"rank": 1, "team": "JAX", "net_pts": 6.5658, "off_pts": 3.7157, "def_pts": 2.8502, "off_epa": 0.1127, "def_epa": 0.0407, "st": 0.1034, "elo": null, "market": 3.5795}, {"rank": 2, "team": "SEA", "net_pts": 6.5158, "off_pts": 3.1505, "def_pts": 3.3653, "off_epa": -0.0239, "def_epa": 0.1559, "st": 2.5628, "elo": 1647.0119, "market": 5.058}, {"rank": 3, "team": "NE", "net_pts": 5.107, "off_pts": 1.1128, "def_pts": 3.9942, "off_epa": 0.0716, "def_epa": 0.0395, "st": 0.2971, "elo": 1613.4379, "market": 1.5799}, {"rank": 4, "team": "BUF", "net_pts": 4.448, "off_pts": 6.5735, "def_pts": -2.1255, "off_epa": 0.1507, "def_epa": -0.0334, "st": 0.0606, "elo": null, "market": 4.8224}, {"rank": 5, "team": "SF", "net_pts": 4.4305, "off_pts": 3.164, "def_pts": 1.2665, "off_epa": 0.1359, "def_epa": 0.0026, "st": -0.5389, "elo": 1654.5645, "market": 2.931}, {"rank": 6, "team": "MIN", "net_pts": 3.7483, "off_pts": -2.0222, "def_pts": 5.7705, "off_epa": -0.0896, "def_epa": 0.1317, "st": 1.0389, "elo": 1624.9253, "market": 0.479}, {"rank": 7, "team": "KC", "net_pts": 3.072, "off_pts": 0.14, "def_pts": 2.9319, "off_epa": 0.0576, "def_epa": 0.0277, "st": 0.107, "elo": 1579.3265, "market": 3.9139}, {"rank": 8, "team": "LA", "net_pts": 2.7833, "off_pts": 2.3136, "def_pts": 0.4696, "off_epa": 0.0848, "def_epa": 0.0264, "st": -1.8496, "elo": 1553.9776, "market": 5.3239}, {"rank": 9, "team": "HOU", "net_pts": 2.6933, "off_pts": 0.6772, "def_pts": 2.0161, "off_epa": -0.0063, "def_epa": 0.081, "st": -1.0781, "elo": 1541.6162, "market": 2.1532}, {"rank": 10, "team": "CHI", "net_pts": 2.4699, "off_pts": 1.6886, "def_pts": 0.7813, "off_epa": 0.0558, "def_epa": 0.0127, "st": 2.0713, "elo": 1554.6256, "market": 0.6838}, {"rank": 11, "team": "DEN", "net_pts": 2.3586, "off_pts": -0.941, "def_pts": 3.2996, "off_epa": -0.0046, "def_epa": 0.0693, "st": -0.3026, "elo": 1608.8033, "market": 3.1414}, {"rank": 12, "team": "DET", "net_pts": 2.1909, "off_pts": 5.2245, "def_pts": -3.0336, "off_epa": 0.086, "def_epa": -0.0584, "st": 1.8676, "elo": 1546.8849, "market": 3.1569}, {"rank": 13, "team": "BAL", "net_pts": 1.8033, "off_pts": 1.3499, "def_pts": 0.4534, "off_epa": 0.081, "def_epa": 0.0028, "st": -0.413, "elo": 1551.1638, "market": 1.7615}, {"rank": 14, "team": "CIN", "net_pts": 1.3421, "off_pts": 2.3868, "def_pts": -1.0447, "off_epa": 0.0526, "def_epa": -0.0009, "st": -0.0086, "elo": 1520.0052, "market": 2.1316}, {"rank": 15, "team": "GB", "net_pts": 0.8207, "off_pts": -0.7411, "def_pts": 1.5618, "off_epa": 0.0573, "def_epa": 0.0025, "st": -0.1133, "elo": 1533.1565, "market": 0.1274}, {"rank": 16, "team": "CAR", "net_pts": 0.7972, "off_pts": 1.1815, "def_pts": -0.3843, "off_epa": 0.0479, "def_epa": -0.0289, "st": -0.0553, "elo": 1493.3773, "market": -0.008}, {"rank": 17, "team": "PIT", "net_pts": 0.3461, "off_pts": -0.2865, "def_pts": 0.6326, "off_epa": -0.0243, "def_epa": -0.0021, "st": 0.3715, "elo": 1540.5546, "market": 0.0347}, {"rank": 18, "team": "PHI", "net_pts": -1.1742, "off_pts": -3.1256, "def_pts": 1.9514, "off_epa": -0.0706, "def_epa": 0.0292, "st": 1.0915, "elo": 1481.3655, "market": -0.1387}, {"rank": 19, "team": "ATL", "net_pts": -1.2555, "off_pts": 0.1507, "def_pts": -1.4061, "off_epa": -0.0471, "def_epa": 0.0194, "st": -2.3616, "elo": 1449.0638, "market": -1.5715}, {"rank": 20, "team": "IND", "net_pts": -1.9259, "off_pts": 1.3888, "def_pts": -3.3148, "off_epa": -0.0112, "def_epa": -0.0479, "st": -0.0518, "elo": 1420.6438, "market": -0.7728}, {"rank": 21, "team": "TB", "net_pts": -2.0153, "off_pts": -1.869, "def_pts": -0.1463, "off_epa": -0.0628, "def_epa": 0.0277, "st": -0.4476, "elo": 1422.5478, "market": -2.5855}, {"rank": 22, "team": "CLE", "net_pts": -2.3457, "off_pts": -4.4618, "def_pts": 2.116, "off_epa": -0.105, "def_epa": 0.0441, "st": -0.4921, "elo": 1453.1059, "market": -4.3319}, {"rank": 23, "team": "DAL", "net_pts": -2.5908, "off_pts": 1.5301, "def_pts": -4.1209, "off_epa": 0.0432, "def_epa": -0.1552, "st": 0.4933, "elo": 1426.806, "market": 1.5444}, {"rank": 24, "team": "NYG", "net_pts": -2.7119, "off_pts": -1.2959, "def_pts": -1.416, "off_epa": -0.0665, "def_epa": -0.0407, "st": 0.5947, "elo": 1430.3117, "market": -4.4127}, {"rank": 25, "team": "NO", "net_pts": -3.0776, "off_pts": -0.2894, "def_pts": -2.7882, "off_epa": -0.0481, "def_epa": -0.0307, "st": 0.3476, "elo": 1420.8637, "market": -2.4219}, {"rank": 26, "team": "LV", "net_pts": -3.7502, "off_pts": -0.3836, "def_pts": -3.3665, "off_epa": -0.052, "def_epa": -0.0395, "st": -1.0384, "elo": 1415.8058, "market": -2.9492}, {"rank": 27, "team": "LAC", "net_pts": -3.79, "off_pts": -4.5212, "def_pts": 0.7312, "off_epa": -0.1341, "def_epa": 0.0549, "st": -0.9082, "elo": null, "market": -0.4064}, {"rank": 28, "team": "NYJ", "net_pts": -4.4716, "off_pts": -3.5734, "def_pts": -0.8981, "off_epa": -0.0841, "def_epa": -0.0276, "st": 0.3917, "elo": 1375.7076, "market": -3.7308}, {"rank": 29, "team": "WAS", "net_pts": -4.5323, "off_pts": -1.1312, "def_pts": -3.4011, "off_epa": -0.0245, "def_epa": -0.081, "st": 0.1304, "elo": null, "market": -3.3221}, {"rank": 30, "team": "MIA", "net_pts": -5.6667, "off_pts": -4.0899, "def_pts": -1.5768, "off_epa": -0.0383, "def_epa": -0.0761, "st": -0.8806, "elo": 1367.9473, "market": -6.377}, {"rank": 31, "team": "ARI", "net_pts": -5.7515, "off_pts": -1.4704, "def_pts": -4.281, "off_epa": -0.0149, "def_epa": -0.0539, "st": -0.7996, "elo": 1387.3288, "market": -3.3776}, {"rank": 32, "team": "TEN", "net_pts": -6.4337, "off_pts": -5.5457, "def_pts": -0.888, "off_epa": -0.129, "def_epa": -0.0917, "st": -0.1899, "elo": 1320.8004, "market": -6.0163}], "injuries": [{"team": "ARI", "player": "Paris Johnson", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.995}, {"team": "ARI", "player": "Jon Gaines", "position": "OL", "status": "out", "p_miss": 0.9999, "usual": 0.895}, {"team": "ARI", "player": "Will Johnson", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.895}, {"team": "ARI", "player": "Isaiah Adams", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.8067}, {"team": "ARI", "player": "Andrew Wingard", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.76}, {"team": "ARI", "player": "Marvin Harrison Jr.", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7375}, {"team": "ARI", "player": "Walter Nolen", "position": "DL", "status": "out", "p_miss": 0.9999, "usual": 0.6167}, {"team": "ARI", "player": "Jeremiyah Love", "position": "RB", "status": "out", "p_miss": 0.9999, "usual": 0.482}, {"team": "ATL", "player": "Divine Deablo", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.825}, {"team": "ATL", "player": "Billy Bowman", "position": "CB", "status": "out", "p_miss": 0.9999, "usual": 0.47}, {"team": "BAL", "player": "Jovaughn Gwyn", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.9067}, {"team": "BAL", "player": "Jaylinn Hawkins", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.8133}, {"team": "BAL", "player": "Tavius Robinson", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.7217}, {"team": "BAL", "player": "Durham Smythe", "position": "TE", "status": "none_missed", "p_miss": 0.8202, "usual": 0.495}, {"team": "CAR", "player": "Jaycee Horn", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.8733}, {"team": "CAR", "player": "Michael Jackson", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.69}, {"team": "CAR", "player": "Jaelan Phillips", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.642}, {"team": "CAR", "player": "Tyrel Dodson", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.54}, {"team": "CAR", "player": "Cam Jackson", "position": "DT", "status": "none_missed", "p_miss": 0.8202, "usual": 0.54}, {"team": "CAR", "player": "Xavier Legette", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.515}, {"team": "CHI", "player": "T.J. Edwards", "position": "LB", "status": "doubtful", "p_miss": 0.9917, "usual": 0.876}, {"team": "CHI", "player": "Montez Sweat", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.694}, {"team": "CHI", "player": "Braxton Jones", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.65}, {"team": "CHI", "player": "Xavier Woods", "position": "DB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.635}, {"team": "CHI", "player": "Dayo Odeyingbo", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.564}, {"team": "CHI", "player": "Kyle Monangai", "position": "RB", "status": "out", "p_miss": 0.9999, "usual": 0.405}, {"team": "CIN", "player": "PJ Jules", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.66}, {"team": "CIN", "player": "Jalen Davis", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6133}, {"team": "CIN", "player": "Andrei Iosivas", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.57}, {"team": "CLE", "player": "Luke Wypler", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "CLE", "player": "Michael Hall", "position": "DT", "status": "out", "p_miss": 0.9999, "usual": 0.455}, {"team": "DAL", "player": "T.J. Bass", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "DAL", "player": "Jalen Thompson", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.8067}, {"team": "DAL", "player": "Dee Winters", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.6117}, {"team": "DAL", "player": "Reddy Steward", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.46}, {"team": "DEN", "player": "Talanoa Hufanga", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.926}, {"team": "DEN", "player": "Jonah Elliss", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.5833}, {"team": "DEN", "player": "Pat Bryant", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5775}, {"team": "DET", "player": "Ben Bartch", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.93}, {"team": "DET", "player": "Christian Izien", "position": "DB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7633}, {"team": "DET", "player": "Avonte Maddox", "position": "DB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.65}, {"team": "DET", "player": "Thomas Harper", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.525}, {"team": "GB", "player": "Zaire Franklin", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.9883}, {"team": "GB", "player": "Jacob Monk", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 0.9633}, {"team": "GB", "player": "Edgerrin Cooper", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.825}, {"team": "GB", "player": "Jager Burton", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 0.695}, {"team": "GB", "player": "Zach Bako-Bewele", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.525}, {"team": "GB", "player": "Javon Hargrave", "position": "DT", "status": "none_missed", "p_miss": 0.8202, "usual": 0.4575}, {"team": "GB", "player": "Donovan Jennings", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.45}, {"team": "HOU", "player": "Jalen Pitre", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.92}, {"team": "HOU", "player": "Reed Blankenship", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.855}, {"team": "HOU", "player": "Wyatt Teller", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7033}, {"team": "HOU", "player": "David Montgomery", "position": "RB", "status": "out", "p_miss": 0.9999, "usual": 0.468}, {"team": "HOU", "player": "Kenneth Murray", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.435}, {"team": "HOU", "player": "Jared Wayne", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.408}, {"team": "IND", "player": "Tyler Warren", "position": "TE", "status": "out", "p_miss": 0.9999, "usual": 0.91}, {"team": "IND", "player": "Sauce Gardner", "position": "CB", "status": "out", "p_miss": 0.9999, "usual": 0.8867}, {"team": "IND", "player": "Arden Key", "position": "DE", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6475}, {"team": "IND", "player": "Alec Pierce", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.425}, {"team": "KC", "player": "Jaylon Moore", "position": "OL", "status": "out", "p_miss": 0.9999, "usual": 0.894}, {"team": "KC", "player": "Rashee Rice", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.6225}, {"team": "KC", "player": "Tyquan Thornton", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.59}, {"team": "LA", "player": "Nathan Landman", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.9183}, {"team": "LA", "player": "Myles Garrett", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.62}, {"team": "LA", "player": "Terrance Ferguson", "position": "TE", "status": "none_missed", "p_miss": 0.8202, "usual": 0.45}, {"team": "LV", "player": "Jackson Powers-Johnson", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.9825}, {"team": "LV", "player": "Isaiah Pola-Mao", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.78}, {"team": "MIA", "player": "De'Von Achane", "position": "RB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5567}, {"team": "MIN", "player": "Donovan Jackson", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7725}, {"team": "MIN", "player": "Josh Oliver", "position": "TE", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5533}, {"team": "NE", "player": "Carlton Davis", "position": "CB", "status": "out", "p_miss": 0.9999, "usual": 0.95}, {"team": "NE", "player": "Alijah Vera-Tucker", "position": "G", "status": "out", "p_miss": 0.9999, "usual": 0.8867}, {"team": "NE", "player": "Ben Brown", "position": "C", "status": "out", "p_miss": 0.9999, "usual": 0.745}, {"team": "NE", "player": "Mack Hollins", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.645}, {"team": "NE", "player": "Michael Onwenu", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.635}, {"team": "NE", "player": "Dell Pettus", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.4}, {"team": "NO", "player": "Kelvin Banks", "position": "T", "status": "none_missed", "p_miss": 0.8202, "usual": 0.795}, {"team": "NO", "player": "Travis Etienne", "position": "RB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5033}, {"team": "NYG", "player": "Tremaine Edmunds", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 1.0}, {"team": "NYG", "player": "Jevon Holland", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 1.0}, {"team": "NYG", "player": "John Michael Schmitz", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "NYG", "player": "Greg Newsome II", "position": "CB", "status": "out", "p_miss": 0.9999, "usual": 0.9067}, {"team": "NYG", "player": "Brian Burns", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6467}, {"team": "NYG", "player": "Chauncey Golston", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.5175}, {"team": "NYG", "player": "Josh Tupou", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.42}, {"team": "NYJ", "player": "Sterling Shepard", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.49}, {"team": "NYJ", "player": "David Onyemata", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.46}, {"team": "NYJ", "player": "Joseph Ossai", "position": "DE", "status": "out", "p_miss": 0.9999, "usual": 0.4533}, {"team": "PHI", "player": "Lane Johnson", "position": "T", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "PHI", "player": "Cam Jurgens", "position": "C", "status": "none_missed", "p_miss": 0.8202, "usual": 1.0}, {"team": "PHI", "player": "DeVonta Smith", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.8725}, {"team": "PHI", "player": "Dontayvion Wicks", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.7983}, {"team": "PHI", "player": "Nolan Smith", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.6333}, {"team": "PHI", "player": "Marcus Epps", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6267}, {"team": "PIT", "player": "Spencer Anderson", "position": "OL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.98}, {"team": "PIT", "player": "Dylan Cook", "position": "T", "status": "none_missed", "p_miss": 0.8202, "usual": 0.98}, {"team": "PIT", "player": "Michael Pittman Jr.", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.7767}, {"team": "PIT", "player": "Rayshawn Jenkins", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.545}, {"team": "PIT", "player": "Roman Wilson", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.474}, {"team": "SEA", "player": "Drake Thomas", "position": "LB", "status": "out", "p_miss": 0.9999, "usual": 0.866}, {"team": "SEA", "player": "Rodney Thomas II", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.802}, {"team": "SEA", "player": "AJ Finley", "position": "S", "status": "none_missed", "p_miss": 0.8202, "usual": 0.52}, {"team": "SF", "player": "Marques Sigle", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.8775}, {"team": "SF", "player": "Dre Greenlaw", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.664}, {"team": "SF", "player": "Nick Bosa", "position": "DL", "status": "out", "p_miss": 0.9999, "usual": 0.635}, {"team": "SF", "player": "Deebo Samuel", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.576}, {"team": "SF", "player": "Mike Evans", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.54}, {"team": "SF", "player": "Demarcus Robinson", "position": "WR", "status": "none_missed", "p_miss": 0.8202, "usual": 0.47}, {"team": "SF", "player": "CJ West", "position": "DL", "status": "none_missed", "p_miss": 0.8202, "usual": 0.41}, {"team": "TB", "player": "Luke Goedeke", "position": "T", "status": "out", "p_miss": 0.9999, "usual": 1.0}, {"team": "TB", "player": "Antoine Winfield Jr.", "position": "S", "status": "out", "p_miss": 0.9999, "usual": 0.9725}, {"team": "TB", "player": "Emeka Egbuka", "position": "WR", "status": "out", "p_miss": 0.9999, "usual": 0.8583}, {"team": "TEN", "player": "Alontae Taylor", "position": "CB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.996}, {"team": "TEN", "player": "Jackson Slater", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.98}, {"team": "TEN", "player": "Fernando Carmona", "position": "G", "status": "none_missed", "p_miss": 0.8202, "usual": 0.6733}, {"team": "TEN", "player": "James Williams", "position": "LB", "status": "none_missed", "p_miss": 0.8202, "usual": 0.42}], "teasers": [], "teaser_pairs": [], "record": {"overall": {"w": 2, "l": 2, "p": 0, "units": -0.13, "staked": 2.0, "roi": -0.0644, "clv": 0.25, "pending": 13}, "by_type": {"H2H": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 2}, "TEASER": {"w": 1, "l": 0, "p": 0, "units": 0.42, "staked": 0.5, "roi": 0.8333, "clv": 0.5, "pending": 4}, "VALUE": {"w": 1, "l": 2, "p": 0, "units": -0.55, "staked": 1.5, "roi": -0.3636, "clv": 0.17, "pending": 7}}, "by_week": {"2026-7": {"w": 2, "l": 2, "p": 0, "units": -0.13, "staked": 2.0, "roi": -0.0644, "clv": 0.25, "pending": 0}, "2026-8": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 6}, "2026-9": {"w": 0, "l": 0, "p": 0, "units": 0.0, "staked": 0.0, "roi": null, "clv": null, "pending": 7}}, "plays": [{"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_NYG_HOU", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": "NYG @ HOU", "selection": "NYG +10.5", "team": "NYG", "line": 10.5, "odds": -110.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T14:21+00:00", "result": "W", "profit": 0.4545454545454545, "close_line": 10.0, "clv_pts": 0.5}, {"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_SF_ATL", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": "SF @ ATL", "selection": "SF -2.5", "team": "SF", "line": -2.5, "odds": -115.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T14:21+00:00", "result": "L", "profit": -0.5, "close_line": -2.5, "clv_pts": 0.0}, {"season": 2026, "week": 7, "kind": "teaser", "angle": "TEASER AB", "game_id": "2026_07_CLE_TEN,2026_07_SF_ATL", "kickoff": "2026-10-25T17:00:00+00:00", "matchup": null, "selection": "TEN +8.5 / ATL +8.5", "team": "TEN/ATL", "line": null, "odds": -120.0, "book": "BetMGM/DraftKings", "stake": 0.5, "legs": "[{\"game_id\": \"2026_07_CLE_TEN\", \"team\": \"TEN\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"DraftKings\"}, {\"game_id\": \"2026_07_SF_ATL\", \"team\": \"ATL\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"BetMGM\"}]", "recorded_at": "2026-10-25T14:21+00:00", "result": "W", "profit": 0.4166666666666667, "close_line": null, "clv_pts": 0.5}, {"season": 2026, "week": 7, "kind": "spread", "angle": "VALUE", "game_id": "2026_07_DAL_PHI", "kickoff": "2026-10-27T00:15:00+00:00", "matchup": "DAL @ PHI", "selection": "PHI +4.5", "team": "PHI", "line": 4.5, "odds": -105.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-25T22:55+00:00", "result": "L", "profit": -0.5, "close_line": 4.5, "clv_pts": 0.0}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_LV_NYJ", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": "LV @ NYJ", "selection": "NYJ -1.5", "team": "NYJ", "line": -1.5, "odds": -105.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:41+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_ATL_TB", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": "ATL @ TB", "selection": "TB -2.5", "team": "TB", "line": -2.5, "odds": -102.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:41+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_08_KC_DEN,2026_08_ATL_TB", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": null, "selection": "DEN +7.5 / ATL +8.5", "team": "DEN/ATL", "line": null, "odds": -120.0, "book": "BetMGM/DraftKings", "stake": 1.0, "legs": "[{\"game_id\": \"2026_08_KC_DEN\", \"team\": \"DEN\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"BetMGM\"}, {\"game_id\": \"2026_08_ATL_TB\", \"team\": \"ATL\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"DraftKings\"}]", "recorded_at": "2026-10-27T19:41+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "teaser", "angle": "TEASER AB", "game_id": "2026_08_LV_NYJ,2026_08_IND_JAX", "kickoff": "2026-11-01T18:00:00+00:00", "matchup": null, "selection": "LV +7.5 / JAX -2", "team": "LV/JAX", "line": null, "odds": -120.0, "book": "BetMGM", "stake": 0.5, "legs": "[{\"game_id\": \"2026_08_LV_NYJ\", \"team\": \"LV\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"BetMGM\"}, {\"game_id\": \"2026_08_IND_JAX\", \"team\": \"JAX\", \"line\": -8.0, \"teased_line\": -2.0, \"book\": \"BetMGM\"}]", "recorded_at": "2026-10-27T19:41+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "VALUE", "game_id": "2026_08_LAC_LA", "kickoff": "2026-11-01T21:05:00+00:00", "matchup": "LAC @ LA", "selection": "LAC +6.5", "team": "LAC", "line": 6.5, "odds": -102.0, "book": "DraftKings", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:41+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 8, "kind": "spread", "angle": "H2H", "game_id": "2026_08_KC_DEN", "kickoff": "2026-11-01T21:25:00+00:00", "matchup": "KC @ DEN", "selection": "KC -1.5", "team": "KC", "line": -1.5, "odds": -108.0, "book": "BetMGM", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:41+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_DET_MIA", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": "DET @ MIA", "selection": "MIA +8.5", "team": "MIA", "line": 8.5, "odds": -120.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:42+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_NYJ_KC", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": "NYJ @ KC", "selection": "NYJ +8.5", "team": "NYJ", "line": 8.5, "odds": -105.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:42+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_09_GB_NE,2026_09_CLE_NO", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": null, "selection": "GB +8.5 / CLE +8.5", "team": "GB/CLE", "line": null, "odds": -120.0, "book": "FanDuel", "stake": 1.0, "legs": "[{\"game_id\": \"2026_09_GB_NE\", \"team\": \"GB\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}, {\"game_id\": \"2026_09_CLE_NO\", \"team\": \"CLE\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}]", "recorded_at": "2026-10-27T19:42+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "teaser", "angle": "TEASER AA", "game_id": "2026_09_NYG_PHI,2026_09_DEN_CAR", "kickoff": "2026-11-08T18:00:00+00:00", "matchup": null, "selection": "PHI +7.5 / CAR +8.5", "team": "PHI/CAR", "line": null, "odds": -120.0, "book": "FanDuel", "stake": 1.0, "legs": "[{\"game_id\": \"2026_09_NYG_PHI\", \"team\": \"PHI\", \"line\": 1.5, \"teased_line\": 7.5, \"book\": \"FanDuel\"}, {\"game_id\": \"2026_09_DEN_CAR\", \"team\": \"CAR\", \"line\": 2.5, \"teased_line\": 8.5, \"book\": \"FanDuel\"}]", "recorded_at": "2026-10-27T19:42+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "H2H", "game_id": "2026_09_ARI_SEA", "kickoff": "2026-11-08T21:25:00+00:00", "matchup": "ARI @ SEA", "selection": "ARI +12.5", "team": "ARI", "line": 12.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:42+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_GB_NE", "kickoff": "2026-11-08T21:25:00+00:00", "matchup": "GB @ NE", "selection": "NE -2.5", "team": "NE", "line": -2.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:42+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}, {"season": 2026, "week": 9, "kind": "spread", "angle": "VALUE", "game_id": "2026_09_TB_CHI", "kickoff": "2026-11-09T01:20:00+00:00", "matchup": "TB @ CHI", "selection": "TB +6.5", "team": "TB", "line": 6.5, "odds": -110.0, "book": "FanDuel", "stake": 0.5, "legs": null, "recorded_at": "2026-10-27T19:42+00:00", "result": null, "profit": null, "close_line": null, "clv_pts": null}]}}</script>
 <script>
-(function () {
+(() => {
   const D = JSON.parse(document.getElementById("report-data").textContent);
   const $ = (id) => document.getElementById(id);
-  // Betslip links: point state-specific books at the bettor's state, and use FanDuel's indexed betslip format
-  const ST = (D.bet_state || "pa").toLowerCase();
-  const fixLink = (u) => !u ? u : u
-    .replace(/^https:\/\/sports\.[a-z]{2}\.betmgm\.com/, "https://sports." + ST + ".betmgm.com")
-    .replace(/^(https:\/\/sportsbook\.caesars\.com\/us\/)[a-z]{2}\//, "$1" + ST + "/");
-  D.games.forEach((g) => (g.book_lines || []).forEach((b) => Object.keys(b).forEach((k) => { if (k.endsWith("_link")) b[k] = fixLink(b[k]); })));
-  const pct = (x) => x == null ? "–" : (x * 100).toFixed(1) + "%";
-  const pct0 = (x) => x == null ? "–" : Math.round(x * 100) + "%";
-  const sp = (x) => x == null ? "–" : (Math.abs(x) < 0.05 ? "PK" : (x > 0 ? "+" : "") + x.toFixed(1));
-  const num1 = (x) => x == null ? "–" : x.toFixed(1);
-  const sgn1 = (x) => x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(1);
-  const ev = (x) => x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(3);
-  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
-  const units = (u) => u + "u";
-  const ml = (x) => x == null ? "" : (x > 0 ? "+" : "") + Math.round(x);
-  const booksCell = (r) => (r.offers || []).map((o) => (o.book === r.best_book ? "<b>" : "") + esc(o.book.replace(/\.ag$/, "")) + " " +
-    sp(o.line) + " " + ml(o.odds) + (o.book === r.best_book ? "</b>" : "")).join("<br>");
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+  const sgn = (x, d = 1) => x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d).replace(/\.0+$/, "");
+  const ln = (x) => x == null ? "–" : Math.abs(x) < 0.05 ? "PK" : sgn(x);
+  const num = (x, d = 1) => x == null ? "–" : Number(x).toFixed(d).replace(/\.0$/, "");
+  const odds = (x) => x == null ? "" : (x > 0 ? "+" : "−") + Math.abs(Math.round(x));
+  const pct = (x) => x == null ? "–" : (100 * x).toFixed(1) + "%";
+  const pay = (o) => o == null ? -1 : (o > 0 ? o / 100 : 100 / -o);
+  const units = (u) => u == null ? "–" : num(u, 2) + "u";
+  const stack = (id) => { const t = $(id); if (!t) return; const hs = [...t.querySelectorAll("thead th")].map((h) => h.textContent.trim());
+    t.classList.add("stack"); t.querySelectorAll("tbody tr").forEach((r) => [...r.children].forEach((c, k) => { if (hs[k]) c.dataset.l = hs[k]; })); };
+  // ESPN logos by team abbreviation (nflverse LA and WAS are lar and wsh at ESPN); a logo that fails to load is removed
+  const LOGO = {LA: "lar", WAS: "wsh"};
+  const logo = (t, px) => { if (!t) return ""; const a = LOGO[t] || String(t).toLowerCase();
+    return "<picture class='tl'><source media='(prefers-color-scheme: dark)' srcset='https://a.espncdn.com/i/teamlogos/nfl/500-dark/" + esc(a) +
+      ".png'><img src='https://a.espncdn.com/i/teamlogos/nfl/500/" + esc(a) + ".png' alt='' loading='lazy' width='" + px + "' height='" + px +
+      "' onerror=\"this.closest('picture').remove()\"></picture>"; };
+  const matchupL = (g) => logo(g.away_team, 14) + esc(g.away_team) + " @ " + logo(g.home_team, 14) + esc(g.home_team);
+  // Kickoff: "Sun Nov 1 · 1:00 PM ET" (kick) and "Sun 1:00 PM" (tip, for the board)
+  const ktime = (g) => { const t = String(g.kickoff || "").split(" ")[1] || "";
+    if (!/^\d{1,2}:\d{2}$/.test(t)) return ""; const [h, m] = t.split(":").map(Number); return (h % 12 || 12) + ":" + String(m).padStart(2, "0") + (h < 12 ? " AM" : " PM"); };
+  const kday = (g, o) => new Date(g.gameday + "T12:00:00").toLocaleDateString("en-US", o);
+  const kick = (g) => kday(g, {weekday: "short", month: "short", day: "numeric"}) + (ktime(g) ? " · " + ktime(g) + " ET" : "");
+  const tip = (g) => kday(g, {weekday: "short"}) + " " + ktime(g);
+  const byKick = (a, b) => String(a.gameday).localeCompare(String(b.gameday)) || String(a.kickoff).localeCompare(String(b.kickoff));
+  const isPlay = (g) => ["BET", "SMALL", "H2H"].includes(g.verdict);
+  const done = (g) => g.state && g.state !== "upcoming";
 
-  // Header
+  // Head
   const days = D.games.map((g) => g.gameday).filter(Boolean).sort();
-  const md = (d) => new Date(d + "T12:00:00").toLocaleDateString([], {month: "short", day: "numeric"});
-  $("eyebrow").textContent = D.season + " NFL season" + (days.length ? " · " + md(days[0]) + (days[0] !== days[days.length - 1] ? " – " + md(days[days.length - 1]) : "") : "");
-  $("h1").textContent = "Week " + D.week + " Bet Card";
-  const bets = D.games.filter((g) => g.verdict === "BET" || g.verdict === "SMALL" || g.verdict === "H2H");
-  const nPlays = bets.length + D.teaser_pairs.length;
-  const units_total = Math.round((bets.reduce((s, g) => s + (g.stake_units || 0), 0) +
-    D.teaser_pairs.reduce((s, t) => s + (t.stake_units || 0), 0)) * 100) / 100;
-  $("lede").textContent = nPlays
-    ? nPlays + (nPlays === 1 ? " play" : " plays") + " this week, " + units_total + " units total. Everything else is a pass."
-    : "No bets at the current numbers. The full slate below shows every line.";
-  const injLabel = {thursday: "Thursday practice report applied", final: "Final injury report applied", monday: "Injury report not out yet (Monday run)"};
-  [D.n_sims.toLocaleString() + " sims per game", "Lines: " + D.line_source, injLabel[D.inj_mode] || "No injury report"]
-    .forEach((t) => { const c = document.createElement("span"); c.className = "chip"; c.textContent = t; $("meta").appendChild(c); });
-  $("flagtext").textContent = D.flag_text + " Breakeven at -110 is 52.4%.";
-
-  // Week switcher (weeks.json is written next to the pages by the site build)
+  const md = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", {month: "short", day: "numeric"});
+  $("h1").textContent = "Week " + D.week;
+  const injLabel = {thursday: "Thursday practice report applied", final: "final injury report applied", monday: "injury report not out yet"};
+  $("sub").textContent = (days.length ? md(days[0]) + (days[0] !== days[days.length - 1] ? " – " + md(days[days.length - 1]) : "") + " · " : "") +
+    D.games.length + " games · " + D.season + " season · " + (injLabel[D.inj_mode] || "no injury report");
   const navWeeks = (list, cur) => {
-    $("weeks").innerHTML = list.map((w) => '<a href="' + D.season + "_week" + String(w).padStart(2, "0") + '.html"' +
-      (w === D.week ? ' aria-current="page"' : "") + ">Week " + w + (w === cur ? '<span class="tag">Now</span>' : "") + "</a>").join("") +
-      '<a href="record.html">Record</a>';
+    $("days").innerHTML = list.map((w) => '<a href="' + D.season + "_week" + String(w).padStart(2, "0") + '.html"' +
+      (w === D.week ? ' aria-current="page"' : "") + ">Week " + w + "</a>").join("");
   };
-  navWeeks([D.week], null);
-  fetch("weeks.json", {cache: "no-store"}).then((r) => r.json()).then((w) => {
-    if (w.season === D.season && w.weeks.length) navWeeks(w.weeks, w.current);
-  }).catch(() => {});
+  navWeeks([D.week]);
+  fetch("weeks.json", {cache: "no-store"}).then((r) => r.json()).then((w) => { if (w.season === D.season && w.weeks.length) navWeeks(w.weeks.slice(-7), w.current); }).catch(() => {});
+
+  // Plays: spreads (value, small, H2H) and teasers
+  const bets = D.games.filter(isPlay);
+  const also = (g) => {
+    const home = g.bet_side === g.home_team;
+    const L = (g.book_lines || []).filter((b) => b.home_spread != null && b.book !== g.bet_book).map((b) => ({book: b.book,
+      n: home ? b.home_spread : -b.home_spread, p: home ? b.home_spread_odds : b.away_spread_odds})).sort((x, y) => y.n - x.n || pay(y.p) - pay(x.p));
+    return L.length ? "Also: " + L.map((x) => x.book + " " + ln(x.n) + (x.p != null ? " (" + odds(x.p) + ")" : "")).join(" · ") : "";
+  };
+  const ROWS = [];
+  bets.slice().sort(byKick).forEach((g) => {
+    const h2h = g.verdict === "H2H", home = g.bet_side === g.home_team;
+    const modelLine = g.model_home_spread == null ? null : (home ? g.model_home_spread : -g.model_home_spread);
+    const edge = modelLine == null ? null : g.bet_line - modelLine;
+    const kind = h2h ? "Spread · H2H angle" : "Spread" + (g.verdict === "SMALL" ? " · small" : "");
+    ROWS.push("<tr><td><div class='b pick'>" + logo(g.bet_side, 20) + esc(g.bet_side + " " + ln(g.bet_line)) + "</div><div class='f' style='font-size:12px'>" + matchupL(g) + " · " + esc(kick(g)) + " · " + kind + "</div>" +
+      (also(g) ? "<div class='f' style='font-size:12px'>" + esc(also(g)) + "</div>" : "") +
+      (g.qb_note ? "<div class='inj'>&#9888; QB: " + esc(g.qb_note) + "</div>" : "") +
+      (h2h && g.reason ? "<div class='f' style='font-size:12px;white-space:normal'>" + esc(g.reason) + "</div>" : "") + "</td><td>" +
+      esc(g.bet_book || "–") + (g.bet_odds != null ? " <span class='m'>" + esc(odds(g.bet_odds)) + "</span>" : "") + "</td><td class='r m hide-sm hide-md'>" + ln(modelLine) +
+      "</td><td class='r " + (edge > 0 ? "pos b" : "m") + "'>" + sgn(edge) + "</td><td class='r m hide-sm'>" + pct(h2h ? g.h2h_p_blend : g.p_cover_blend) +
+      "</td><td class='r'>" + (h2h || g.spread_ev == null ? "–" : sgn(100 * g.spread_ev) + "%") + "</td><td class='r'>" + (h2h ? "–" : ln(g.bet_down_to)) +
+      "</td><td class='r m hide-sm hide-md'>" + num(g.proj_away) + "–" + num(g.proj_home) + "</td><td class='r hide-sm hide-md'>" + units(g.stake_units) + "</td></tr>");
+  });
+  D.teaser_pairs.forEach((t) => {
+    const legs = t.legs || [];
+    const books = [...new Set(legs.map((l) => l.book).filter(Boolean))];
+    ROWS.push("<tr><td><div class='b pick'>" + legs.map((l) => logo(l.team, 20)).join("") + esc(t.teaser) + "</div>" +
+      "<div class='f' style='font-size:12px'>2-team, 6-point teaser · both legs must win · grades " + esc(t.grades) + "</div>" +
+      "<div class='f' style='font-size:12px'>" + legs.map((l) => esc(l.team + " " + ln(l.line) + " → " + ln(l.teased_line))).join(" · ") + "</div></td><td>" +
+      esc(books.length ? books.join(", ") : "Best teaser price") + " <span class='m'>−120</span></td><td class='r m hide-sm hide-md'>" + pct(t.p_both_model) +
+      "</td><td class='r m'>–</td><td class='r m hide-sm'>" + pct(t.p_both) + "</td><td class='r'>" + (t.ev == null ? "–" : sgn(100 * t.ev) + "%") +
+      "</td><td class='r'>" + legs.map((l) => ln(l.teased_line)).join(", ") + "</td><td class='r m hide-sm hide-md'>–</td><td class='r hide-sm hide-md'>" + units(t.stake_units) + "</td></tr>");
+  });
+  const nPlays = ROWS.length;
+  const uTotal = Math.round((bets.reduce((s, g) => s + (g.stake_units || 0), 0) + D.teaser_pairs.reduce((s, t) => s + (t.stake_units || 0), 0)) * 100) / 100;
+  $("plays-note").textContent = "Spreads where the realistic cover % beats the break-even of the best price, the coach H2H angle, and 6-point teasers through 3 and 7. Cover % is the realistic rate; bet only at the number shown or better (Bet to). " +
+    (D.flag_text || "") + " Break-even at −110 is 52.4%.";
+  $("t-plays").innerHTML = nPlays ? "<thead><tr><th>Bet</th><th>Book</th><th class='r hide-sm hide-md'>Model</th><th class='r'>Edge</th><th class='r hide-sm'>Cover %</th><th class='r'>EV</th><th class='r'>Bet to</th><th class='r hide-sm hide-md'>Proj</th><th class='r hide-sm hide-md'>Units</th></tr></thead><tbody>" + ROWS.join("") + "</tbody>"
+    : "<tbody><tr><td class='empty'>No plays. No game meets the betting rule at today's lines; most weeks after Week 4 that is the right call.</td></tr></tbody>";
+
+  // KPIs
+  const R = D.record, o = R ? R.overall : null;
+  const rec = (a) => a ? a.w + "–" + a.l + (a.p ? "–" + a.p : "") : "0–0";
+  const wp = (a) => a && a.w + a.l ? pct(a.w / (a.w + a.l)) : "";
+  $("kpis").innerHTML = [["Plays this week", nPlays + "<small>" + num(uTotal, 2) + "u</small>"], ["Record", rec(o) + "<small>" + wp(o) + "</small>"],
+    ["Units", "<span class='" + (o && o.units > 0 ? "pos" : o && o.units < 0 ? "neg" : "") + "'>" + sgn(o ? o.units : 0, 2) + "</span>"],
+    ["ROI", o && o.roi != null ? sgn(100 * o.roi) + "%" : "–"], ["Avg CLV", o && o.clv != null ? sgn(o.clv, 2) + "<small>pts</small>" : "–"]]
+    .map(([k, v]) => "<div class='kpi'><div class='k'>" + k + "</div><div class='v'>" + v + "</div></div>").join("");
+
+  // Odds board: two rows per game (away, home), one column per book
+  const PREF = ["FanDuel", "DraftKings", "BetMGM", "Caesars", "Fanatics", "bet365", "theScore Bet"];
+  const all = [...new Set(D.games.flatMap((g) => (g.book_lines || []).map((b) => b.book)))];
+  const BOOKS = PREF.filter((b) => all.includes(b)).concat(all.filter((b) => !PREF.includes(b)).sort());
+  const bl = (g, bk) => (g.book_lines || []).find((x) => x.book === bk);
+  let market = "spread";
+  const cell = (val, price, link, best) => val == null ? "<span class='na'>–</span>" :
+    "<" + (link ? "a href='" + esc(link) + "' target='_blank' rel='noopener'" : "span") + " class='odd" + (best ? " best" : "") + "'>" + esc(val) +
+    (price != null ? "<small>" + esc(odds(price)) + "</small>" : "") + "</" + (link ? "a" : "span") + ">";
+  const best = (g, sd, i) => {
+    let top = null;
+    for (const x of (g.book_lines || [])) {
+      let v, pr, txt;
+      if (market === "spread") { if (x.home_spread == null) continue; v = sd === "home" ? x.home_spread : -x.home_spread; pr = x[sd + "_spread_odds"]; txt = ln(v); }
+      else if (market === "total") { if (x.total == null) continue; const ou = i === 0 ? "over" : "under"; v = ou === "over" ? -x.total : x.total; pr = x[ou + "_odds"]; txt = ou[0] + num(x.total); }
+      else { pr = x[sd + "_ml"]; if (pr == null) continue; v = pay(pr); txt = odds(pr); }
+      const key = [v, pay(pr)];
+      if (!top || key[0] > top.key[0] || (key[0] === top.key[0] && key[1] > top.key[1])) top = {key, txt, pr, book: x.book};
+    }
+    return top ? esc(top.txt) + (market !== "ml" && top.pr != null ? " <span class='m'>" + esc(odds(top.pr)) + "</span>" : "") + "<small>" + esc(top.book) + "</small>" : "<span class='na'>–</span>";
+  };
+  const board = () => {
+    const only = $("only-plays").checked;
+    const G = D.games.filter((g) => !only || isPlay(g)).sort((a, b) => (done(a) - done(b)) || byKick(a, b));
+    const mh = {spread: "Model", total: "Model", ml: "Win %"}[market];
+    let h = "<thead><tr><th class='tm'>Time</th><th>Team</th><th class='r pts'>Proj</th><th class='r'>" + mh + "</th>" +
+      BOOKS.map((b, j) => "<th class='bk" + (j >= 4 ? " bk-minor" : "") + "'>" + esc(b) + "</th>").join("") + "<th class='bestc'>Best</th><th class='r edge'>Edge</th></tr></thead>";
+    if (!G.length) { $("t-board").innerHTML = h + "<tbody><tr><td class='empty' colspan='" + (BOOKS.length + 6) + "'>No games.</td></tr></tbody>"; return; }
+    h += G.map((g) => {
+      const play = market === "spread" && isPlay(g);
+      const rows = ["away", "home"].map((sd, i) => {
+        const team = g[sd + "_team"];
+        const pts = g["proj_" + sd] == null ? "–" : Math.round(g["proj_" + sd]);
+        let model, bookCells, edge = "";
+        if (market === "spread") {
+          model = ln(sd === "home" ? g.model_home_spread : -g.model_home_spread);
+          const pick = isPlay(g) && g.bet_side === team, watch = g.verdict === "WATCH" && g.spread_pick === team;
+          bookCells = BOOKS.map((bk) => { const x = bl(g, bk); if (!x || x.home_spread == null) return cell(null);
+            const v = sd === "home" ? x.home_spread : -x.home_spread;
+            return cell(ln(v), x[sd + "_spread_odds"], x[sd + "_spread_link"], pick && g.bet_book === bk); });
+          if (pick) edge = "<span class='tag bet'>" + (g.verdict === "H2H" ? "H2H" : "BET") + " " + units(g.stake_units) + "</span>";
+          else if (watch) edge = "<span class='tag'>Watch · bet at " + ln(g.bet_at) + "</span>";
+        } else if (market === "total") {
+          const ou = i === 0 ? "over" : "under";
+          model = i === 0 ? num(g.model_total) : "";
+          bookCells = BOOKS.map((bk) => { const x = bl(g, bk); if (!x || x.total == null) return cell(null);
+            return cell((i === 0 ? "o" : "u") + num(x.total), x[ou + "_odds"], x[ou + "_link"], false); });
+          if (g.total_pick === ou && g.total_edge != null) edge = "<span class='f' style='font-size:12px'>Lean " + sgn(Math.abs(g.total_edge)) + " · not bet</span>";
+        } else {
+          const p = g.winner == null ? null : (g.winner === team ? g.win_pct : 1 - g.win_pct);
+          model = p == null ? "–" : Math.round(100 * p) + "%";
+          const prices = BOOKS.map((bk) => (bl(g, bk) || {})[sd + "_ml"]);
+          const ok = prices.filter((v) => v != null), top = Math.max(...ok);
+          bookCells = BOOKS.map((bk, j) => { const x = bl(g, bk); return x && x[sd + "_ml"] != null ? cell(odds(x[sd + "_ml"]), null, x[sd + "_ml_link"], prices[j] === top && ok.length > 1) : cell(null); });
+        }
+        const fin = g.state === "final";
+        return "<tr>" + (i === 0 ? "<td class='tm' rowspan='2'>" + esc(tip(g)) + (fin ? "<div class='f'>Final</div>" : g.state === "live" ? "<div class='f'>Live</div>" : "") + "</td>" : "") +
+          "<td class='team'>" + (i === 0 ? "<div class='tm-sm'>" + esc(tip(g)) + (fin ? " · Final" : "") + "</div>" : "") +
+          (i === 1 ? "<span class='f'>@ </span>" : "") + logo(team, 18) + esc(team) + (fin && g[sd + "_score"] != null ? " <span class='m'>" + esc(g[sd + "_score"]) + "</span>" : "") +
+          "</td><td class='r pts'>" + pts + "</td><td class='r b'>" + model + "</td>" +
+          bookCells.map((c, j) => "<td class='bk" + (j >= 4 ? " bk-minor" : "") + "'>" + c + "</td>").join("") + "<td class='bestc'>" + best(g, sd, i) + "</td><td class='r edge'>" + edge + "</td></tr>";
+      }).join("");
+      return "<tbody class='g" + (play ? " has-bet" : "") + "'>" + rows + "</tbody>";
+    }).join("");
+    $("t-board").innerHTML = h;
+  };
+  document.querySelectorAll(".seg button").forEach((b) => b.onclick = () => {
+    market = b.dataset.m; document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", x === b)); board(); });
+  $("only-plays").onchange = board;
+  board();
+
+  // Watch list
+  const W = D.games.filter((g) => g.verdict === "WATCH" && !done(g)).sort(byKick);
+  if (!W.length) $("watch-sec").hidden = true;
+  else $("t-watch").innerHTML = "<thead><tr><th>Game</th><th>Side</th><th class='r'>Now</th><th class='r'>Play at</th><th class='r'>Cover % now</th><th class='r'>EV now</th></tr></thead><tbody>" +
+    W.map((g) => "<tr><td>" + matchupL(g) + "<div class='f' style='font-size:12px'>" + esc(kick(g)) + "</div></td><td class='b'>" + logo(g.spread_pick, 16) + esc(g.spread_pick) +
+      "</td><td class='r'>" + ln(g.pick_line) + "</td><td class='r b'>" + ln(g.bet_at) + "</td><td class='r m'>" + pct(g.p_cover_blend) +
+      "</td><td class='r m'>" + (g.spread_ev == null ? "–" : sgn(100 * g.spread_ev) + "%") + "</td></tr>").join("") + "</tbody>";
+
+  // Record
+  if (R) {
+    const TYPE = {VALUE: "Spreads", SMALL: "Spreads (small)", H2H: "H2H angle", TEASER: "Teasers"};
+    $("rec-sec").hidden = false;
+    $("t-rec").innerHTML = "<thead><tr><th>Bets</th><th class='r'>Record</th><th class='r'>Win %</th><th class='r'>Units</th><th class='r'>ROI</th><th class='r'>Avg CLV</th><th class='r'>Open</th></tr></thead><tbody>" +
+      [["All bets", o]].concat(Object.entries(R.by_type).map(([k, a]) => [TYPE[k] || k, a])).map(([k, s]) => "<tr><td>" + esc(k) + "</td><td class='r'>" + rec(s) + "</td><td class='r'>" + (wp(s) || "–") +
+        "</td><td class='r " + (s.units > 0 ? "pos" : s.units < 0 ? "neg" : "") + "'>" + sgn(s.units, 2) + "</td><td class='r'>" + (s.roi == null ? "–" : sgn(100 * s.roi) + "%") +
+        "</td><td class='r'>" + (s.clv == null ? "–" : sgn(s.clv, 2)) + "</td><td class='r m'>" + s.pending + "</td></tr>").join("") + "</tbody>";
+    const P = (R.plays || []).filter((x) => x.result).sort((a, b) => String(b.kickoff).localeCompare(String(a.kickoff))).slice(0, 40);
+    if (P.length) {
+      $("recent-sec").hidden = false;
+      $("t-recent").innerHTML = "<thead><tr><th>Date</th><th>Game</th><th>Bet</th><th>Book</th><th class='r'>Close</th><th class='r'>CLV</th><th class='r'>Result</th><th class='r'>Units</th></tr></thead><tbody>" +
+        P.map((x) => { const m = String(x.matchup || "").split(" @ ");
+          return "<tr><td class='m'>" + esc(x.kickoff ? new Date(x.kickoff).toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "America/New_York"}) : "") + "</td><td>" +
+          (m.length === 2 ? logo(m[0], 14) + esc(m[0]) + " @ " + logo(m[1], 14) + esc(m[1]) : "Teaser") + "</td><td class='b'>" + esc(x.selection) + "</td><td>" + esc(x.book || "–") +
+          "</td><td class='r'>" + (x.close_line == null ? "–" : ln(x.close_line)) + "</td><td class='r'>" + (x.clv_pts == null ? "–" : sgn(x.clv_pts)) +
+          "</td><td class='r b " + (x.result === "W" ? "pos" : x.result === "L" ? "neg" : "") + "'>" + esc(x.result) + "</td><td class='r'>" + sgn(x.profit, 2) + "</td></tr>"; }).join("") + "</tbody>";
+    }
+  }
+
+  // Teaser legs, injuries, ratings
+  $("t-tz").innerHTML = D.teasers.length ? "<thead><tr><th>Leg</th><th>Grade</th><th class='r'>Line</th><th class='r'>Teased to</th><th>Best number</th><th class='r'>Leg win %</th></tr></thead><tbody>" +
+    D.teasers.slice().sort((a, b) => (b.p_leg || 0) - (a.p_leg || 0)).map((r) => "<tr><td class='b'>" + logo(r.team, 16) + esc(r.team) + " <span class='f'>" + esc(r.matchup) + "</span></td><td>" + esc(r.grade) +
+      "</td><td class='r'>" + ln(r.line) + "</td><td class='r b'>" + ln(r.teased_line) + "</td><td>" + esc(r.book || "–") + "</td><td class='r'>" + pct(r.p_leg) + "</td></tr>").join("") + "</tbody>"
+    : "<tbody><tr><td class='empty'>No qualifying teaser legs this week (underdogs +1.5 to +2.5, or favorites −7.5 to −8.5 the model likes).</td></tr></tbody>";
+  const injText = {monday: "Not applied on Monday: long-term absences are already in the ratings.", thursday: "Applied from the Thursday practice report.", final: "Applied from the final report."};
+  const qbs = D.games.filter((g) => g.qb_note).map((g) => g.qb_note);
+  $("t-inj").innerHTML = "<thead><tr><th>Team</th><th>Player</th><th>Pos</th><th>Status</th><th class='r'>Miss %</th><th class='r'>Usual snaps</th></tr></thead><tbody>" +
+    (D.injuries.length ? D.injuries.slice().sort((a, b) => (b.usual || 0) - (a.usual || 0)).map((r) => "<tr><td>" + logo(r.team, 16) + esc(r.team) + "</td><td class='b'>" + esc(r.player) + "</td><td>" + esc(r.position) +
+      "</td><td>" + esc(String(r.status).replace("none_missed", "missed last game (likely IR)").replace(/^lag_/, "last week: ").replace(/^prac_/, "practice: ").replace(/_/g, " ")) +
+      "</td><td class='r'>" + (r.p_miss == null ? "–" : Math.round(100 * r.p_miss) + "%") + "</td><td class='r'>" + (r.usual == null ? "–" : Math.round(100 * r.usual) + "%") + "</td></tr>").join("")
+      : "<tr><td class='empty' colspan='6'>No injuries listed.</td></tr>") + "</tbody>";
+  $("t-inj").insertAdjacentHTML("beforebegin", "<p class='f' style='font-size:12px;margin:10px 16px'>" + esc((qbs.length ? "QB changes: " + qbs.join("; ") + ". " : "") + (injText[D.inj_mode] || "No injury report available.")) + "</p>");
+  $("t-rat").innerHTML = "<thead><tr><th class='r'>#</th><th>Team</th><th class='r'>Net</th><th class='r'>Offense</th><th class='r'>Defense</th><th class='r'>Special teams</th><th class='r'>Elo</th></tr></thead><tbody>" +
+    D.ratings.map((r) => "<tr><td class='r m'>" + r.rank + "</td><td>" + logo(r.team, 16) + esc(r.team) + "</td><td class='r b'>" + sgn(r.net_pts) + "</td><td class='r'>" + sgn(r.off_pts) +
+      "</td><td class='r'>" + sgn(r.def_pts) + "</td><td class='r'>" + sgn(r.st) + "</td><td class='r'>" + (r.elo == null ? "–" : Math.round(r.elo)) + "</td></tr>").join("") + "</tbody>";
+  ["t-plays", "t-watch", "t-rec", "t-recent", "t-tz", "t-inj"].forEach(stack);
 
   // Update bar. The button starts the "Update bet card" GitHub Actions workflow, which pulls live odds, re-runs the
   // model and republishes this page (about 5-10 minutes). It needs a fine-grained GitHub token with Actions
@@ -333,291 +478,5 @@ details[open] summary { border-bottom: 1px solid var(--line) }
     if (run && run.status !== "completed") followRun(new Date(run.created_at));
   }).catch(() => {});
 
-  // Kickoff label, e.g. "Sun Nov 1 · 1:00 PM ET"
-  const kick = (g) => {
-    const d = new Date(g.gameday + "T12:00:00");
-    const t = String(g.kickoff || "").split(" ")[1] || "";
-    let time = "";
-    if (/^\d{1,2}:\d{2}$/.test(t)) { let [h, m] = t.split(":").map(Number); time = (h % 12 || 12) + ":" + String(m).padStart(2, "0") + (h < 12 ? " AM" : " PM") + " ET"; }
-    return d.toLocaleDateString([], {weekday: "short", month: "short", day: "numeric"}) + (time ? " · " + time : "");
-  };
-  const byKick = (a, b) => String(a.gameday).localeCompare(String(b.gameday)) || String(a.kickoff).localeCompare(String(b.kickoff));
-
-  // Betslip link for a game's recommended spread bet at the recommended book (SportsGameOdds deeplinks)
-  const betLink = (g) => {
-    const b = (g.book_lines || []).find((x) => x.book === g.bet_book);
-    return b ? b[g.bet_side === g.home_team ? "home_spread_link" : "away_spread_link"] || "" : "";
-  };
-
-  // Model plays: a ticket per bet with every book's price for it and the numbers behind it
-  const plays = $("plays");
-  const SHORTB = {FanDuel: "FD", DraftKings: "DK", BetMGM: "MGM", Caesars: "CZR"};
-  const stat = (lab, val, cls) => '<div class="stat"><span>' + lab + "</span><b" + (cls ? ' class="' + cls + '"' : "") + ">" + val + "</b></div>";
-  const sideLine = (g, team, line) => esc(team) + " " + sp(line);
-  // this side's spread at every book, best one highlighted, each a betslip link
-  const sideTiles = (g) => {
-    const home = g.bet_side === g.home_team;
-    const bl = (g.book_lines || []).filter((b) => b.home_spread != null);
-    if (!bl.length) return "";
-    const cells = bl.map((b) => ({b, n: home ? b.home_spread : -b.home_spread, p: home ? b.home_spread_odds : b.away_spread_odds,
-      link: b[home ? "home_spread_link" : "away_spread_link"]}));
-    return '<div class="oddswrap"><table class="odds' + (cells.length < 3 ? " few" : "") + '"><thead><tr><th></th>' +
-      cells.map((c) => '<th title="' + esc(c.b.book) + '"><span class="full">' + esc(c.b.book) + '</span><span class="abbr">' + esc(SHORTB[c.b.book] || c.b.book) + "</span></th>").join("") +
-      '</tr></thead><tbody><tr class="mine"><th scope="row">' + esc(g.bet_side) + "</th>" + cells.map((c) => {
-        const inner = sp(c.n) + "<small>" + ml(c.p) + "</small>";
-        return '<td class="' + (c.b.book === g.bet_book ? "best" : "") + '">' + (c.link
-          ? '<a class="t" href="' + esc(c.link) + '"' + (c.b.book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">' + inner + "</a>" : '<span class="t">' + inner + "</span>") + "</td>";
-      }).join("") + "</tr></tbody></table></div>";
-  };
-  const addTicket = (cls, html) => { const el = document.createElement("article"); el.className = "pk " + cls; el.innerHTML = html; plays.appendChild(el); };
-  bets.sort((a, b) => b.stake_units - a.stake_units || b.p_cover_blend - a.p_cover_blend).forEach((g) => {
-    const h2h = g.verdict === "H2H";
-    const home = g.bet_side === g.home_team;
-    const modelLine = g.model_home_spread == null ? null : (home ? g.model_home_spread : -g.model_home_spread);
-    const edge = modelLine == null ? null : g.bet_line - modelLine;
-    const link = betLink(g);
-    const stats = [
-      stat("Model line", sideLine(g, g.bet_side, modelLine)),
-      stat("Bet line", sideLine(g, g.bet_side, g.bet_line)),
-      stat("Edge", (edge > 0 ? "+" : "") + num1(edge) + " pts", edge > 0 ? "pos" : ""),
-      h2h ? stat("Realistic cover", pct(g.h2h_p_blend)) : stat("Realistic cover", pct(g.p_cover_blend), g.p_cover_blend > 0.524 ? "pos" : ""),
-      h2h ? stat("Angle record", "57% since '99") : stat("EV per unit", ev(g.spread_ev), g.spread_ev > 0 ? "pos" : ""),
-      h2h ? stat("Meetings", g.h2h_meetings) : stat("Good down to", sp(g.bet_down_to)),
-      stat("Proj " + esc(g.away_team) + "–" + esc(g.home_team), num1(g.proj_away) + "–" + num1(g.proj_home)),
-      stat("Model cover", pct(g.p_cover_raw)),
-    ].join("");
-    const why = h2h ? esc(g.reason || "") : "";
-    addTicket(g.verdict === "SMALL" ? "small" : "",
-      '<div class="pk-top"><div><div class="pk-pick">' + esc(g.bet_side) + " " + sp(g.bet_line) + ' <span class="price">' + ml(g.bet_odds) + "</span></div>" +
-        '<div class="pk-game">' + esc(g.matchup) + " · " + kick(g) + "</div></div>" +
-        '<div class="pk-stake"><b>' + units(g.stake_units) + "</b><span>" + esc(g.flag || g.verdict) + "</span></div></div>" +
-      sideTiles(g) + '<div class="stats">' + stats + "</div>" +
-      (g.qb_note ? '<div class="pk-why">QB: ' + esc(g.qb_note) + "</div>" : "") +
-      (why ? '<div class="pk-why">' + why + "</div>" : "") +
-      (link ? '<a class="cta" href="' + esc(link) + '"' + (g.bet_book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">Bet ' + esc(g.bet_side) + " " + sp(g.bet_line) + " at " + esc(g.bet_book) + " &#8599;</a>"
-        : '<span class="cta">Bet at ' + esc(g.bet_book) + "</span>"));
-  });
-  D.teaser_pairs.forEach((t) => {
-    const legs = (t.legs || []);
-    const books = [...new Set(legs.map((l) => l.book))];
-    const legRows = legs.map((l) => {
-      const leg = D.teasers.find((x) => x.team === l.team && x.matchup && x.line === l.line) || {};
-      return '<tr class="mine"><th scope="row">' + esc(l.team) + "</th>" +
-        '<td><span class="t">' + sp(l.line) + "<small>now</small></span></td>" +
-        '<td class="best"><span class="t">' + sp(l.teased_line) + "<small>teased</small></span></td>" +
-        '<td><span class="t">' + esc(leg.grade || "") + "<small>grade</small></span></td>" +
-        '<td><span class="t">' + pct0(leg.p_leg) + "<small>leg win</small></span></td></tr>";
-    }).join("");
-    addTicket("tz",
-      '<div class="pk-top"><div><div class="pk-pick">' + esc(t.teaser) + ' <span class="price">-120</span></div>' +
-        '<div class="pk-game">2-team, 6-point teaser · both legs must win</div></div>' +
-        '<div class="pk-stake"><b>' + units(t.stake_units) + "</b><span>Teaser " + esc(t.grades) + "</span></div></div>" +
-      '<div class="oddswrap"><table class="odds"><tbody>' + legRows + "</tbody></table></div>" +
-      '<div class="stats">' + stat("Both win (history)", pct0(t.p_both), "pos") + stat("Break-even", "54.5%") +
-        stat("EV per unit", ev(t.ev), t.ev > 0 ? "pos" : "") + stat("Model estimate", pct0(t.p_both_model)) + "</div>" +
-      '<div class="pk-why">Legs cross both 3 and 7, the most common NFL margins. ' +
-        (books.length > 1 ? "Best numbers are at " + esc(books.join(" and ")) + "; place it where both legs are available." : "") + "</div>" +
-      '<span class="cta">Bet at ' + esc(books.length === 1 ? books[0] : "your best teaser price") + "</span>");
-  });
-  if (!nPlays) plays.innerHTML = '<div class="empty">No game meets the betting rule at today\'s lines. That is the right call most weeks after Week 4.</div>';
-  $("plays-sum").textContent = nPlays ? units_total + " units across " + nPlays + " plays" : "";
-
-  // Full slate: one ticket per game; books side by side so the best number is easy to spot
-  const pay = (o) => o == null ? -1 : (o > 0 ? o / 100 : 100 / -o);
-  const slate = $("slate");
-  const stOrder = {upcoming: 0, live: 1, final: 2};
-  D.games.slice().sort((a, b) => (stOrder[a.state] || 0) - (stOrder[b.state] || 0) || byKick(a, b)).forEach((g) => {
-    if (g.state && g.state !== "upcoming") {
-      const el = document.createElement("article");
-      el.className = "game done";
-      const score = g.state === "final" && g.away_score != null
-        ? '<div class="g-score">' + esc(g.away_team) + " " + g.away_score + " – " + g.home_score + " " + esc(g.home_team) + "</div>" : "";
-      el.innerHTML = '<div class="g-top"><div><div class="g-title">' + esc(g.away_team) + " @ " + esc(g.home_team) + '</div><div class="g-kick">' +
-        kick(g) + '</div></div><span class="v ' + g.verdict + '">' + (g.state === "final" ? "Final" : "In progress") + "</span></div>" + score +
-        '<div class="g-model">Model had ' + esc(g.away_team) + " " + num1(g.proj_away) + ", " + esc(g.home_team) + " " + num1(g.proj_home) + "</div>";
-      slate.appendChild(el);
-      return;
-    }
-    const bl = g.book_lines || [];
-    const A = g.away_team, H = g.home_team;
-    const isPlay = ["BET", "SMALL", "H2H"].includes(g.verdict);
-    // rows: [label, value(book) -> {num, price}, better(a, b) -> true if a beats b, mine?]
-    const rows = [
-      {lab: A, link: "away_spread_link", get: (b) => b.home_spread == null ? null : {n: -b.home_spread, p: b.away_spread_odds, txt: sp(-b.home_spread)}, mine: isPlay && g.bet_side === A},
-      {lab: H, link: "home_spread_link", get: (b) => b.home_spread == null ? null : {n: b.home_spread, p: b.home_spread_odds, txt: sp(b.home_spread)}, mine: isPlay && g.bet_side === H},
-      {lab: "Over", link: "over_link", get: (b) => b.total == null ? null : {n: -b.total, p: b.over_odds, txt: "O " + b.total}},
-      {lab: "Under", link: "under_link", get: (b) => b.total == null ? null : {n: b.total, p: b.under_odds, txt: "U " + b.total}},
-      {lab: A, link: "away_ml_link", get: (b) => b.away_ml == null ? null : {n: 0, p: b.away_ml, txt: ml(b.away_ml), noPrice: 1}},
-      {lab: H, link: "home_ml_link", get: (b) => b.home_ml == null ? null : {n: 0, p: b.home_ml, txt: ml(b.home_ml), noPrice: 1}},
-    ];
-    const SHORT = {FanDuel: "FD", DraftKings: "DK", BetMGM: "MGM", Caesars: "CZR", Fanatics: "FAN", bet365: "365"};
-    const head = (b) => '<span class="full">' + esc(b.book) + '</span><span class="abbr">' + esc(SHORT[b.book] || b.book) + "</span>";
-    let tbl = '<div class="oddswrap"><table class="odds' + (bl.length < 3 ? " few" : "") + '"><thead><tr><th></th>' + bl.map((b) => '<th title="' + esc(b.book) + '">' + head(b) + "</th>").join("") + "</tr></thead><tbody>";
-    const caps = {0: "Spread", 2: "Total", 4: "Moneyline"};
-    rows.forEach((r, ri) => {
-      if (caps[ri]) tbl += '<tr class="cap"><th colspan="' + (bl.length + 1) + '">' + caps[ri] + "</th></tr>";
-      const vals = bl.map(r.get);
-      let best = -1;
-      if (bl.length > 1) vals.forEach((v, i) => { if (v && (best < 0 || v.n > vals[best].n || (v.n === vals[best].n && pay(v.p) > pay(vals[best].p)))) best = i; });
-      const tie = best >= 0 && vals.every((v) => v && v.n === vals[best].n && v.p === vals[best].p);
-      tbl += "<tr" + (r.mine ? ' class="mine"' : "") + '><th scope="row">' + esc(r.lab) + "</th>" + vals.map((v, i) => {
-        if (!v) return '<td class="none">–</td>';
-        const hi = r.mine ? bl[i].book === g.bet_book : i === best && !tie;
-        const inner = (v.noPrice ? v.txt : v.txt + "<small>" + ml(v.p) + "</small>");
-        const link = bl[i][r.link];
-        return '<td class="' + (hi ? "best" : "") + '">' + (link
-          ? '<a class="t" href="' + esc(link) + '"' + (bl[i].book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener" title="Open in ' + esc(bl[i].book) + '">' + inner + "</a>"
-          : '<span class="t">' + inner + "</span>") + "</td>";
-      }).join("") + "</tr>";
-    });
-    tbl += '</tbody></table></div><div class="swipe' + (bl.length > 4 ? " on" : "") + '">Swipe for more books &rarr;</div>';
-    const fav = g.model_home_spread == null ? "" : (g.model_home_spread <= 0 ? H + " " + sp(g.model_home_spread) : A + " " + sp(-g.model_home_spread));
-    const el = document.createElement("article");
-    el.className = "game" + (isPlay ? " has-play" : "");
-    el.innerHTML = '<div class="g-top"><div><div class="g-title">' + esc(A) + " @ " + esc(H) + '</div><div class="g-kick">' + kick(g) + "</div></div>" +
-      '<span class="v ' + g.verdict + '">' + g.verdict + "</span></div>" +
-      (bl.length ? tbl : '<div class="note">No lines posted yet.</div>') +
-      '<div class="g-model">Model: <b>' + esc(A) + " " + num1(g.proj_away) + ", " + esc(H) + " " + num1(g.proj_home) + "</b> · line " + esc(fav) +
-      " · total " + num1(g.model_total) + " · " + esc(g.winner) + " wins " + pct0(g.win_pct) + "</div>" +
-      (isPlay
-        ? '<div class="g-play">' + (betLink(g) ? '<a href="' + esc(betLink(g)) + '"' + (g.bet_book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">' : "") +
-          "&#10003; Play: " + esc(g.bet_side) + " " + sp(g.bet_line) + " " + ml(g.bet_odds) + " at " + esc(g.bet_book) + " · " + units(g.stake_units) +
-          (betLink(g) ? " &#8599;</a>" : "") + "</div>"
-        : g.verdict === "WATCH"
-          ? '<div class="g-play none">Watch: bet ' + esc(g.spread_pick) + " only at " + sp(g.bet_at) + " or better</div>"
-          : '<div class="g-play none">No play</div>');
-    slate.appendChild(el);
-  });
-
-  // Generic sortable table
-  function table(id, cols, rows, initial) {
-    const t = $(id);
-    let key = initial ? initial[0] : null, dir = initial ? initial[1] : -1, data = rows.slice();
-    function render() {
-      if (key) {
-        const c = cols.find((c) => c.k === key);
-        const val = c.sort || ((r) => r[key]);
-        data.sort((a, b) => {
-          const x = val(a), y = val(b);
-          if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
-          return (typeof x === "string" ? x.localeCompare(y) : x - y) * dir;
-        });
-      }
-      t.innerHTML = "<thead><tr>" + cols.map((c) =>
-        '<th scope="col" tabindex="0" data-k="' + c.k + '"' + (c.l ? ' class="l"' : "") +
-        (c.k === key ? ' aria-sort="' + (dir > 0 ? "ascending" : "descending") + '"' : "") + ">" + c.h + "</th>").join("") +
-        "</tr></thead><tbody>" + data.map((r) => "<tr>" + cols.map((c) => {
-          const cls = [c.l ? "l" : "", c.cls ? c.cls(r) : ""].join(" ").trim();
-          return "<td" + (cls ? ' class="' + cls + '"' : "") + ">" + (c.f ? c.f(r) : esc(r[c.k])) + "</td>";
-        }).join("") + "</tr>").join("") + "</tbody>";
-      t.querySelectorAll("th").forEach((th) => {
-        const go = () => { const k = th.dataset.k; dir = key === k ? -dir : (cols.find((c) => c.k === k).l ? 1 : -1); key = k; render(); };
-        th.addEventListener("click", go);
-        th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
-      });
-    }
-    render();
-    return { set(rowsNew) { data = rowsNew.slice(); render(); } };
-  }
-  const verdictOrder = {BET: 4, H2H: 3, SMALL: 2, WATCH: 1, PASS: 0};
-  const vpill = (r) => '<span class="v ' + r.verdict + '">' + r.verdict + "</span>";
-
-  // Teaser legs (the recommended pairings are listed with the model plays)
-  if (!D.teasers.length) {
-    $("tz-note").textContent = "No qualifying teaser legs this week (underdogs +1.5 to +2.5, or favorites -7.5 to -8.5 the model likes).";
-  } else {
-    table("t-tz", [
-      {k: "team", h: "Leg", l: 1, f: (r) => esc(r.team) + " · " + esc(r.matchup)},
-      {k: "grade", h: "Grade", l: 1},
-      {k: "line", h: "Line", f: (r) => sp(r.line)},
-      {k: "teased_line", h: "Teased to", f: (r) => sp(r.teased_line), cls: () => "strong"},
-      {k: "book", h: "Best number", l: 1},
-      {k: "total", h: "Total", f: (r) => r.total == null ? "–" : r.total},
-      {k: "p_leg", h: "Leg win % (realistic)", f: (r) => pct(r.p_leg)},
-    ], D.teasers, ["p_leg", -1]);
-  }
-
-  // Watch list
-  const watch = D.games.filter((g) => g.verdict === "WATCH");
-  if (!watch.length) $("watch-sec").hidden = true;
-  else table("t-watch", [
-    {k: "matchup", h: "Game", l: 1},
-    {k: "spread_pick", h: "Side", l: 1},
-    {k: "pick_line", h: "Line now", f: (r) => sp(r.pick_line)},
-    {k: "bet_at", h: "Bet at", f: (r) => '<span class="v WATCH">' + esc(r.spread_pick) + " " + sp(r.bet_at) + "</span>"},
-    {k: "p_cover_raw", h: "Model cover", f: (r) => pct(r.p_cover_raw)},
-    {k: "p_cover_blend", h: "Realistic cover", f: (r) => pct(r.p_cover_blend)},
-    {k: "spread_ev", h: "EV now", f: (r) => ev(r.spread_ev), cls: (r) => r.spread_ev > 0 ? "pos" : "neg"},
-  ], watch, ["p_cover_blend", -1]);
-
-  // All games
-  const gameCols = [
-    {k: "matchup", h: "Game", l: 1},
-    {k: "gameday", h: "Date", l: 1},
-    {k: "verdict", h: "Call", l: 1, f: vpill, sort: (r) => verdictOrder[r.verdict] * 10 + (r.stake_units || 0)},
-    {k: "bet_side", h: "Side (best price)", l: 1, f: (r) => esc(r.bet_side) + " " + sp(r.bet_line) + " " + ml(r.bet_odds) + (r.bet_book ? " · " + esc(r.bet_book) : ""), cls: (r) => r.verdict === "BET" || r.verdict === "H2H" ? "strong" : ""},
-    {k: "stake_units", h: "Stake", f: (r) => r.stake_units ? units(r.stake_units) : "–"},
-    {k: "proj", h: "Projected score", l: 1, f: (r) => esc(r.away_team) + " " + num1(r.proj_away) + " – " + esc(r.home_team) + " " + num1(r.proj_home), sort: (r) => r.proj_home - r.proj_away},
-    {k: "model_home_spread", h: "Model line", f: (r) => esc(r.home_team) + " " + sp(r.model_home_spread)},
-    {k: "home_spread", h: "Consensus", f: (r) => esc(r.home_team) + " " + sp(r.home_spread)},
-    {k: "spread_edge", h: "Edge", f: (r) => sgn1(r.spread_edge), sort: (r) => r.spread_edge == null ? null : Math.abs(r.spread_edge)},
-    {k: "p_cover_raw", h: "Model cover", f: (r) => pct(r.p_cover_raw)},
-    {k: "p_cover_blend", h: "Realistic cover", f: (r) => pct(r.p_cover_blend)},
-    {k: "spread_ev", h: "EV / unit", f: (r) => ev(r.spread_ev), cls: (r) => r.spread_ev > 0 ? "pos" : "neg"},
-    {k: "bet_down_to", h: "Good down to", f: (r) => r.bet_down_to == null ? (r.bet_at == null ? "–" : "bet at " + sp(r.bet_at)) : sp(r.bet_down_to)},
-    {k: "n_books", h: "Every book", l: 1, f: booksCell},
-    {k: "reason", h: "Why", l: 1},
-  ];
-  const gt = table("t-games", gameCols, D.games, ["verdict", -1]);
-  const states = ["All", "BET", "H2H", "SMALL", "WATCH", "PASS"];
-  states.forEach((s) => {
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = s === "All" ? "All games" : s; b.setAttribute("aria-pressed", s === "All");
-    b.addEventListener("click", () => {
-      $("vfilter").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b));
-      gt.set(s === "All" ? D.games : D.games.filter((g) => g.verdict === s));
-    });
-    $("vfilter").appendChild(b);
-  });
-
-  // Winners
-  table("t-win", [
-    {k: "matchup", h: "Game", l: 1},
-    {k: "winner", h: "Winner", l: 1, cls: () => "strong"},
-    {k: "win_pct", h: "Win %", f: (r) => pct0(r.win_pct)},
-    {k: "proj", h: "Projected score", l: 1, f: (r) => esc(r.away_team) + " " + num1(r.proj_away) + " – " + esc(r.home_team) + " " + num1(r.proj_home), sort: (r) => r.proj_home - r.proj_away},
-  ], D.games, ["win_pct", -1]);
-
-  // Totals
-  table("t-tot", [
-    {k: "matchup", h: "Game", l: 1},
-    {k: "total_pick", h: "Lean", l: 1},
-    {k: "total", h: "Line"},
-    {k: "model_total", h: "Model", f: (r) => num1(r.model_total)},
-    {k: "tedge", h: "Edge", f: (r) => sgn1(r.model_total - r.total), sort: (r) => Math.abs(r.model_total - r.total)},
-    {k: "p_total_raw", h: "Model %", f: (r) => pct(r.p_total_raw)},
-  ], D.games, ["tedge", -1]);
-
-  // Injuries + QBs
-  const injText = {
-    monday: "Not applied to projections on Monday: these long-term absences are already in the ratings. Re-run Thursday or Friday to apply this week's report.",
-    thursday: "Applied from the Thursday practice report.", final: "Applied from the final report with game statuses."};
-  const qbs = D.games.filter((g) => g.qb_note).map((g) => g.qb_note);
-  $("inj-note").textContent = (qbs.length ? "QB changes: " + qbs.join("; ") + ". " : "") + (injText[D.inj_mode] || "No injury report available.");
-  if (D.injuries.length) table("t-inj", [
-    {k: "team", h: "Team", l: 1}, {k: "player", h: "Player", l: 1}, {k: "position", h: "Pos", l: 1},
-    {k: "status", h: "Status", l: 1, f: (r) => esc(String(r.status).replace("none_missed", "missed last game (likely IR)").replace(/^lag_/, "last week: ").replace(/^prac_/, "practice: ").replace(/_/g, " "))},
-    {k: "p_miss", h: "Miss %", f: (r) => pct0(r.p_miss)}, {k: "usual", h: "Usual snaps", f: (r) => pct0(r.usual)},
-  ], D.injuries, ["usual", -1]);
-
-  // Ratings
-  table("t-rat", [
-    {k: "rank", h: "#"}, {k: "team", h: "Team", l: 1}, {k: "net_pts", h: "Net", f: (r) => sgn1(r.net_pts)},
-    {k: "off_pts", h: "Offense", f: (r) => sgn1(r.off_pts)}, {k: "def_pts", h: "Defense", f: (r) => sgn1(r.def_pts)},
-    {k: "off_epa", h: "Off EPA/play", f: (r) => r.off_epa == null ? "–" : r.off_epa.toFixed(3)},
-    {k: "def_epa", h: "Def EPA/play", f: (r) => r.def_epa == null ? "–" : r.def_epa.toFixed(3)},
-    {k: "st", h: "Special teams", f: (r) => sgn1(r.st)}, {k: "elo", h: "Elo", f: (r) => r.elo == null ? "–" : Math.round(r.elo)},
-    {k: "market", h: "Market", f: (r) => sgn1(r.market)},
-  ], D.ratings, ["net_pts", -1]);
 })();
 </script>
