@@ -249,7 +249,7 @@ details[open] summary { border-bottom: 1px solid var(--line) }
 
 <header class="top"><div class="topin">
   <a class="brand" href="https://barrca12-rgb.github.io/">Model Card</a>
-  <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
+  <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/NBA/">NBA</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
   <div class="status"><span id="upd-status"></span><button id="upd-btn" type="button">Update</button></div>
 </div></header>
 <div class="wrap">
@@ -734,7 +734,7 @@ __STYLE__
 </style>
 <header class="top"><div class="topin">
   <a class="brand" href="https://barrca12-rgb.github.io/">Model Card</a>
-  <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
+  <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/NBA/">NBA</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
   
 </div></header>
 <div class="wrap">
