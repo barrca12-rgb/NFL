@@ -183,7 +183,41 @@ section { display: grid; gap: 10px; min-width: 0 }
 .weeks a[aria-current="page"] { color: var(--surface); border-color: var(--ink); background: var(--ink) }
 .weeks a .tag { font-size: 11px; font-weight: 700; margin-left: 6px; color: var(--brand) }
 
-/* Model plays */
+/* Model plays: same panel and table as the CBB card (barrca12-rgb/CBB cbb/report_html.py) */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(10,44,73,.06) }
+.panel-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line) }
+.panel-h h2::before { content: ""; width: 4px; height: 14px; background: var(--brand); border-radius: 2px }
+.scroll { overflow-x: auto }
+table.ct th, table.ct td { text-align: left; padding: 9px 12px; vertical-align: middle }
+table.ct thead th { position: static; cursor: default; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px }
+table.ct tbody tr:hover { background: none }
+table.ct .r { text-align: right } .m { color: var(--muted) } .f { color: var(--pass) } .b { font-weight: 600 }
+.pos { color: var(--turf) } .neg { color: var(--neg) } td.pos { font-weight: 600 }
+table.ct td.empty { padding: 28px 16px; color: var(--muted); text-align: center; white-space: normal }
+.inj { color: var(--amber); font-size: 11px; font-weight: 500; white-space: normal; max-width: 420px; margin-top: 1px }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap }
+.tag.bet { color: #fff; border-color: var(--brand); background: var(--brand) }
+.tl img { width: auto; vertical-align: -3px; margin-right: 5px; object-fit: contain }
+.pick .tl img { vertical-align: -5px; margin-right: 6px }
+.pagebtn { padding: 5px 12px; border-radius: 6px; color: var(--ink); font-weight: 600; font-size: 13px; text-decoration: none;
+  border: 1px solid var(--line-strong); background: var(--surface); white-space: nowrap }
+.pagebtn:hover { background: var(--chalk) }
+.navrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center }
+@media (max-width: 1100px) { .hide-md { display: none } }
+@media (max-width: 860px) {
+  #t-plays td:first-child { white-space: normal; min-width: 150px }
+  table.stack thead { display: none }
+  table.stack tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; padding: 12px; border-bottom: 1px solid var(--line) }
+  table.stack tbody tr:last-child { border-bottom: 0 }
+  table.stack td { display: block; border: 0; padding: 0; white-space: normal; text-align: left; min-width: 0 }
+  table.stack td.r { text-align: left }
+  table.stack td:first-child { grid-column: 1 / -1; min-width: 0 }
+  table.stack td[data-l]::before { content: attr(data-l); display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--pass); margin-bottom: 1px }
+  table.stack td:first-child::before { display: none }
+  table.stack td.hide-sm, table.stack td:empty { display: none }
+  table.stack td.empty { grid-column: 1 / -1; text-align: center }
+}
 .plays { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px }
 .pk { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--brand); border-radius: 10px; box-shadow: 0 1px 2px rgba(10,44,73,.06); padding: 14px 16px; display: grid; gap: 12px; min-width: 0 }
 .pk.small { border-left-color: var(--amber) } .pk.tz { border-left-color: var(--blue) }
@@ -293,15 +327,13 @@ details[open] summary { border-bottom: 1px solid var(--line) }
     <div class="eyebrow" id="eyebrow"></div>
     <h1 id="h1"></h1>
     <p class="lede" id="lede"></p>
-    <nav class="weeks" id="weeks" aria-label="Weeks"></nav>
+    <div class="navrow"><nav class="weeks" id="weeks" aria-label="Weeks"></nav><a class="pagebtn" href="record.html">Record</a></div>
     <div class="meta" id="meta"></div>
   </header>
 
-  <section aria-labelledby="plays-h">
-    <div class="sec-head"><h2 id="plays-h">Model plays</h2><span class="note" id="plays-sum"></span></div>
-    <p class="note">Bet each play only at the number shown or better. Realistic cover % already accounts for how often the model has been right; EV above 0 means the price is worth it.</p>
-    <div class="plays" id="plays"></div>
-    <p class="note" id="flagtext"></p>
+  <section class="panel" aria-labelledby="plays-h">
+    <div class="panel-h"><h2 id="plays-h">Plays</h2><span class="note">Bet each play only at the number shown or better ("Bet to"). Cover % is the realistic rate, already adjusted for how often the model has been right; EV above 0 means the price is worth it. <span id="flagtext"></span></span></div>
+    <div class="scroll"><table class="ct" id="t-plays"></table></div>
   </section>
 
   <section aria-labelledby="slate-h">
@@ -328,7 +360,7 @@ details[open] summary { border-bottom: 1px solid var(--line) }
     <div class="tbl"><table id="t-tot"></table></div></details>
 
   <details id="tz-sec"><summary>Teaser legs</summary>
-    <p class="note" id="tz-note">Every leg that qualifies this week. Only the pairings listed under Model plays are bets; this list is for building your own if a book has a better teaser price. 6-point teasers through 3 and 7: grade A legs have won about 78% since 2006; break-even is 73.9% per leg at -120.</p>
+    <p class="note" id="tz-note">Every leg that qualifies this week. Only the pairings listed under Plays are bets; this list is for building your own if a book has a better teaser price. 6-point teasers through 3 and 7: grade A legs have won about 78% since 2006; break-even is 73.9% per leg at -120.</p>
     <div class="tbl"><table id="t-tz"></table></div></details>
 
   <details><summary>How to read this</summary>
@@ -370,6 +402,14 @@ details[open] summary { border-bottom: 1px solid var(--line) }
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
   const units = (u) => u + "u";
   const ml = (x) => x == null ? "" : (x > 0 ? "+" : "") + Math.round(x);
+  // ESPN logos by team abbreviation (nflverse LA and WAS are lar and wsh at ESPN); a logo that fails to load is removed
+  const LOGO = {LA: "lar", WAS: "wsh"};
+  const logo = (t, px) => { if (!t) return ""; const a = LOGO[t] || String(t).toLowerCase();
+    return "<picture class='tl'><source media='(prefers-color-scheme: dark)' srcset='https://a.espncdn.com/i/teamlogos/nfl/500-dark/" + esc(a) +
+      ".png'><img src='https://a.espncdn.com/i/teamlogos/nfl/500/" + esc(a) + ".png' alt='' loading='lazy' width='" + px + "' height='" + px +
+      "' onerror=\"this.closest('picture').remove()\"></picture>"; };
+  const stack = (id) => { const t = $(id); if (!t) return; const hs = [...t.querySelectorAll("thead th")].map((h) => h.textContent.trim());
+    t.classList.add("stack"); t.querySelectorAll("tbody tr").forEach((r) => [...r.children].forEach((c, k) => { if (hs[k]) c.dataset.l = hs[k]; })); };
   const booksCell = (r) => (r.offers || []).map((o) => (o.book === r.best_book ? "<b>" : "") + esc(o.book.replace(/\.ag$/, "")) + " " +
     sp(o.line) + " " + ml(o.odds) + (o.book === r.best_book ? "</b>" : "")).join("<br>");
 
@@ -388,13 +428,12 @@ details[open] summary { border-bottom: 1px solid var(--line) }
   const injLabel = {thursday: "Thursday practice report applied", final: "Final injury report applied", monday: "Injury report not out yet (Monday run)"};
   [D.n_sims.toLocaleString() + " sims per game", "Lines: " + D.line_source, injLabel[D.inj_mode] || "No injury report"]
     .forEach((t) => { const c = document.createElement("span"); c.className = "chip"; c.textContent = t; $("meta").appendChild(c); });
-  $("flagtext").textContent = D.flag_text + " Breakeven at -110 is 52.4%.";
+  $("flagtext").textContent = D.flag_text + " Break-even at -110 is 52.4%.";
 
   // Week switcher (weeks.json is written next to the pages by the site build)
   const navWeeks = (list, cur) => {
     $("weeks").innerHTML = list.map((w) => '<a href="' + D.season + "_week" + String(w).padStart(2, "0") + '.html"' +
-      (w === D.week ? ' aria-current="page"' : "") + ">Week " + w + (w === cur ? '<span class="tag">Now</span>' : "") + "</a>").join("") +
-      '<a href="record.html">Record</a>';
+      (w === D.week ? ' aria-current="page"' : "") + ">Week " + w + (w === cur ? '<span class="tag">Now</span>' : "") + "</a>").join("");
   };
   navWeeks([D.week], null);
   fetch("weeks.json", {cache: "no-store"}).then((r) => r.json()).then((w) => {
@@ -462,87 +501,56 @@ details[open] summary { border-bottom: 1px solid var(--line) }
   };
   const byKick = (a, b) => String(a.gameday).localeCompare(String(b.gameday)) || String(a.kickoff).localeCompare(String(b.kickoff));
 
-  // Betslip link for a game's recommended spread bet at the recommended book (SportsGameOdds deeplinks)
-  const betLink = (g) => {
-    const b = (g.book_lines || []).find((x) => x.book === g.bet_book);
-    return b ? b[g.bet_side === g.home_team ? "home_spread_link" : "away_spread_link"] || "" : "";
-  };
-
-  // Model plays: a ticket per bet with every book's price for it and the numbers behind it
-  const plays = $("plays");
-  const SHORTB = {FanDuel: "FD", DraftKings: "DK", BetMGM: "MGM", Caesars: "CZR"};
-  const stat = (lab, val, cls) => '<div class="stat"><span>' + lab + "</span><b" + (cls ? ' class="' + cls + '"' : "") + ">" + val + "</b></div>";
-  const sideLine = (g, team, line) => esc(team) + " " + sp(line);
-  // this side's spread at every book, best one highlighted, each a betslip link
-  const sideTiles = (g) => {
+  // Model plays: one row per bet, same table as the CBB card
+  const pay = (o) => o == null ? -1 : (o > 0 ? o / 100 : 100 / -o);
+  // other books' numbers for this side, best first
+  const also = (g) => {
     const home = g.bet_side === g.home_team;
-    const bl = (g.book_lines || []).filter((b) => b.home_spread != null);
-    if (!bl.length) return "";
-    const cells = bl.map((b) => ({b, n: home ? b.home_spread : -b.home_spread, p: home ? b.home_spread_odds : b.away_spread_odds,
-      link: b[home ? "home_spread_link" : "away_spread_link"]}));
-    return '<div class="oddswrap"><table class="odds' + (cells.length < 3 ? " few" : "") + '"><thead><tr><th></th>' +
-      cells.map((c) => '<th title="' + esc(c.b.book) + '"><span class="full">' + esc(c.b.book) + '</span><span class="abbr">' + esc(SHORTB[c.b.book] || c.b.book) + "</span></th>").join("") +
-      '</tr></thead><tbody><tr class="mine"><th scope="row">' + esc(g.bet_side) + "</th>" + cells.map((c) => {
-        const inner = sp(c.n) + "<small>" + ml(c.p) + "</small>";
-        return '<td class="' + (c.b.book === g.bet_book ? "best" : "") + '">' + (c.link
-          ? '<a class="t" href="' + esc(c.link) + '"' + (c.b.book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">' + inner + "</a>" : '<span class="t">' + inner + "</span>") + "</td>";
-      }).join("") + "</tr></tbody></table></div>";
+    const L = (g.book_lines || []).filter((b) => b.home_spread != null && b.book !== g.bet_book).map((b) => ({book: b.book,
+      n: home ? b.home_spread : -b.home_spread, p: home ? b.home_spread_odds : b.away_spread_odds})).sort((x, y) => y.n - x.n || pay(y.p) - pay(x.p));
+    return L.length ? "Also: " + L.map((x) => x.book + " " + sp(x.n) + (x.p != null ? " (" + ml(x.p) + ")" : "")).join(" · ") : "";
   };
-  const addTicket = (cls, html) => { const el = document.createElement("article"); el.className = "pk " + cls; el.innerHTML = html; plays.appendChild(el); };
-  bets.sort((a, b) => b.stake_units - a.stake_units || b.p_cover_blend - a.p_cover_blend).forEach((g) => {
+  const ROWS = [];
+  bets.sort((a, b) => byKick(a, b) || b.stake_units - a.stake_units).forEach((g) => {
     const h2h = g.verdict === "H2H";
     const home = g.bet_side === g.home_team;
     const modelLine = g.model_home_spread == null ? null : (home ? g.model_home_spread : -g.model_home_spread);
     const edge = modelLine == null ? null : g.bet_line - modelLine;
-    const link = betLink(g);
-    const stats = [
-      stat("Model line", sideLine(g, g.bet_side, modelLine)),
-      stat("Bet line", sideLine(g, g.bet_side, g.bet_line)),
-      stat("Edge", (edge > 0 ? "+" : "") + num1(edge) + " pts", edge > 0 ? "pos" : ""),
-      h2h ? stat("Realistic cover", pct(g.h2h_p_blend)) : stat("Realistic cover", pct(g.p_cover_blend), g.p_cover_blend > 0.524 ? "pos" : ""),
-      h2h ? stat("Angle record", "57% since '99") : stat("EV per unit", ev(g.spread_ev), g.spread_ev > 0 ? "pos" : ""),
-      h2h ? stat("Meetings", g.h2h_meetings) : stat("Good down to", sp(g.bet_down_to)),
-      stat("Proj " + esc(g.away_team) + "–" + esc(g.home_team), num1(g.proj_away) + "–" + num1(g.proj_home)),
-      stat("Model cover", pct(g.p_cover_raw)),
-    ].join("");
-    const why = h2h ? esc(g.reason || "") : "";
-    addTicket(g.verdict === "SMALL" ? "small" : "",
-      '<div class="pk-top"><div><div class="pk-pick">' + esc(g.bet_side) + " " + sp(g.bet_line) + ' <span class="price">' + ml(g.bet_odds) + "</span></div>" +
-        '<div class="pk-game">' + esc(g.matchup) + " · " + kick(g) + "</div></div>" +
-        '<div class="pk-stake"><b>' + units(g.stake_units) + "</b><span>" + esc(g.flag || g.verdict) + "</span></div></div>" +
-      sideTiles(g) + '<div class="stats">' + stats + "</div>" +
-      (g.qb_note ? '<div class="pk-why">QB: ' + esc(g.qb_note) + "</div>" : "") +
-      (why ? '<div class="pk-why">' + why + "</div>" : "") +
-      (link ? '<a class="cta" href="' + esc(link) + '"' + (g.bet_book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">Bet ' + esc(g.bet_side) + " " + sp(g.bet_line) + " at " + esc(g.bet_book) + " &#8599;</a>"
-        : '<span class="cta">Bet at ' + esc(g.bet_book) + "</span>"));
+    const opp = home ? g.away_team : g.home_team;
+    const kind = h2h ? "Spread · H2H angle" : "Spread" + (g.verdict === "SMALL" ? " · small" : "");
+    ROWS.push("<tr><td><div class='b pick'>" + logo(g.bet_side, 20) + esc(g.bet_side) + " " + sp(g.bet_line) + "</div>" +
+      "<div class='f' style='font-size:12px'>" + logo(g.away_team, 14) + esc(g.away_team) + " @ " + logo(g.home_team, 14) + esc(g.home_team) + " · " + kick(g) + " · " + kind + "</div>" +
+      (also(g) ? "<div class='f' style='font-size:12px'>" + esc(also(g)) + "</div>" : "") +
+      (g.qb_note ? "<div class='inj'>&#9888; QB: " + esc(g.qb_note) + "</div>" : "") +
+      (h2h && g.reason ? "<div class='f' style='font-size:12px;white-space:normal'>" + esc(g.reason) + "</div>" : "") + "</td>" +
+      "<td>" + esc(g.bet_book || "–") + (g.bet_odds != null ? " <span class='m'>" + ml(g.bet_odds) + "</span>" : "") + "</td>" +
+      "<td class='r m hide-sm hide-md'>" + sp(modelLine) + "</td>" +
+      "<td class='r " + (edge > 0 ? "pos" : "m") + "'>" + sgn1(edge) + "</td>" +
+      "<td class='r m hide-sm'>" + pct(h2h ? g.h2h_p_blend : g.p_cover_blend) + "</td>" +
+      "<td class='r'>" + (h2h || g.spread_ev == null ? "–" : (g.spread_ev > 0 ? "+" : "") + (100 * g.spread_ev).toFixed(1) + "%") + "</td>" +
+      "<td class='r'>" + (h2h ? "–" : sp(g.bet_down_to)) + "</td>" +
+      "<td class='r m hide-sm hide-md'>" + num1(g.proj_away) + "–" + num1(g.proj_home) + "</td>" +
+      "<td class='r'>" + units(g.stake_units) + "</td></tr>");
   });
   D.teaser_pairs.forEach((t) => {
-    const legs = (t.legs || []);
-    const books = [...new Set(legs.map((l) => l.book))];
-    const legRows = legs.map((l) => {
-      const leg = D.teasers.find((x) => x.team === l.team && x.matchup && x.line === l.line) || {};
-      return '<tr class="mine"><th scope="row">' + esc(l.team) + "</th>" +
-        '<td><span class="t">' + sp(l.line) + "<small>now</small></span></td>" +
-        '<td class="best"><span class="t">' + sp(l.teased_line) + "<small>teased</small></span></td>" +
-        '<td><span class="t">' + esc(leg.grade || "") + "<small>grade</small></span></td>" +
-        '<td><span class="t">' + pct0(leg.p_leg) + "<small>leg win</small></span></td></tr>";
-    }).join("");
-    addTicket("tz",
-      '<div class="pk-top"><div><div class="pk-pick">' + esc(t.teaser) + ' <span class="price">-120</span></div>' +
-        '<div class="pk-game">2-team, 6-point teaser · both legs must win</div></div>' +
-        '<div class="pk-stake"><b>' + units(t.stake_units) + "</b><span>Teaser " + esc(t.grades) + "</span></div></div>" +
-      '<div class="oddswrap"><table class="odds"><tbody>' + legRows + "</tbody></table></div>" +
-      '<div class="stats">' + stat("Both win (history)", pct0(t.p_both), "pos") + stat("Break-even", "54.5%") +
-        stat("EV per unit", ev(t.ev), t.ev > 0 ? "pos" : "") + stat("Model estimate", pct0(t.p_both_model)) + "</div>" +
-      '<div class="pk-why">Legs cross both 3 and 7, the most common NFL margins. ' +
-        (books.length > 1 ? "Best numbers are at " + esc(books.join(" and ")) + "; place it where both legs are available." : "") + "</div>" +
-      '<span class="cta">Bet at ' + esc(books.length === 1 ? books[0] : "your best teaser price") + "</span>");
+    const legs = t.legs || [];
+    const books = [...new Set(legs.map((l) => l.book).filter(Boolean))];
+    ROWS.push("<tr><td><div class='b pick'>" + legs.map((l) => logo(l.team, 20)).join("") + esc(t.teaser) + "</div>" +
+      "<div class='f' style='font-size:12px'>2-team, 6-point teaser · both legs must win · grades " + esc(t.grades) + "</div>" +
+      "<div class='f' style='font-size:12px'>" + legs.map((l) => esc(l.team) + " " + sp(l.line) + " → " + sp(l.teased_line)).join(" · ") + "</div></td>" +
+      "<td>" + esc(books.length === 1 ? books[0] : books.length ? books.join(", ") : "Best teaser price") + " <span class='m'>-120</span></td>" +
+      "<td class='r m hide-sm hide-md'>" + pct0(t.p_both_model) + "</td><td class='r m'>–</td>" +
+      "<td class='r m hide-sm'>" + pct0(t.p_both) + "</td>" +
+      "<td class='r'>" + (t.ev == null ? "–" : (t.ev > 0 ? "+" : "") + (100 * t.ev).toFixed(1) + "%") + "</td>" +
+      "<td class='r'>" + legs.map((l) => sp(l.teased_line)).join(", ") + "</td><td class='r m hide-sm hide-md'>–</td>" +
+      "<td class='r'>" + units(t.stake_units) + "</td></tr>");
   });
-  if (!nPlays) plays.innerHTML = '<div class="empty">No game meets the betting rule at today\'s lines. That is the right call most weeks after Week 4.</div>';
-  $("plays-sum").textContent = nPlays ? units_total + " units across " + nPlays + " plays" : "";
+  $("t-plays").innerHTML = ROWS.length ? "<thead><tr><th>Bet</th><th>Book</th><th class='r hide-sm hide-md'>Model</th><th class='r'>Edge</th><th class='r hide-sm'>Cover %</th>" +
+    "<th class='r'>EV</th><th class='r'>Bet to</th><th class='r hide-sm hide-md'>Proj</th><th class='r'>Units</th></tr></thead><tbody>" + ROWS.join("") + "</tbody>"
+    : "<tbody><tr><td class='empty'>No game meets the betting rule at today's lines. That is the right call most weeks after Week 4.</td></tr></tbody>";
+  stack("t-plays");
 
   // Full slate: one ticket per game; books side by side so the best number is easy to spot
-  const pay = (o) => o == null ? -1 : (o > 0 ? o / 100 : 100 / -o);
   const slate = $("slate");
   const stOrder = {upcoming: 0, live: 1, final: 2};
   D.games.slice().sort((a, b) => (stOrder[a.state] || 0) - (stOrder[b.state] || 0) || byKick(a, b)).forEach((g) => {
@@ -551,7 +559,7 @@ details[open] summary { border-bottom: 1px solid var(--line) }
       el.className = "game done";
       const score = g.state === "final" && g.away_score != null
         ? '<div class="g-score">' + esc(g.away_team) + " " + g.away_score + " – " + g.home_score + " " + esc(g.home_team) + "</div>" : "";
-      el.innerHTML = '<div class="g-top"><div><div class="g-title">' + esc(g.away_team) + " @ " + esc(g.home_team) + '</div><div class="g-kick">' +
+      el.innerHTML = '<div class="g-top"><div><div class="g-title">' + logo(g.away_team, 20) + esc(g.away_team) + " @ " + logo(g.home_team, 20) + esc(g.home_team) + '</div><div class="g-kick">' +
         kick(g) + '</div></div><span class="v ' + g.verdict + '">' + (g.state === "final" ? "Final" : "In progress") + "</span></div>" + score +
         '<div class="g-model">Model had ' + esc(g.away_team) + " " + num1(g.proj_away) + ", " + esc(g.home_team) + " " + num1(g.proj_home) + "</div>";
       slate.appendChild(el);
@@ -593,15 +601,13 @@ details[open] summary { border-bottom: 1px solid var(--line) }
     const fav = g.model_home_spread == null ? "" : (g.model_home_spread <= 0 ? H + " " + sp(g.model_home_spread) : A + " " + sp(-g.model_home_spread));
     const el = document.createElement("article");
     el.className = "game" + (isPlay ? " has-play" : "");
-    el.innerHTML = '<div class="g-top"><div><div class="g-title">' + esc(A) + " @ " + esc(H) + '</div><div class="g-kick">' + kick(g) + "</div></div>" +
+    el.innerHTML = '<div class="g-top"><div><div class="g-title">' + logo(A, 20) + esc(A) + " @ " + logo(H, 20) + esc(H) + '</div><div class="g-kick">' + kick(g) + "</div></div>" +
       '<span class="v ' + g.verdict + '">' + g.verdict + "</span></div>" +
       (bl.length ? tbl : '<div class="note">No lines posted yet.</div>') +
       '<div class="g-model">Model: <b>' + esc(A) + " " + num1(g.proj_away) + ", " + esc(H) + " " + num1(g.proj_home) + "</b> · line " + esc(fav) +
       " · total " + num1(g.model_total) + " · " + esc(g.winner) + " wins " + pct0(g.win_pct) + "</div>" +
       (isPlay
-        ? '<div class="g-play">' + (betLink(g) ? '<a href="' + esc(betLink(g)) + '"' + (g.bet_book === "FanDuel" ? "" : ' target="_blank"') + ' rel="noopener">' : "") +
-          "&#10003; Play: " + esc(g.bet_side) + " " + sp(g.bet_line) + " " + ml(g.bet_odds) + " at " + esc(g.bet_book) + " · " + units(g.stake_units) +
-          (betLink(g) ? " &#8599;</a>" : "") + "</div>"
+        ? '<div class="g-play">&#10003; Play: ' + esc(g.bet_side) + " " + sp(g.bet_line) + " " + ml(g.bet_odds) + " at " + esc(g.bet_book) + " · " + units(g.stake_units) + "</div>"
         : g.verdict === "WATCH"
           ? '<div class="g-play none">Watch: bet ' + esc(g.spread_pick) + " only at " + sp(g.bet_at) + " or better</div>"
           : '<div class="g-play none">No play</div>');
@@ -760,32 +766,29 @@ RECORD_TEMPLATE = r"""<!doctype html>
 __HEAD__
 __STYLE__
 <style>
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden }
-.kpi { padding: 12px 16px; border-right: 1px solid var(--line); margin-right: -1px }
-.kpi span { display: block; font-size: 12px; font-weight: 500; color: var(--muted) }
-.kpi b { display: block; font-size: 18px; font-weight: 600; margin-top: 2px }
-.kpi b.pos { color: var(--turf) } .kpi b.neg { color: var(--neg) }
-.res { display: inline-block; min-width: 22px; text-align: center; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line-strong) }
-.res.W { color: var(--turf); border-color: var(--turf); background: var(--turf-soft) } .res.L { color: var(--neg); border-color: var(--neg) }
-.res.P { background: var(--chalk); color: var(--muted) } .res.pend { background: var(--chalk); color: var(--amber) }
+/* Same layout as the CBB record page (barrca12-rgb/CBB cbb/record_page.py) */
+.rhead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px }
+.sub { color: var(--muted); margin-top: 2px }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border: 1px solid var(--line); border-top: 3px solid var(--ink); border-radius: 10px;
+  background: var(--surface); overflow: hidden; box-shadow: 0 1px 2px rgba(10,44,73,.06) }
+.kpi { padding: 12px 16px; border-right: 1px solid var(--line) } .kpi:last-child { border-right: 0 }
+.kpi .k { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em }
+.kpi .kv { font-size: 21px; font-weight: 800; margin-top: 3px; letter-spacing: -.01em }
+@media (max-width: 860px) { .kpi { border-right: 0; border-bottom: 1px solid var(--line) } .kpi:last-child { border-bottom: 0 } }
 </style>
 <header class="top"><div class="topin">
   __BRAND__
   <nav class="tabs" aria-label="Sport"><a href="./" aria-current="page">NFL</a><a href="https://barrca12-rgb.github.io/NBA/">NBA</a><a href="https://barrca12-rgb.github.io/CBB/"><span class="hide-sm">College Basketball</span><span class="show-sm">CBB</span></a></nav>
-  
 </div></header>
 <div class="wrap">
-  <header class="head">
-    <div class="eyebrow" id="eyebrow"></div>
-    <h1>Model Record</h1>
-    <p class="lede">Every play the site recommended, as it stood at kickoff, graded against the final score. Units use the stake and price shown on the card.</p>
-    <nav class="weeks" id="weeks" aria-label="Weeks"><a href="record.html" aria-current="page">Record</a></nav>
-  </header>
-  <section><div class="kpis" id="kpis"></div></section>
-  <section aria-labelledby="type-h"><div class="sec-head"><h2 id="type-h">By bet type</h2></div><div class="tbl"><table id="t-type"></table></div></section>
-  <section aria-labelledby="wk-h"><div class="sec-head"><h2 id="wk-h">By week</h2></div><div class="tbl"><table id="t-week"></table></div></section>
-  <section aria-labelledby="pl-h"><div class="sec-head"><h2 id="pl-h">Every play</h2><span class="note">CLV = points better than the closing line (positive is good).</span></div>
-    <div class="tbl"><table id="t-plays"></table></div></section>
+  <div class="rhead"><div><div class="eyebrow" id="eyebrow"></div><h1>NFL Record</h1>
+    <div class="sub">Every play the model recommended, at the logged number and price, graded against the final score.</div></div>
+    <a class="pagebtn" href="./">&larr; Card</a></div>
+  <div class="kpis" id="kpis"></div>
+  <section class="panel"><div class="panel-h"><h2>Summary</h2><span class="note">Settled plays. CLV = points the line moved our way from the logged number to the close. Break-even at -110 is 52.4%.</span></div>
+    <div class="scroll"><table class="ct" id="t-type"></table></div></section>
+  <section class="panel"><div class="panel-h"><h2>By week</h2></div><div class="scroll"><table class="ct" id="t-week"></table></div></section>
+  <section class="panel"><div class="panel-h"><h2>Bets placed</h2><span class="note">Newest first.</span></div><div class="scroll"><table class="ct" id="t-plays"></table></div></section>
   __FOLLOW__
 </div>
 <script id="record-data" type="application/json">__DATA__</script>
@@ -794,42 +797,44 @@ __STYLE__
   const R = JSON.parse(document.getElementById("record-data").textContent);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
-  const u = (x) => x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(2) + "u";
+  const u = (x) => x == null ? "–" : (x > 0 ? "+" : "") + x.toFixed(2);
   const pc = (x) => x == null ? "–" : (x > 0 ? "+" : "") + (x * 100).toFixed(1) + "%";
-  const rec = (a) => a.w + "-" + a.l + (a.p ? "-" + a.p : "");
+  const rec = (a) => a.w + "–" + a.l + (a.p ? "–" + a.p : "");
+  const wp = (a) => a.w + a.l ? ((a.w / (a.w + a.l)) * 100).toFixed(1) + "%" : "–";
   const ml = (x) => x == null ? "" : (x > 0 ? "+" : "") + Math.round(x);
+  const cls = (x) => x > 0 ? "pos" : x < 0 ? "neg" : "";
+  const LOGO = {LA: "lar", WAS: "wsh"};
+  const logo = (t, px) => { if (!t) return ""; const a = LOGO[t] || String(t).toLowerCase();
+    return "<picture class='tl'><source media='(prefers-color-scheme: dark)' srcset='https://a.espncdn.com/i/teamlogos/nfl/500-dark/" + esc(a) +
+      ".png'><img src='https://a.espncdn.com/i/teamlogos/nfl/500/" + esc(a) + ".png' alt='' loading='lazy' width='" + px + "' height='" + px +
+      "' onerror=\"this.closest('picture').remove()\"></picture>"; };
   $("eyebrow").textContent = R.season + " NFL season";
   const o = R.overall;
-  const winp = o.w + o.l ? o.w / (o.w + o.l) : null;
-  [["Record", rec(o), ""], ["Win %", winp == null ? "–" : (winp * 100).toFixed(1) + "%", ""],
-   ["Units", u(o.units), o.units > 0 ? "pos" : o.units < 0 ? "neg" : ""], ["ROI", pc(o.roi), o.roi > 0 ? "pos" : o.roi < 0 ? "neg" : ""],
-   ["Avg CLV", o.clv == null ? "–" : (o.clv > 0 ? "+" : "") + o.clv.toFixed(2) + " pts", o.clv > 0 ? "pos" : o.clv < 0 ? "neg" : ""],
-   ["Pending", String(o.pending), ""]].forEach(([k, v, c]) => {
-    $("kpis").insertAdjacentHTML("beforeend", '<div class="kpi"><span>' + k + '</span><b class="' + c + '">' + v + "</b></div>");
-  });
-  const aggRows = (obj, label) => Object.entries(obj).map(([k, a]) => "<tr><td>" + esc(label(k)) + "</td><td>" + rec(a) + "</td><td>" +
-    (a.w + a.l ? ((a.w / (a.w + a.l)) * 100).toFixed(1) + "%" : "–") + '</td><td class="' + (a.units > 0 ? "pos" : a.units < 0 ? "neg" : "") + '">' + u(a.units) +
-    "</td><td>" + pc(a.roi) + "</td><td>" + (a.clv == null ? "–" : (a.clv > 0 ? "+" : "") + a.clv.toFixed(2)) + "</td><td>" + a.pending + "</td></tr>").join("");
-  const head = (first) => "<thead><tr><th class=\"l\">" + first + "</th><th>Record</th><th>Win %</th><th>Units</th><th>ROI</th><th>CLV</th><th>Pending</th></tr></thead>";
-  $("t-type").innerHTML = head("Type") + "<tbody>" + aggRows(R.by_type, (k) => k) + "</tbody>";
-  $("t-week").innerHTML = head("Week") + "<tbody>" + aggRows(R.by_week, (k) => "Week " + k.split("-")[1]) + "</tbody>";
+  $("kpis").innerHTML = [["Record", rec(o)], ["Win %", wp(o)], ["Units", "<span class='" + cls(o.units) + "'>" + u(o.units) + "</span>"], ["ROI", pc(o.roi)],
+    ["Avg CLV", o.clv == null ? "–" : (o.clv > 0 ? "+" : "") + o.clv.toFixed(2) + " pts"], ["Open plays", String(o.pending)]]
+    .map(([k, v]) => "<div class='kpi'><div class='k'>" + k + "</div><div class='kv'>" + v + "</div></div>").join("");
+  const head = (first) => "<thead><tr><th>" + first + "</th><th class='r'>Record</th><th class='r'>Win %</th><th class='r'>Units</th><th class='r'>ROI</th><th class='r'>Avg CLV</th><th class='r'>Open</th></tr></thead>";
+  const row = (label, a) => "<tr><td class='b'>" + esc(label) + "</td><td class='r'>" + rec(a) + "</td><td class='r'>" + wp(a) + "</td><td class='r " + cls(a.units) + "'>" + u(a.units) +
+    "</td><td class='r'>" + pc(a.roi) + "</td><td class='r'>" + (a.clv == null ? "–" : (a.clv > 0 ? "+" : "") + a.clv.toFixed(2)) + "</td><td class='r m'>" + a.pending + "</td></tr>";
+  const TYPE = {VALUE: "Spreads", SMALL: "Spreads (small)", H2H: "H2H angle", TEASER: "Teasers"};
+  $("t-type").innerHTML = head("Bets") + "<tbody>" + row("All bets", o) + Object.entries(R.by_type).map(([k, a]) => row(TYPE[k] || k, a)).join("") + "</tbody>";
+  $("t-week").innerHTML = head("Week") + "<tbody>" + Object.entries(R.by_week).sort((a, b) => b[0].localeCompare(a[0])).map(([k, a]) => row("Week " + Number(k.split("-")[1]), a)).join("") + "</tbody>";
   const plays = R.plays.slice().sort((a, b) => String(b.kickoff).localeCompare(String(a.kickoff)));
   const now = new Date();
-  $("t-plays").innerHTML = '<thead><tr><th class="l">Result</th><th class="l">Play</th><th class="l">Type</th><th class="l">Game</th><th class="l">Book</th><th>Stake</th><th>Profit</th><th>Close</th><th>CLV</th><th class="l">Kickoff</th></tr></thead><tbody>' +
+  const game = (p) => { const m = String(p.matchup || "").split(" @ "); return m.length === 2 ? logo(m[0], 16) + esc(m[0]) + " @ " + logo(m[1], 16) + esc(m[1]) : esc(p.matchup || "Teaser"); };
+  $("t-plays").innerHTML = plays.length ? "<thead><tr><th>Date</th><th>Game</th><th>Play</th><th>Book</th><th class='r'>Close</th><th class='r'>CLV</th><th>Result</th><th class='r'>Units</th><th class='hide-sm'>Type</th></tr></thead><tbody>" +
     plays.map((p) => {
       const started = p.kickoff && new Date(p.kickoff) <= now;
-      const res = p.result ? '<span class="res ' + p.result + '">' + p.result + "</span>" : '<span class="res pend">' + (started ? "Live" : "Open") + "</span>";
-      const t = p.kickoff ? new Date(p.kickoff).toLocaleString([], {weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit"}) : "";
-      return "<tr><td class=\"l\">" + res + '</td><td class="l strong">' + esc(p.selection) + " " + ml(p.odds) + '</td><td class="l">' + esc(p.angle) +
-        '</td><td class="l">' + esc(p.matchup || "Teaser") + '</td><td class="l">' + esc(p.book) + "</td><td>" + p.stake + "u</td>" +
-        '<td class="' + (p.profit > 0 ? "pos" : p.profit < 0 ? "neg" : "") + '">' + (p.profit == null ? "–" : u(p.profit)) + "</td><td>" +
-        (p.close_line == null ? "–" : (p.close_line > 0 ? "+" : "") + p.close_line) + "</td><td>" + (p.clv_pts == null ? "–" : (p.clv_pts > 0 ? "+" : "") + p.clv_pts.toFixed(1)) +
-        '</td><td class="l">' + t + "</td></tr>";
-    }).join("") + "</tbody>";
-  fetch("weeks.json", {cache: "no-store"}).then((r) => r.json()).then((w) => {
-    $("weeks").innerHTML = w.weeks.map((k) => '<a href="' + w.season + "_week" + String(k).padStart(2, "0") + '.html">Week ' + k +
-      (k === w.current ? '<span class="tag">Now</span>' : "") + "</a>").join("") + '<a href="record.html" aria-current="page">Record</a>';
-  }).catch(() => {});
+      const res = p.result === "W" ? "<span class='pos b'>Win</span>" : p.result === "L" ? "<span class='neg b'>Loss</span>" : p.result === "P" ? "Push" : (started ? "Live" : "Open");
+      const d = p.kickoff ? new Date(p.kickoff).toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "America/New_York"}) : "";
+      return "<tr><td class='m'>" + esc(d) + "</td><td>" + game(p) + "</td><td class='b'>" + (p.team ? logo(p.team, 16) : "") + esc(p.selection) + "</td><td>" + esc(p.book || "–") +
+        " <span class='m'>" + ml(p.odds) + "</span></td><td class='r'>" + (p.close_line == null ? "–" : (p.close_line > 0 ? "+" : "") + p.close_line) + "</td><td class='r'>" +
+        (p.clv_pts == null ? "–" : (p.clv_pts > 0 ? "+" : "") + p.clv_pts.toFixed(1)) + "</td><td>" + res + "</td><td class='r " + cls(p.profit) + "'>" +
+        (p.profit == null ? "–" : u(p.profit)) + "</td><td class='m hide-sm'>" + esc(TYPE[p.angle] || (String(p.angle).startsWith("TEASER") ? "Teaser " + String(p.angle).slice(7) : p.angle || p.kind)) + " · " + p.stake + "u</td></tr>";
+    }).join("") + "</tbody>" : "<tbody><tr><td class='empty'>No plays yet.</td></tr></tbody>";
+  // phones: each row becomes a small card, each cell labeled with its column header
+  document.querySelectorAll("table.ct").forEach((t) => { const hs = [...t.querySelectorAll("thead th")].map((h) => h.textContent.trim());
+    t.classList.add("stack"); t.querySelectorAll("tbody tr").forEach((r) => [...r.children].forEach((c, k) => { if (hs[k]) c.dataset.l = hs[k]; })); });
 })();
 </script>
 """
