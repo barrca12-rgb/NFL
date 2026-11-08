@@ -1,6 +1,6 @@
-2026-11-06 14:20 UTC  keys set: theoddsapi, sgo
-theoddsapi: ok (BetMGM 14, DraftKings 27, FanDuel 27)
-sgo: ok (BetMGM 14, Caesars 26, DraftKings 27, FanDuel 27)
-  sgo feed: 34 events; FanDuel sent 204, unavailable 42, stale 0; DraftKings sent 204, unavailable 42, stale 0; BetMGM sent 126, unavailable 42, stale 0; Caesars sent 204, unavailable 48, stale 0
-theoddsapi credits used 3, remaining 482
--> odds_live_2026-11-06_1420.csv
+2026-11-08 19:55 UTC  keys set: theoddsapi, sgo
+theoddsapi: ok (BetMGM 13, DraftKings 13, FanDuel 13)
+sgo: ok (BetMGM 6, Caesars 17, DraftKings 6, FanDuel 6)
+  sgo feed: 33 events; FanDuel sent 156, unavailable 120, stale 0; DraftKings sent 156, unavailable 120, stale 0; BetMGM sent 78, unavailable 42, stale 0; Caesars sent 156, unavailable 54, stale 0
+theoddsapi credits used 3, remaining 479
+-> odds_live_2026-11-08_1955.csv
