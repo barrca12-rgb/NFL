@@ -1,6 +1,5 @@
-2026-11-24 23:37 UTC  keys set: theoddsapi, sgo
-theoddsapi: ok (BetMGM 16, DraftKings 30, FanDuel 30)
-sgo: ok (BetMGM 16, Caesars 30, DraftKings 30, FanDuel 30)
-  sgo feed: 36 events; FanDuel sent 180, unavailable 0, stale 0; DraftKings sent 216, unavailable 36, stale 0; BetMGM sent 96, unavailable 0, stale 0; Caesars sent 216, unavailable 36, stale 0
-theoddsapi credits used 3, remaining 431
--> odds_live_2026-11-24_2337.csv
+2026-11-27 03:15 UTC  keys set: theoddsapi, sgo
+theoddsapi: ok (BetMGM 13, DraftKings 21, FanDuel 21)
+sgo: FAILED HTTP Error 403: Forbidden {"success":false,"error":"Inactive API key"}
+theoddsapi credits used 3, remaining 428
+-> odds_live_2026-11-27_0315.csv
