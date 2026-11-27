@@ -1,5 +1,5 @@
-2026-11-27 03:15 UTC  keys set: theoddsapi, sgo
-theoddsapi: ok (BetMGM 13, DraftKings 21, FanDuel 21)
+2026-11-27 16:43 UTC  keys set: theoddsapi, sgo
+theoddsapi: ok (BetMGM 12, DraftKings 26, FanDuel 26)
 sgo: FAILED HTTP Error 403: Forbidden {"success":false,"error":"Inactive API key"}
-theoddsapi credits used 3, remaining 428
--> odds_live_2026-11-27_0315.csv
+theoddsapi credits used 3, remaining 425
+-> odds_live_2026-11-27_1643.csv
